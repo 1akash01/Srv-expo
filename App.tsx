@@ -1,6 +1,6 @@
-import { StatusBar } from 'expo-status-bar';
+import { StatusBar as ExpoStatusBar } from 'expo-status-bar';
 import { useMemo, useState } from 'react';
-import { SafeAreaView, StyleSheet, View } from 'react-native';
+import { Platform, SafeAreaView, StatusBar, StyleSheet, View } from 'react-native';
 import { BottomNav } from './src/components/BottomNav';
 import { HomeScreen } from './src/screens/HomeScreen';
 import { OnboardingScreen } from './src/screens/OnboardingScreen';
@@ -13,6 +13,7 @@ import { colors } from './src/theme';
 import type { Screen, UserRole } from './src/types';
 
 export default function App() {
+  const androidTopInset = Platform.OS === 'android' ? (StatusBar.currentHeight ?? 0) : 0;
   const [currentScreen, setCurrentScreen] = useState<Screen>('home');
   const [showOnboarding, setShowOnboarding] = useState(true);
   const [currentRole, setCurrentRole] = useState<UserRole>('electrician');
@@ -38,8 +39,8 @@ export default function App() {
 
   if (showOnboarding) {
     return (
-      <View style={styles.root}>
-        <StatusBar style="dark" />
+      <View style={[styles.root, { paddingTop: androidTopInset }]}>
+        <ExpoStatusBar style="dark" />
         <OnboardingScreen
           onGetStarted={(role) => {
             setCurrentRole(role);
@@ -52,8 +53,8 @@ export default function App() {
   }
 
   return (
-    <SafeAreaView style={styles.root}>
-      <StatusBar style="dark" />
+    <SafeAreaView style={[styles.root, { paddingTop: androidTopInset }]}>
+      <ExpoStatusBar style="dark" />
       <View style={styles.content}>{screen}</View>
       <BottomNav currentScreen={currentScreen} onNavigate={setCurrentScreen} />
     </SafeAreaView>

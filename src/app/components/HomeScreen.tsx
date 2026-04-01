@@ -1,13 +1,19 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { useEffect, useState } from 'react';
-import { Image, Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Image, Linking, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { ScreenTitle, SectionCard, StatPill } from '../../components/Common';
 import { banners, featuredProducts, recentActivity } from '../../data/mock';
 import { colors } from '../../theme';
 import type { Screen, UserRole } from '../../types';
 
 export function HomeScreen({ onNavigate, role }: { onNavigate: (screen: Screen) => void; role: UserRole }) {
+  const { width } = useWindowDimensions();
   const [slide, setSlide] = useState(0);
+  const compactPhone = width < 370;
+  const screenPadding = compactPhone ? 12 : 18;
+  const contentWidth = width - screenPadding * 2;
+  const gridGap = 12;
+  const twoColWidth = (contentWidth - gridGap) / 2;
 
   useEffect(() => {
     const id = setInterval(() => setSlide((value) => (value + 1) % banners.length), 3200);
@@ -15,21 +21,21 @@ export function HomeScreen({ onNavigate, role }: { onNavigate: (screen: Screen) 
   }, []);
 
   return (
-    <ScrollView style={styles.screen} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-      <LinearGradient colors={['#6E241B', '#B13127', '#D56C3E']} style={styles.hero}>
+    <ScrollView style={styles.screen} contentContainerStyle={[styles.content, { padding: screenPadding }]} showsVerticalScrollIndicator={false}>
+      <LinearGradient colors={['#6E241B', '#B13127', '#D56C3E']} style={[styles.hero, compactPhone && styles.heroCompact]}>
         <ScreenTitle
           title="Good morning"
           subtitle={role === 'dealer' ? 'Dealer dashboard' : 'Electrician dashboard'}
           right={<Text style={styles.heroChip}>4,250 pts</Text>}
         />
-        <View style={styles.statRow}>
+        <View style={[styles.statRow, compactPhone && styles.statRowCompact]}>
           <StatPill label="Weekly" value="+120" accent="#FFD27A" />
           <StatPill label="Level" value="Gold" accent="#FFFFFF" />
           <StatPill label="Role" value={role === 'dealer' ? 'Dealer' : 'Electrician'} accent="#FFFFFF" />
         </View>
       </LinearGradient>
 
-      <LinearGradient colors={banners[slide].colors} style={styles.banner}>
+      <LinearGradient colors={banners[slide].colors} style={[styles.banner, compactPhone && styles.bannerCompact]}>
         <Text style={styles.bannerTag}>{banners[slide].tag}</Text>
         <Text style={styles.bannerBrand}>SRV ELECTRICALS</Text>
         <Text style={styles.bannerTitle}>{banners[slide].title}</Text>
@@ -52,7 +58,7 @@ export function HomeScreen({ onNavigate, role }: { onNavigate: (screen: Screen) 
           { key: 'reward', label: 'Rewards', sub: 'Redeem now', glyph: 'RW', action: () => onNavigate('rewards') },
           { key: 'profile', label: 'Profile', sub: 'More options', glyph: 'ME', action: () => onNavigate('profile') },
         ].map((item) => (
-          <Pressable key={item.key} onPress={item.action} style={styles.quickCard}>
+          <Pressable key={item.key} onPress={item.action} style={[styles.quickCard, { width: twoColWidth }]}>
             <View style={styles.quickGlyphBox}>
               <Text style={styles.quickGlyph}>{item.glyph}</Text>
             </View>
@@ -71,7 +77,7 @@ export function HomeScreen({ onNavigate, role }: { onNavigate: (screen: Screen) 
         </View>
         <View style={styles.productGrid}>
           {featuredProducts.map((product) => (
-            <View key={product.id} style={styles.productCard}>
+            <View key={product.id} style={[styles.productCard, { width: twoColWidth }]}>
               <LinearGradient colors={product.colors} style={styles.productImageWrap}>
                 <Image source={{ uri: product.image }} style={styles.productImage} resizeMode="contain" />
               </LinearGradient>
@@ -111,9 +117,12 @@ const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.appBackground },
   content: { padding: 18, gap: 16, paddingBottom: 120 },
   hero: { borderRadius: 28, padding: 18 },
+  heroCompact: { padding: 14, borderRadius: 24 },
   heroChip: { paddingHorizontal: 12, paddingVertical: 8, borderRadius: 16, backgroundColor: 'rgba(255,255,255,0.16)', color: '#FFFFFF', fontSize: 12, fontWeight: '800' },
   statRow: { marginTop: 18, flexDirection: 'row', justifyContent: 'space-between', gap: 10 },
+  statRowCompact: { gap: 8 },
   banner: { borderRadius: 26, padding: 20, minHeight: 176 },
+  bannerCompact: { padding: 16, minHeight: 158, borderRadius: 22 },
   bannerTag: { alignSelf: 'flex-start', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 999, backgroundColor: 'rgba(255,255,255,0.14)', color: '#FFD8CA', fontSize: 11, fontWeight: '800' },
   bannerBrand: { marginTop: 18, color: 'rgba(255,255,255,0.62)', letterSpacing: 2.2, fontSize: 11, fontWeight: '800' },
   bannerTitle: { marginTop: 10, fontSize: 28, fontWeight: '900', color: '#FFFFFF' },
@@ -124,7 +133,7 @@ const styles = StyleSheet.create({
   dot: { width: 7, height: 7, borderRadius: 999, backgroundColor: '#D7C7BD' },
   dotActive: { width: 22, backgroundColor: colors.primary },
   quickGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
-  quickCard: { width: '48.2%', borderRadius: 22, backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: colors.border, padding: 14 },
+  quickCard: { borderRadius: 22, backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: colors.border, padding: 14 },
   quickGlyphBox: { width: 42, height: 42, borderRadius: 14, backgroundColor: '#FCECE5', alignItems: 'center', justifyContent: 'center' },
   quickGlyph: { color: colors.primary, fontWeight: '800', fontSize: 12 },
   quickTitle: { marginTop: 12, fontSize: 15, fontWeight: '800', color: colors.text },
@@ -133,7 +142,7 @@ const styles = StyleSheet.create({
   sectionTitle: { fontSize: 17, fontWeight: '800', color: colors.text },
   linkText: { fontSize: 12, fontWeight: '800', color: colors.primary },
   productGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
-  productCard: { width: '48.1%' },
+  productCard: {},
   productImageWrap: { borderRadius: 18, minHeight: 112, alignItems: 'center', justifyContent: 'center' },
   productImage: { width: 92, height: 92 },
   productName: { marginTop: 10, fontSize: 13, fontWeight: '800', color: colors.text },

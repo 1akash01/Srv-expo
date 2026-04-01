@@ -1,8 +1,4 @@
-node_modules
-.expo
-dist
-web-build
-*.log
-npm-debug.*
-yarn-debug.*
-yarn-error.*
+node_modules/
+dist/
+.env
+.DS_Store

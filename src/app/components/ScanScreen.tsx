@@ -1,12 +1,15 @@
 import { useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { PrimaryButton, ScreenTitle, SectionCard } from '../../components/Common';
 import { colors } from '../../theme';
 import type { Screen } from '../../types';
 
 export function ScanScreen({ onNavigate }: { onNavigate: (screen: Screen) => void }) {
+  const { width } = useWindowDimensions();
   const [scanned, setScanned] = useState(false);
   const [scanning, setScanning] = useState(false);
+  const screenPadding = width < 370 ? 12 : 18;
+  const frameSize = Math.min(width - screenPadding * 2 - 32, 248);
 
   const startScan = () => {
     setScanning(true);
@@ -17,11 +20,11 @@ export function ScanScreen({ onNavigate }: { onNavigate: (screen: Screen) => voi
   };
 
   return (
-    <ScrollView style={styles.screen} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+    <ScrollView style={styles.screen} contentContainerStyle={[styles.content, { padding: screenPadding }]} showsVerticalScrollIndicator={false}>
       <SectionCard>
         <ScreenTitle title="Scan QR Code" subtitle="Point the camera at the QR label on any SRV product box." />
         <View style={styles.frameWrap}>
-          <View style={styles.frame}>
+          <View style={[styles.frame, { width: frameSize, height: frameSize }]}>
             <View style={styles.bracketTopLeft} />
             <View style={styles.bracketTopRight} />
             <View style={styles.bracketBottomLeft} />

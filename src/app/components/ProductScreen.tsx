@@ -1,14 +1,20 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { useMemo, useState } from 'react';
-import { Image, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Image, Pressable, ScrollView, StyleSheet, Text, TextInput, View, useWindowDimensions } from 'react-native';
 import { ScreenTitle, SectionCard } from '../../components/Common';
 import { productCategories, products } from '../../data/mock';
 import { colors } from '../../theme';
 import type { Screen } from '../../types';
 
 export function ProductScreen({ onNavigate }: { onNavigate: (screen: Screen) => void }) {
+  const { width } = useWindowDimensions();
   const [category, setCategory] = useState(productCategories[0].id);
   const [search, setSearch] = useState('');
+  const compactPhone = width < 370;
+  const screenPadding = compactPhone ? 12 : 18;
+  const contentWidth = width - screenPadding * 2;
+  const gridGap = 12;
+  const twoColWidth = (contentWidth - gridGap) / 2;
 
   const filtered = useMemo(
     () => products.filter((item) => item.category === category && item.name.toLowerCase().includes(search.toLowerCase())),
@@ -16,7 +22,7 @@ export function ProductScreen({ onNavigate }: { onNavigate: (screen: Screen) => 
   );
 
   return (
-    <ScrollView style={styles.screen} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+    <ScrollView style={styles.screen} contentContainerStyle={[styles.content, { padding: screenPadding }]} showsVerticalScrollIndicator={false}>
       <SectionCard>
         <ScreenTitle title="All Products" subtitle="Browse SRV categories and scan products to earn points." />
         <TextInput value={search} onChangeText={setSearch} placeholder="Search products" placeholderTextColor="#A8978D" style={styles.search} />
@@ -33,14 +39,14 @@ export function ProductScreen({ onNavigate }: { onNavigate: (screen: Screen) => 
         </ScrollView>
       </SectionCard>
 
-      <LinearGradient colors={['#7A2A21', '#C55032', '#EEA35D']} style={styles.headerBanner}>
+      <LinearGradient colors={['#7A2A21', '#C55032', '#EEA35D']} style={[styles.headerBanner, compactPhone && styles.headerBannerCompact]}>
         <Text style={styles.headerBannerTitle}>{productCategories.find((item) => item.id === category)?.label}</Text>
         <Text style={styles.headerBannerSub}>{filtered.length} products available • scan any QR to earn points</Text>
       </LinearGradient>
 
       <View style={styles.grid}>
         {filtered.map((product) => (
-          <View key={product.id} style={styles.productCard}>
+          <View key={product.id} style={[styles.productCard, { width: twoColWidth }]}>
             <View style={styles.productImageWrap}>
               <Image source={{ uri: product.image }} style={styles.productImage} resizeMode="contain" />
               {product.badge ? <Text style={styles.badge}>{product.badge}</Text> : null}
@@ -72,10 +78,11 @@ const styles = StyleSheet.create({
   categoryText: { fontSize: 12, fontWeight: '700', color: colors.text },
   categoryTextActive: { color: '#FFFFFF' },
   headerBanner: { borderRadius: 24, padding: 18 },
+  headerBannerCompact: { padding: 14, borderRadius: 20 },
   headerBannerTitle: { fontSize: 22, fontWeight: '900', color: '#FFFFFF' },
   headerBannerSub: { marginTop: 6, color: 'rgba(255,255,255,0.82)', fontSize: 12 },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
-  productCard: { width: '48.1%', borderRadius: 22, backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: colors.border, padding: 12 },
+  productCard: { borderRadius: 22, backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: colors.border, padding: 12 },
   productImageWrap: { minHeight: 126, borderRadius: 18, backgroundColor: '#FFF6EF', alignItems: 'center', justifyContent: 'center', position: 'relative' },
   productImage: { width: 100, height: 100 },
   badge: { position: 'absolute', top: 8, left: 8, fontSize: 10, fontWeight: '800', color: '#FFFFFF', backgroundColor: colors.primary, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 999 },

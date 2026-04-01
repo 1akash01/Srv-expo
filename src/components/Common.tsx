@@ -1,5 +1,5 @@
 import { LinearGradient } from 'expo-linear-gradient';
-import type { PropsWithChildren, ReactNode } from 'react';
+import { useState, type PropsWithChildren, type ReactNode } from 'react';
 import { Image, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { colors } from '../theme';
 
@@ -45,10 +45,12 @@ export function FormInput({
   secureTextEntry?: boolean;
   right?: ReactNode;
 }) {
+  const [focused, setFocused] = useState(false);
+
   return (
     <View style={styles.fieldWrap}>
       <Text style={styles.fieldLabel}>{label}</Text>
-      <View style={styles.inputShell}>
+      <View style={[styles.inputShell, focused && styles.inputShellFocused]}>
         <TextInput
           value={value}
           onChangeText={onChangeText}
@@ -56,6 +58,8 @@ export function FormInput({
           placeholderTextColor="#A8978D"
           keyboardType={keyboardType}
           secureTextEntry={secureTextEntry}
+          onFocus={() => setFocused(true)}
+          onBlur={() => setFocused(false)}
           style={styles.input}
         />
         {right}
@@ -168,6 +172,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     flexDirection: 'row',
     alignItems: 'center',
+  },
+  inputShellFocused: {
+    borderColor: '#4F6DAF',
+    backgroundColor: '#FFFFFF',
   },
   input: {
     flex: 1,
