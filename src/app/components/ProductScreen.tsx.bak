@@ -1,0 +1,2 @@
+Expo migration note: Product screen now lives at src/screens/ProductScreen.tsx
+
