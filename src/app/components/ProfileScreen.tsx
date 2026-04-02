@@ -39,7 +39,7 @@ const defaultProfile = {
 };
 
 type Profile = typeof defaultProfile;
-type Screen = 'home' | 'scan' | 'rewards' | 'profile' | 'product' | 'wallet';
+type Screen = 'home' | 'scan' | 'rewards' | 'profile' | 'product' | 'wallet' | 'onboarding';
 
 const menuItems = [
   { label: 'My Redemption', emoji: '🎁', bg: Colors.primaryLight, screen: 'wallet' as Screen },
@@ -62,44 +62,36 @@ export function ProfileScreen({ onNavigate }: { onNavigate: (screen: Screen) => 
   const [profile, setProfile] = useState<Profile>(defaultProfile);
   const [draft, setDraft] = useState<Profile>(defaultProfile);
   const [showEdit, setShowEdit] = useState(false);
+  const [showSignOutConfirm, setShowSignOutConfirm] = useState(false);
 
   const initials = useMemo(
-    () =>
-      profile.name
-        .split(' ')
-        .map((w) => w[0])
-        .join('')
-        .slice(0, 2)
-        .toUpperCase(),
+    () => profile.name.split(' ').map((w) => w[0]).join('').slice(0, 2).toUpperCase(),
     [profile.name]
   );
 
-  const saveProfile = () => {
-    setProfile(draft);
-    setShowEdit(false);
-  };
+  const saveProfile = () => { setProfile(draft); setShowEdit(false); };
+
+  // Sign Out → goes to onboarding/login screen
+ const confirmSignOut = () => {
+  setShowSignOutConfirm(false);
+  onNavigate('onboarding'); //  correct
+};
 
   return (
     <>
       <ScrollView style={styles.screen} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        {/* Header */}
         <Text style={styles.pageTitle}>More</Text>
 
-        {/* Profile Card */}
         <View style={styles.profileCard}>
           <View style={styles.profileTop}>
             <View style={styles.avatarWrap}>
-              <View style={styles.avatar}>
-                <Text style={styles.avatarText}>{initials}</Text>
-              </View>
-              <View style={styles.levelBadge}>
-                <Text style={styles.levelText}>L3</Text>
-              </View>
+              <View style={styles.avatar}><Text style={styles.avatarText}>{initials}</Text></View>
+              <View style={styles.levelBadge}><Text style={styles.levelText}>L3</Text></View>
             </View>
             <View style={{ flex: 1 }}>
               <Text style={styles.profileName}>{profile.name}</Text>
               <Text style={styles.profilePhone}>{profile.phone}</Text>
-              <Text style={styles.profileDealer}># Dealer: {profile.dealerCode}</Text>
+              <Text style={styles.profileDealer}>Dealer: {profile.dealerCode}</Text>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2 }}>
                 <Text style={{ fontSize: 12 }}>📍</Text>
                 <Text style={styles.profileCity}>{profile.city}, {profile.state}</Text>
@@ -109,11 +101,8 @@ export function ProfileScreen({ onNavigate }: { onNavigate: (screen: Screen) => 
               <Text style={{ fontSize: 16 }}>✏️</Text>
             </TouchableOpacity>
           </View>
-
-          {/* Gold badge */}
           <View style={styles.goldMemberRow}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-              <View style={styles.goldDot} />
               <Text style={{ fontSize: 16 }}>⭐</Text>
               <Text style={styles.goldMemberText}>Gold Member</Text>
             </View>
@@ -121,7 +110,6 @@ export function ProfileScreen({ onNavigate }: { onNavigate: (screen: Screen) => 
           </View>
         </View>
 
-        {/* Profile Details */}
         <View style={styles.card}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
             <Text style={styles.sectionTitle}>Profile Details</Text>
@@ -130,8 +118,6 @@ export function ProfileScreen({ onNavigate }: { onNavigate: (screen: Screen) => 
               <Text style={styles.editChipText}>Edit</Text>
             </TouchableOpacity>
           </View>
-
-          {/* KYC Banner */}
           <View style={styles.kycBanner}>
             <Text style={{ fontSize: 16 }}>⚠️</Text>
             <View style={{ flex: 1 }}>
@@ -139,7 +125,6 @@ export function ProfileScreen({ onNavigate }: { onNavigate: (screen: Screen) => 
               <Text style={styles.kycSub}>Add PAN & GST details to get verified</Text>
             </View>
           </View>
-
           {[
             ['Mobile Number', profile.phone],
             ['Email ID', profile.email || 'Not provided'],
@@ -160,15 +145,10 @@ export function ProfileScreen({ onNavigate }: { onNavigate: (screen: Screen) => 
           ))}
         </View>
 
-        {/* Quick Actions */}
         <View style={styles.card}>
           {menuItems.map((item, i) => (
-            <TouchableOpacity
-              key={item.label}
-              onPress={() => item.screen && onNavigate(item.screen)}
-              style={[styles.menuRow, i < menuItems.length - 1 && styles.menuRowBorder]}
-              activeOpacity={0.75}
-            >
+            <TouchableOpacity key={item.label} onPress={() => item.screen && onNavigate(item.screen)}
+              style={[styles.menuRow, i < menuItems.length - 1 && styles.menuRowBorder]} activeOpacity={0.75}>
               <View style={[styles.menuIcon, { backgroundColor: item.bg }]}>
                 <Text style={{ fontSize: 18 }}>{item.emoji}</Text>
               </View>
@@ -178,15 +158,11 @@ export function ProfileScreen({ onNavigate }: { onNavigate: (screen: Screen) => 
           ))}
         </View>
 
-        {/* Settings */}
         <Text style={styles.sectionLabel}>Settings</Text>
         <View style={styles.card}>
           {settingsItems.map((item, i) => (
-            <TouchableOpacity
-              key={item.label}
-              style={[styles.menuRow, i < settingsItems.length - 1 && styles.menuRowBorder]}
-              activeOpacity={0.75}
-            >
+            <TouchableOpacity key={item.label}
+              style={[styles.menuRow, i < settingsItems.length - 1 && styles.menuRowBorder]} activeOpacity={0.75}>
               <View style={[styles.menuIcon, { backgroundColor: item.bg }]}>
                 <Text style={{ fontSize: 18 }}>{item.emoji}</Text>
                 {item.badge && <View style={styles.notifDot} />}
@@ -197,7 +173,6 @@ export function ProfileScreen({ onNavigate }: { onNavigate: (screen: Screen) => 
           ))}
         </View>
 
-        {/* Stats */}
         <View style={styles.statsCard}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 16 }}>
             <Text style={{ fontSize: 20 }}>⭐</Text>
@@ -219,8 +194,7 @@ export function ProfileScreen({ onNavigate }: { onNavigate: (screen: Screen) => 
           </View>
         </View>
 
-        {/* Sign Out */}
-        <TouchableOpacity style={styles.signOutBtn} activeOpacity={0.8}>
+        <TouchableOpacity style={styles.signOutBtn} onPress={() => setShowSignOutConfirm(true)} activeOpacity={0.8}>
           <Text style={{ fontSize: 18 }}>↪️</Text>
           <Text style={styles.signOutText}>Sign Out</Text>
         </TouchableOpacity>
@@ -228,34 +202,46 @@ export function ProfileScreen({ onNavigate }: { onNavigate: (screen: Screen) => 
         <View style={{ height: 30 }} />
       </ScrollView>
 
-      {/* Edit Modal */}
+      {/* Sign Out Confirm Modal */}
+      <Modal visible={showSignOutConfirm} animationType="fade" transparent onRequestClose={() => setShowSignOutConfirm(false)}>
+        <View style={styles.confirmOverlay}>
+          <View style={styles.confirmCard}>
+            <View style={styles.confirmIconWrap}>
+              <Text style={{ fontSize: 36 }}>↪️</Text>
+            </View>
+            <Text style={styles.confirmTitle}>Sign Out?</Text>
+            <Text style={styles.confirmSub}>Are you sure you want to sign out?{'\n'}Your data will be saved.</Text>
+            <View style={styles.confirmActions}>
+              <Pressable onPress={() => setShowSignOutConfirm(false)} style={styles.confirmCancel}>
+                <Text style={styles.confirmCancelText}>Cancel</Text>
+              </Pressable>
+              <Pressable onPress={confirmSignOut} style={styles.confirmSignOut}>
+                <Text style={styles.confirmSignOutText}>Sign Out</Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Edit Profile Modal */}
       <Modal visible={showEdit} animationType="slide" transparent onRequestClose={() => setShowEdit(false)}>
         <View style={styles.modalOverlay}>
           <View style={styles.modalCard}>
             <Text style={styles.modalTitle}>Edit Profile</Text>
             <ScrollView showsVerticalScrollIndicator={false}>
               {[
-                ['Full Name', 'name'],
-                ['Phone Number', 'phone'],
-                ['Email', 'email'],
-                ['City', 'city'],
-                ['State', 'state'],
-                ['Pincode', 'pincode'],
-                ['Address', 'address'],
-                ['GST Holder Name', 'gstHolderName'],
-                ['GST Number', 'gstNumber'],
-                ['PAN Holder Name', 'panHolderName'],
-                ['PAN Number', 'panNumber'],
-                ['Dealer Code', 'dealerCode'],
+                ['Full Name', 'name'], ['Phone Number', 'phone'], ['Email', 'email'],
+                ['City', 'city'], ['State', 'state'], ['Pincode', 'pincode'],
+                ['Address', 'address'], ['GST Holder Name', 'gstHolderName'],
+                ['GST Number', 'gstNumber'], ['PAN Holder Name', 'panHolderName'],
+                ['PAN Number', 'panNumber'], ['Dealer Code', 'dealerCode'],
               ].map(([label, key]) => (
                 <View key={key} style={styles.modalField}>
                   <Text style={styles.modalLabel}>{label}</Text>
                   <TextInput
                     value={draft[key as keyof Profile]}
                     onChangeText={(v) => setDraft((c) => ({ ...c, [key]: v }))}
-                    placeholder={label}
-                    placeholderTextColor="#AA9A90"
-                    style={styles.modalInput}
+                    placeholder={label} placeholderTextColor="#AA9A90" style={styles.modalInput}
                   />
                 </View>
               ))}
@@ -280,7 +266,6 @@ const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: Colors.background },
   content: { padding: 16, gap: 16, paddingBottom: 120 },
   pageTitle: { fontSize: 22, fontWeight: '800', color: Colors.textDark, textAlign: 'center' },
-
   profileCard: { backgroundColor: Colors.surface, borderRadius: 22, padding: 18, borderWidth: 1, borderColor: Colors.border, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 10, elevation: 3 },
   profileTop: { flexDirection: 'row', alignItems: 'flex-start', gap: 14, marginBottom: 14 },
   avatarWrap: { position: 'relative' },
@@ -294,43 +279,45 @@ const styles = StyleSheet.create({
   profileCity: { fontSize: 12, color: Colors.textMuted },
   editBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: Colors.primaryLight, alignItems: 'center', justifyContent: 'center' },
   goldMemberRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#FFFBEB', borderRadius: 14, padding: 12, borderWidth: 1, borderColor: '#FEF3C7' },
-  goldDot: { width: 10, height: 10, borderRadius: 5, backgroundColor: Colors.gold },
   goldMemberText: { fontSize: 14, fontWeight: '800', color: '#92400E' },
   goldHint: { fontSize: 12, color: '#92400E', fontWeight: '600' },
-
   card: { backgroundColor: Colors.surface, borderRadius: 22, padding: 18, borderWidth: 1, borderColor: Colors.border, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 8, elevation: 2 },
   sectionTitle: { fontSize: 17, fontWeight: '800', color: Colors.textDark },
   sectionLabel: { fontSize: 16, fontWeight: '800', color: Colors.textDark, paddingLeft: 2 },
   editChip: { flexDirection: 'row', alignItems: 'center', backgroundColor: Colors.primaryLight, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 6 },
   editChipText: { color: Colors.primary, fontSize: 13, fontWeight: '700' },
-
   kycBanner: { flexDirection: 'row', gap: 10, alignItems: 'flex-start', backgroundColor: '#FFFBEB', borderWidth: 1, borderColor: '#FEF3C7', borderRadius: 14, padding: 12, marginBottom: 14 },
   kycTitle: { fontSize: 13, fontWeight: '800', color: '#92400E' },
   kycSub: { fontSize: 12, color: '#B45309', marginTop: 2 },
-
   detailRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 13 },
   detailBorder: { borderBottomWidth: 1, borderBottomColor: '#F5F5FB' },
   detailLabel: { fontSize: 13, color: Colors.textMuted, flex: 1 },
   detailValue: { fontSize: 13, fontWeight: '700', color: Colors.textDark, flex: 1, textAlign: 'right' },
   detailValueEmpty: { color: Colors.textMuted, fontStyle: 'italic', fontWeight: '400' },
-
   menuRow: { flexDirection: 'row', alignItems: 'center', gap: 14, paddingVertical: 14 },
   menuRowBorder: { borderBottomWidth: 1, borderBottomColor: '#F5F5FB' },
   menuIcon: { width: 44, height: 44, borderRadius: 14, alignItems: 'center', justifyContent: 'center', position: 'relative' },
   notifDot: { position: 'absolute', top: 6, right: 6, width: 8, height: 8, borderRadius: 4, backgroundColor: Colors.primary, borderWidth: 1.5, borderColor: '#fff' },
   menuLabel: { flex: 1, fontSize: 15, fontWeight: '600', color: Colors.textDark },
   menuArrow: { fontSize: 22, color: '#C0C0D0' },
-
   statsCard: { backgroundColor: '#2D3561', borderRadius: 22, padding: 20 },
   statsTitle: { fontSize: 17, fontWeight: '800', color: '#fff' },
   statsRow: { flexDirection: 'row', gap: 12 },
   statBox: { flex: 1, borderRadius: 16, padding: 16, alignItems: 'center', justifyContent: 'center' },
   statValue: { fontSize: 18, fontWeight: '900' },
   statLabel: { fontSize: 12, color: 'rgba(255,255,255,0.65)', marginTop: 4, fontWeight: '600' },
-
   signOutBtn: { backgroundColor: Colors.surface, borderRadius: 18, paddingVertical: 16, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8, borderWidth: 1, borderColor: Colors.border },
   signOutText: { fontSize: 16, fontWeight: '700', color: Colors.primary },
-
+  confirmOverlay: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(28,30,46,0.5)' },
+  confirmCard: { backgroundColor: '#fff', borderRadius: 28, padding: 28, marginHorizontal: 32, alignItems: 'center', width: '85%', shadowColor: '#000', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.15, shadowRadius: 24, elevation: 10 },
+  confirmIconWrap: { width: 72, height: 72, borderRadius: 36, backgroundColor: Colors.primaryLight, alignItems: 'center', justifyContent: 'center', marginBottom: 16 },
+  confirmTitle: { fontSize: 20, fontWeight: '900', color: Colors.textDark, marginBottom: 8 },
+  confirmSub: { fontSize: 14, color: Colors.textMuted, textAlign: 'center', lineHeight: 20, marginBottom: 24 },
+  confirmActions: { flexDirection: 'row', gap: 12, width: '100%' },
+  confirmCancel: { flex: 1, height: 50, borderRadius: 16, backgroundColor: '#F3E9E1', alignItems: 'center', justifyContent: 'center' },
+  confirmCancelText: { fontSize: 15, fontWeight: '800', color: Colors.textDark },
+  confirmSignOut: { flex: 1, height: 50, borderRadius: 16, backgroundColor: Colors.primary, alignItems: 'center', justifyContent: 'center' },
+  confirmSignOutText: { color: '#fff', fontSize: 15, fontWeight: '800' },
   modalOverlay: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(28,30,46,0.4)' },
   modalCard: { maxHeight: '88%', backgroundColor: '#fff', borderTopLeftRadius: 28, borderTopRightRadius: 28, padding: 20 },
   modalTitle: { fontSize: 19, fontWeight: '800', color: Colors.textDark, marginBottom: 16 },
