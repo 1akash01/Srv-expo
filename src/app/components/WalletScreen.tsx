@@ -2,8 +2,11 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import Svg, { Circle, Path, Rect } from 'react-native-svg';
 import { colors } from '../../theme';
+import type { Screen } from '../../types';
 
-type Screen = 'home' | 'scan' | 'rewards' | 'profile' | 'product' | 'wallet' | 'notification';
+type WalletScreenProps = {
+  onNavigate?: (screen: Screen) => void;
+};
 
 function BackIcon() {
   return (
@@ -71,13 +74,13 @@ const historyItems = [
   { id: 'h3', title: 'Scheme bonus unlocked', time: '02 Apr 2026', points: '+80', accent: '#35538E' },
 ];
 
-export function WalletScreen({ onNavigate }: { onNavigate: (screen: Screen) => void }) {
+export function WalletScreen({ onNavigate }: WalletScreenProps) {
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
       <LinearGradient colors={['#18345B', '#355C95', '#E18D4E']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.heroCard}>
         <View style={styles.heroGlow} />
         <View style={styles.heroHeader}>
-          <Pressable onPress={() => onNavigate('home')} style={styles.backButton}>
+          <Pressable onPress={() => onNavigate?.('home')} style={styles.backButton}>
             <BackIcon />
             <Text style={styles.backLabel}>Home</Text>
           </Pressable>
@@ -361,4 +364,3 @@ const styles = StyleSheet.create({
   emptyTitle: { marginTop: 14, fontSize: 20, fontWeight: '900', color: '#B04D2E' },
   emptySub: { marginTop: 8, fontSize: 13, textAlign: 'center', color: colors.mutedText, lineHeight: 19 },
 });
-
