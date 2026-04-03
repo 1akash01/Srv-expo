@@ -42,7 +42,13 @@ export default function App() {
   const screen = useMemo(() => {
     switch (currentScreen) {
       case 'home':
-        return <HomeScreen onNavigate={handleNavigate} onOpenProductCategory={handleOpenProductCategory} />;
+        return (
+          <HomeScreen
+            currentRole={currentRole}
+            onNavigate={handleNavigate}
+            onOpenProductCategory={handleOpenProductCategory}
+          />
+        );
       case 'product':
         return <ProductScreen onNavigate={handleNavigate} initialCategory={selectedProductCategory} />;
       case 'notification':
@@ -52,13 +58,19 @@ export default function App() {
       case 'rewards':
         return <RewardsScreen />;
       case 'profile':
-        return <ProfileScreen onNavigate={handleNavigate} onSignOut={handleSignOut} />;
+        return <ProfileScreen currentRole={currentRole} onNavigate={handleNavigate} onSignOut={handleSignOut} />;
       case 'wallet':
         return <WalletScreen />;
       default:
-        return <HomeScreen onNavigate={handleNavigate} onOpenProductCategory={handleOpenProductCategory} />;
+        return (
+          <HomeScreen
+            currentRole={currentRole}
+            onNavigate={handleNavigate}
+            onOpenProductCategory={handleOpenProductCategory}
+          />
+        );
     }
-  }, [currentScreen, selectedProductCategory]);
+  }, [currentRole, currentScreen, selectedProductCategory]);
 
   if (showOnboarding) {
     return (

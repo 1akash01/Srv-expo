@@ -1,332 +1,384 @@
-import { useMemo, useState } from 'react';
-import {
-  Modal,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from 'react-native';
-
-const Colors = {
-  primary: '#E8453C',
-  primaryLight: '#FFF0F0',
-  background: '#F2F3F7',
-  surface: '#FFFFFF',
-  border: '#EEEEF3',
-  textDark: '#1C1E2E',
-  textMuted: '#9898A8',
-  success: '#22c55e',
-  gold: '#F59E0B',
-  blue: '#3B82F6',
-};
-
-const defaultProfile = {
-  name: 'Harshvardhan',
-  phone: '9162038214',
-  email: '',
-  state: 'Punjab',
-  city: 'Mansa',
-  pincode: '151505',
-  address: 'YOUR+PC8, Green Valley',
-  gstHolderName: 'Harshvardhan',
-  gstNumber: 'BIBPB7675A',
-  panHolderName: '',
-  panNumber: '',
-  dealerCode: '215548',
-};
-
-type Profile = typeof defaultProfile;
-type Screen = 'home' | 'scan' | 'rewards' | 'profile' | 'product' | 'wallet';
+import React, { useMemo, useState } from 'react';
+import { Image, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import * as ImagePicker from 'expo-image-picker';
+import type { UserRole } from '../../types';
+import { AppIcon, C, defaultProfile, getThemePalette, IconName, PreferenceContext, Profile, Screen, SubPage, translations } from './profile/ProfileShared';
+import { RedemptionPage } from './profile/MyRedemption';
+import { TransferPointsPage } from './profile/TransferPoints';
+import { MyOrdersPage } from './profile/MyOrders';
+import { BankDetailsPage } from './profile/BankDetails';
+import { ReferFriendPage } from './profile/ReferFriend';
+import { NeedHelpPage } from './profile/NeedHelp';
+import { OffersPage } from './profile/Offers';
+import { NotificationsPage } from './profile/Notifications';
+import { AppSettingsPage } from './profile/AppSettings';
+import { ScanHistoryPage } from './profile/ScanHistory';
+import { ContactSupportPage } from './profile/ContactSupport';
 
 const menuItems = [
-  { label: 'My Redemption', emoji: '🎁', bg: Colors.primaryLight, screen: 'wallet' as Screen },
-  { label: 'Transfer Points', emoji: '↕️', bg: Colors.primaryLight, screen: null },
-  { label: 'My Orders', emoji: '🛍️', bg: Colors.primaryLight, screen: null },
-  { label: 'Bank Details', emoji: '💳', bg: '#FFF8E1', screen: null },
-  { label: 'Refer To A Friend', emoji: '👥', bg: '#EFF6FF', screen: null },
-  { label: 'Need Help', emoji: '❓', bg: '#E6FDF0', screen: null },
-  { label: 'Offers', emoji: '🏷️', bg: '#FFF8E1', screen: null },
+  { label: 'My Redemption', icon: 'gift' as IconName, bg: C.primaryLight, screen: 'My Redemption' as SubPage, color: C.primary },
+  { label: 'Gift Store', icon: 'gift' as IconName, bg: C.tealLight, route: 'rewards' as Screen, color: C.teal },
+  { label: 'Transfer Points', icon: 'transfer' as IconName, bg: C.blueLight, screen: 'Transfer Points' as SubPage, color: C.blue },
+  { label: 'My Orders', icon: 'order' as IconName, bg: C.purpleLight, screen: 'My Orders' as SubPage, color: C.purple },
+  { label: 'Bank Details', icon: 'bank' as IconName, bg: C.goldLight, screen: 'Bank Details' as SubPage, color: C.gold },
+  { label: 'Refer To A Friend', icon: 'refer' as IconName, bg: '#EFF6FF', screen: 'Refer To A Friend' as SubPage, color: C.blue },
+  { label: 'Need Help', icon: 'help' as IconName, bg: C.tealLight, screen: 'Need Help' as SubPage, color: C.teal },
+  { label: 'Offers & Promotions', icon: 'offer' as IconName, bg: C.goldLight, screen: 'Offers & Promotions' as SubPage, color: C.gold },
 ];
 
 const settingsItems = [
-  { label: 'Notifications', emoji: '🔔', bg: '#FFF8E1', badge: true },
-  { label: 'App Settings', emoji: '⚙️', bg: '#F3F0FF', badge: false },
-  { label: 'Scan History', emoji: '📷', bg: Colors.primaryLight, badge: false },
-  { label: 'Contact Support', emoji: '📞', bg: '#E6FDF0', badge: false },
+  { label: 'Notifications', icon: 'notification' as IconName, bg: C.goldLight, screen: 'Notifications' as SubPage, badge: true, color: C.gold },
+  { label: 'App Settings', icon: 'settings' as IconName, bg: C.purpleLight, screen: 'App Settings' as SubPage, badge: false, color: C.purple },
+  { label: 'Scan History', icon: 'history' as IconName, bg: C.primaryLight, screen: 'Scan History' as SubPage, badge: false, color: C.primary },
+  { label: 'Contact Support', icon: 'support' as IconName, bg: C.tealLight, screen: 'Contact Support' as SubPage, badge: false, color: C.teal },
 ];
 
-export function ProfileScreen({ onNavigate, onSignOut }: { onNavigate: (screen: Screen) => void; onSignOut: () => void }) {
+export function ProfileScreen({
+  currentRole,
+  onNavigate,
+  onSignOut,
+}: {
+  currentRole: UserRole;
+  onNavigate: (screen: Screen) => void;
+  onSignOut: () => void;
+}) {
+  const [language, setLanguage] = useState<'English' | 'Hindi' | 'Punjabi'>('English');
+  const [darkMode, setDarkMode] = useState(false);
   const [profile, setProfile] = useState<Profile>(defaultProfile);
   const [draft, setDraft] = useState<Profile>(defaultProfile);
+  const [profileImage, setProfileImage] = useState<string | null>(null);
+  const [draftImage, setDraftImage] = useState<string | null>(null);
   const [showEdit, setShowEdit] = useState(false);
-  const [showSignOutConfirm, setShowSignOutConfirm] = useState(false);
+  const [showSignOut, setShowSignOut] = useState(false);
+  const [showImgPicker, setShowImgPicker] = useState(false);
+  const [subPage, setSubPage] = useState<SubPage>(null);
+  const [showFullProfile, setShowFullProfile] = useState(false);
 
-  const initials = useMemo(
-    () => profile.name.split(' ').map((w) => w[0]).join('').slice(0, 2).toUpperCase(),
-    [profile.name]
-  );
+  const theme = useMemo(() => getThemePalette(darkMode), [darkMode]);
+  const t = (key: keyof (typeof translations)['English']) => translations[language][key];
+  const preferenceValue = { language, setLanguage, darkMode, setDarkMode, t, theme };
+  const initials = useMemo(() => profile.name.split(' ').map((w) => w[0]).join('').slice(0, 2).toUpperCase(), [profile.name]);
 
-  const saveProfile = () => { setProfile(draft); setShowEdit(false); };
-
-  // Sign Out → goes to onboarding/login screen
- const confirmSignOut = () => {
-    setShowSignOutConfirm(false);
-    onSignOut();
+  const openEdit = () => { setDraft(profile); setDraftImage(profileImage); setShowEdit(true); };
+  const saveProfile = () => { setProfile(draft); setProfileImage(draftImage); setShowEdit(false); };
+  const pickFromGallery = async () => {
+    setShowImgPicker(false);
+    const res = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ImagePicker.MediaTypeOptions.Images, allowsEditing: true, aspect: [1, 1], quality: 0.85 });
+    if (!res.canceled) setDraftImage(res.assets[0].uri);
+  };
+  const pickFromCamera = async () => {
+    setShowImgPicker(false);
+    const res = await ImagePicker.launchCameraAsync({ allowsEditing: true, aspect: [1, 1], quality: 0.85 });
+    if (!res.canceled) setDraftImage(res.assets[0].uri);
   };
 
+  const subpages: Record<Exclude<SubPage, null>, React.ReactElement> = {
+    'My Redemption': <RedemptionPage onBack={() => setSubPage(null)} />,
+    'Transfer Points': <TransferPointsPage onBack={() => setSubPage(null)} />,
+    'My Orders': <MyOrdersPage onBack={() => setSubPage(null)} />,
+    'Bank Details': <BankDetailsPage onBack={() => setSubPage(null)} />,
+    'Refer To A Friend': <ReferFriendPage onBack={() => setSubPage(null)} />,
+    'Need Help': <NeedHelpPage onBack={() => setSubPage(null)} />,
+    'Offers & Promotions': <OffersPage onBack={() => setSubPage(null)} />,
+    Notifications: <NotificationsPage onBack={() => setSubPage(null)} />,
+    'App Settings': <AppSettingsPage onBack={() => setSubPage(null)} />,
+    'Scan History': <ScanHistoryPage onBack={() => setSubPage(null)} />,
+    'Contact Support': <ContactSupportPage onBack={() => setSubPage(null)} />,
+  };
+
+  if (subPage) {
+    return <PreferenceContext.Provider value={preferenceValue}>{subpages[subPage]}</PreferenceContext.Provider>;
+  }
+
   return (
-    <>
-      <ScrollView style={styles.screen} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <Text style={styles.pageTitle}>More</Text>
-
-        <View style={styles.profileCard}>
-          <View style={styles.profileTop}>
-            <View style={styles.avatarWrap}>
-              <View style={styles.avatar}><Text style={styles.avatarText}>{initials}</Text></View>
-              <View style={styles.levelBadge}><Text style={styles.levelText}>L3</Text></View>
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.profileName}>{profile.name}</Text>
-              <Text style={styles.profilePhone}>{profile.phone}</Text>
-              <Text style={styles.profileDealer}>Dealer: {profile.dealerCode}</Text>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2 }}>
-                <Text style={{ fontSize: 12 }}>📍</Text>
-                <Text style={styles.profileCity}>{profile.city}, {profile.state}</Text>
-              </View>
-            </View>
-            <TouchableOpacity onPress={() => { setDraft(profile); setShowEdit(true); }} style={styles.editBtn}>
-              <Text style={{ fontSize: 16 }}>✏️</Text>
+    <PreferenceContext.Provider value={preferenceValue}>
+      <>
+        <ScrollView style={[ps.screen, { backgroundColor: theme.bg }]} contentContainerStyle={ps.content} showsVerticalScrollIndicator={false}>
+          <View style={ps.pageHeader}>
+            <Text style={[ps.pageTitle, { color: theme.textPrimary }]}>{t('myProfile')}</Text>
+            <TouchableOpacity onPress={openEdit} style={[ps.editHeaderBtn, { backgroundColor: theme.surface, borderColor: theme.border }]} activeOpacity={0.75}>
+              <AppIcon name="edit" size={16} color={C.primary} />
+              <Text style={[ps.editHeaderText, { color: theme.textPrimary }]}>{t('edit')}</Text>
             </TouchableOpacity>
           </View>
-          <View style={styles.goldMemberRow}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-              <Text style={{ fontSize: 16 }}>⭐</Text>
-              <Text style={styles.goldMemberText}>Gold Member</Text>
-            </View>
-            <Text style={styles.goldHint}>750 pts to Platinum →</Text>
-          </View>
-        </View>
 
-        <View style={styles.card}>
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-            <Text style={styles.sectionTitle}>Profile Details</Text>
-            <TouchableOpacity onPress={() => { setDraft(profile); setShowEdit(true); }} style={styles.editChip}>
-              <Text style={{ fontSize: 14 }}>✏️ </Text>
-              <Text style={styles.editChipText}>Edit</Text>
-            </TouchableOpacity>
-          </View>
-          <View style={styles.kycBanner}>
-            <Text style={{ fontSize: 16 }}>⚠️</Text>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.kycTitle}>Complete KYC to unlock all features</Text>
-              <Text style={styles.kycSub}>Add PAN & GST details to get verified</Text>
-            </View>
-          </View>
-          {[
-            ['Mobile Number', profile.phone],
-            ['Email ID', profile.email || 'Not provided'],
-            ['State', profile.state],
-            ['City', profile.city],
-            ['Pincode', profile.pincode],
-            ['Address', profile.address],
-            ['GST Holder Name', profile.gstHolderName],
-            ['GST Number', profile.gstNumber],
-            ['PAN Holder Name', profile.panHolderName || 'Not provided'],
-            ['PAN Number', profile.panNumber || 'Not provided'],
-            ['Dealer Code', profile.dealerCode],
-          ].map(([label, value], i, arr) => (
-            <View key={label} style={[styles.detailRow, i < arr.length - 1 && styles.detailBorder]}>
-              <Text style={styles.detailLabel}>{label}</Text>
-              <Text style={[styles.detailValue, !value.trim() && styles.detailValueEmpty]}>{value}</Text>
-            </View>
-          ))}
-        </View>
-
-        <View style={styles.card}>
-          {menuItems.map((item, i) => (
-            <TouchableOpacity key={item.label} onPress={() => item.screen && onNavigate(item.screen)}
-              style={[styles.menuRow, i < menuItems.length - 1 && styles.menuRowBorder]} activeOpacity={0.75}>
-              <View style={[styles.menuIcon, { backgroundColor: item.bg }]}>
-                <Text style={{ fontSize: 18 }}>{item.emoji}</Text>
-              </View>
-              <Text style={styles.menuLabel}>{item.label}</Text>
-              <Text style={styles.menuArrow}>›</Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-
-        <Text style={styles.sectionLabel}>Settings</Text>
-        <View style={styles.card}>
-          {settingsItems.map((item, i) => (
-            <TouchableOpacity key={item.label}
-              style={[styles.menuRow, i < settingsItems.length - 1 && styles.menuRowBorder]} activeOpacity={0.75}>
-              <View style={[styles.menuIcon, { backgroundColor: item.bg }]}>
-                <Text style={{ fontSize: 18 }}>{item.emoji}</Text>
-                {item.badge && <View style={styles.notifDot} />}
-              </View>
-              <Text style={styles.menuLabel}>{item.label}</Text>
-              <Text style={styles.menuArrow}>›</Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-
-        <View style={styles.statsCard}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 16 }}>
-            <Text style={{ fontSize: 20 }}>⭐</Text>
-            <Text style={styles.statsTitle}>Your Stats</Text>
-          </View>
-          <View style={styles.statsRow}>
-            <View style={[styles.statBox, { backgroundColor: 'rgba(232,69,60,0.18)' }]}>
-              <Text style={[styles.statValue, { color: Colors.primary }]}>24</Text>
-              <Text style={styles.statLabel}>Scans</Text>
-            </View>
-            <View style={[styles.statBox, { backgroundColor: 'rgba(245,158,11,0.18)' }]}>
-              <Text style={[styles.statValue, { color: Colors.gold }]}>4,250</Text>
-              <Text style={styles.statLabel}>Points</Text>
-            </View>
-            <View style={[styles.statBox, { backgroundColor: 'rgba(34,197,94,0.18)' }]}>
-              <Text style={[styles.statValue, { color: Colors.success }]}>6</Text>
-              <Text style={styles.statLabel}>Rewards</Text>
-            </View>
-          </View>
-        </View>
-
-        <TouchableOpacity style={styles.signOutBtn} onPress={() => setShowSignOutConfirm(true)} activeOpacity={0.8}>
-          <Text style={{ fontSize: 18 }}>↪️</Text>
-          <Text style={styles.signOutText}>Sign Out</Text>
-        </TouchableOpacity>
-
-        <View style={{ height: 30 }} />
-      </ScrollView>
-
-      {/* Sign Out Confirm Modal */}
-      <Modal visible={showSignOutConfirm} animationType="fade" transparent onRequestClose={() => setShowSignOutConfirm(false)}>
-        <View style={styles.confirmOverlay}>
-          <View style={styles.confirmCard}>
-            <View style={styles.confirmIconWrap}>
-              <Text style={{ fontSize: 36 }}>↪️</Text>
-            </View>
-            <Text style={styles.confirmTitle}>Sign Out?</Text>
-            <Text style={styles.confirmSub}>Are you sure you want to sign out?{'\n'}Your data will be saved.</Text>
-            <View style={styles.confirmActions}>
-              <Pressable onPress={() => setShowSignOutConfirm(false)} style={styles.confirmCancel}>
-                <Text style={styles.confirmCancelText}>Cancel</Text>
-              </Pressable>
-              <Pressable onPress={confirmSignOut} style={styles.confirmSignOut}>
-                <Text style={styles.confirmSignOutText}>Sign Out</Text>
-              </Pressable>
-            </View>
-          </View>
-        </View>
-      </Modal>
-
-      {/* Edit Profile Modal */}
-      <Modal visible={showEdit} animationType="slide" transparent onRequestClose={() => setShowEdit(false)}>
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalCard}>
-            <Text style={styles.modalTitle}>Edit Profile</Text>
-            <ScrollView showsVerticalScrollIndicator={false}>
-              {[
-                ['Full Name', 'name'], ['Phone Number', 'phone'], ['Email', 'email'],
-                ['City', 'city'], ['State', 'state'], ['Pincode', 'pincode'],
-                ['Address', 'address'], ['GST Holder Name', 'gstHolderName'],
-                ['GST Number', 'gstNumber'], ['PAN Holder Name', 'panHolderName'],
-                ['PAN Number', 'panNumber'], ['Dealer Code', 'dealerCode'],
-              ].map(([label, key]) => (
-                <View key={key} style={styles.modalField}>
-                  <Text style={styles.modalLabel}>{label}</Text>
-                  <TextInput
-                    value={draft[key as keyof Profile]}
-                    onChangeText={(v) => setDraft((c) => ({ ...c, [key]: v }))}
-                    placeholder={label} placeholderTextColor="#AA9A90" style={styles.modalInput}
-                  />
+          <View style={[ps.heroCard, { backgroundColor: theme.heroSurface, borderColor: theme.border }]}>
+            <View style={ps.blobTL} />
+            <View style={ps.blobBR} />
+            <View style={ps.heroTop}>
+              <TouchableOpacity onPress={openEdit} activeOpacity={0.85} style={ps.avatarWrap}>
+                <View style={ps.avatarRing}>
+                  {profileImage ? <Image source={{ uri: profileImage }} style={ps.avatarImg} /> : <View style={ps.avatarFallback}><Text style={ps.avatarInitials}>{initials}</Text></View>}
                 </View>
-              ))}
-              <View style={{ height: 20 }} />
-            </ScrollView>
-            <View style={styles.modalActions}>
-              <Pressable onPress={() => setShowEdit(false)} style={styles.modalSecondary}>
-                <Text style={styles.modalSecondaryText}>Cancel</Text>
-              </Pressable>
-              <Pressable onPress={saveProfile} style={styles.modalPrimary}>
-                <Text style={styles.modalPrimaryText}>Save</Text>
-              </Pressable>
+                <View style={ps.levelBadge}><Text style={ps.levelTxt}>L3</Text></View>
+              </TouchableOpacity>
+              <View style={{ flex: 1 }}>
+                <Text style={[ps.heroName, { color: theme.textPrimary }]}>{profile.name}</Text>
+                <Text style={[ps.heroPhone, { color: theme.textMuted }]}>+91 {profile.phone}</Text>
+                <View style={ps.tagRow}>
+                  <View style={[ps.tag, { backgroundColor: theme.soft }]}><Text style={[ps.tagTxt, { color: theme.textSecondary }]}>📍 {profile.city}</Text></View>
+                  <View style={[ps.tag, { backgroundColor: C.primaryLight }]}><Text style={[ps.tagTxt, { color: C.primary }]}>{profile.dealerCode}</Text></View>
+                </View>
+              </View>
+            </View>
+            <View style={[ps.memberStrip, { backgroundColor: theme.heroStrip, borderTopColor: theme.border }]}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <View style={ps.memberStarWrap}><AppIcon name="star" size={14} color="#F59E0B" /></View>
+                <View>
+                  <Text style={ps.memberTitle}>{t('goldMember')}</Text>
+                  <Text style={[ps.memberSub, { color: theme.textMuted }]}>{currentRole === 'dealer' ? t('dealerPartner') : t('electricianPartner')}</Text>
+                </View>
+              </View>
+              <View style={{ alignItems: 'flex-end', gap: 5 }}>
+                <Text style={[ps.memberHint, { color: theme.textSecondary }]}>{t('toPlatinum')}</Text>
+                <View style={ps.progressTrack}><View style={ps.progressFill} /></View>
+              </View>
             </View>
           </View>
-        </View>
-      </Modal>
-    </>
+
+          <View style={{ flexDirection: 'row', gap: 10 }}>
+            {[{ val: '24', label: t('scans'), icon: 'scan' as IconName, bg: C.primaryLight, color: C.primary }, { val: '4,250', label: t('points'), icon: 'star' as IconName, bg: C.goldLight, color: C.gold }, { val: '6', label: t('rewards'), icon: 'gift' as IconName, bg: C.tealLight, color: C.teal }].map((s) => (
+              <View key={s.label} style={[ps.statBox, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+                <View style={[ps.statIcon, { backgroundColor: s.bg }]}><AppIcon name={s.icon} size={18} color={s.color} /></View>
+                <Text style={[ps.statVal, { color: s.color }]}>{s.val}</Text>
+                <Text style={[ps.statLbl, { color: theme.textMuted }]}>{s.label}</Text>
+              </View>
+            ))}
+          </View>
+
+          <View style={[ps.card, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+            <View style={ps.cardHead}>
+              <Text style={[ps.cardTitle, { color: theme.textPrimary }]}>{t('profileDetails')}</Text>
+              <TouchableOpacity onPress={() => setShowFullProfile((current) => !current)} style={ps.visibilityBtn} activeOpacity={0.75}>
+                <AppIcon name={showFullProfile ? 'eyeOff' : 'eye'} size={16} color={C.primary} />
+                <Text style={ps.visibilityText}>{showFullProfile ? t('hide') : t('show')}</Text>
+              </TouchableOpacity>
+            </View>
+            {currentRole === 'dealer' && (
+              <View style={ps.kycBanner}>
+                <View style={ps.kycIcon}><AppIcon name="warning" size={18} color="#B45309" /></View>
+                <View style={{ flex: 1 }}>
+                  <Text style={ps.kycTitle}>Complete KYC to unlock all features</Text>
+                  <Text style={ps.kycSub}>Add PAN & GST details to get verified</Text>
+                </View>
+                <View style={ps.kycBadge}><Text style={ps.kycBadgeTxt}>Pending</Text></View>
+              </View>
+            )}
+            {[
+              ['Mobile', profile.phone], ['Email', profile.email || 'Not provided'], ['State', profile.state], ['City', profile.city],
+              ['Pincode', profile.pincode], ['Address', profile.address], ['GST Holder', profile.gstHolderName], ['GST Number', profile.gstNumber],
+              ['PAN Holder', profile.panHolderName || 'Not provided'], ['PAN Number', profile.panNumber || 'Not provided'], ['Dealer Code', profile.dealerCode],
+            ].slice(0, showFullProfile ? undefined : 4).map(([lbl, val], i, arr) => (
+              <View key={lbl} style={[ps.detailRow, i < arr.length - 1 && [ps.detailBorder, { borderBottomColor: theme.border }]]}>
+                <Text style={[ps.detailLbl, { color: theme.textMuted }]}>{lbl}</Text>
+                <Text style={[ps.detailVal, { color: theme.textPrimary }, (!val || val === 'Not provided') && ps.detailEmpty]} numberOfLines={1}>{val}</Text>
+              </View>
+            ))}
+          </View>
+
+          <View style={[ps.card, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+            <Text style={[ps.cardTitle, { color: theme.textPrimary }]}>{t('quickActions')}</Text>
+            <View style={{ height: 12 }} />
+            {menuItems.map((item, i) => (
+              <TouchableOpacity key={item.label} style={[ps.menuRow, i < menuItems.length - 1 && [ps.menuBorder, { borderBottomColor: theme.border }]]} onPress={() => (item.route ? onNavigate(item.route) : setSubPage(item.screen as SubPage))} activeOpacity={0.75}>
+                <View style={[ps.menuIcon, { backgroundColor: item.bg }]}><AppIcon name={item.icon} size={20} color={item.color} /></View>
+                <Text style={[ps.menuLabel, { color: theme.textPrimary }]}>{item.label}</Text>
+                <View style={[ps.arrowWrap, { backgroundColor: theme.soft }]}><Text style={[ps.arrowTxt, { color: theme.textMuted }]}>›</Text></View>
+              </TouchableOpacity>
+            ))}
+          </View>
+
+          <View style={[ps.card, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+            <Text style={[ps.cardTitle, { color: theme.textPrimary }]}>{t('settings')}</Text>
+            <View style={{ height: 12 }} />
+            {settingsItems.map((item, i) => (
+              <TouchableOpacity key={item.label} style={[ps.menuRow, i < settingsItems.length - 1 && [ps.menuBorder, { borderBottomColor: theme.border }]]} onPress={() => setSubPage(item.screen)} activeOpacity={0.75}>
+                <View style={[ps.menuIcon, { backgroundColor: item.bg }]}>{item.badge && <View style={ps.notifDot} />}<AppIcon name={item.icon} size={20} color={item.color} /></View>
+                <Text style={[ps.menuLabel, { color: theme.textPrimary }]}>{item.label}</Text>
+                <View style={[ps.arrowWrap, { backgroundColor: theme.soft }]}><Text style={[ps.arrowTxt, { color: theme.textMuted }]}>›</Text></View>
+              </TouchableOpacity>
+            ))}
+          </View>
+
+          <TouchableOpacity style={[ps.signOutBtn, { backgroundColor: theme.surface, borderColor: darkMode ? theme.border : '#FFD6D4' }]} onPress={() => setShowSignOut(true)} activeOpacity={0.8}>
+            <View style={ps.signOutIconWrap}><AppIcon name="signOut" size={18} color={C.primary} /></View>
+            <Text style={ps.signOutTxt}>{t('signOut')}</Text>
+          </TouchableOpacity>
+          <View style={{ height: 40 }} />
+        </ScrollView>
+
+        <Modal visible={showImgPicker} animationType="slide" transparent onRequestClose={() => setShowImgPicker(false)}>
+          <Pressable style={ms.pickerOverlay} onPress={() => setShowImgPicker(false)}>
+            <View style={ms.pickerSheet}>
+              <View style={ms.handle} />
+              <Text style={ms.pickerTitle}>{t('updateProfilePhoto')}</Text>
+              {[{ icon: 'camera' as IconName, label: t('takePhoto'), sub: t('useCamera'), fn: pickFromCamera }, { icon: 'gallery' as IconName, label: t('chooseGallery'), sub: t('selectPhoto'), fn: pickFromGallery }].map((opt) => (
+                <TouchableOpacity key={opt.label} style={ms.pickerOption} onPress={opt.fn} activeOpacity={0.8}>
+                  <View style={ms.pickerOptionIcon}><AppIcon name={opt.icon} size={22} color={C.blue} /></View>
+                  <View><Text style={ms.pickerOptionLabel}>{opt.label}</Text><Text style={ms.pickerOptionSub}>{opt.sub}</Text></View>
+                </TouchableOpacity>
+              ))}
+              <TouchableOpacity style={ms.pickerCancel} onPress={() => setShowImgPicker(false)}><Text style={ms.pickerCancelTxt}>{t('cancel')}</Text></TouchableOpacity>
+            </View>
+          </Pressable>
+        </Modal>
+
+        <Modal visible={showSignOut} animationType="fade" transparent onRequestClose={() => setShowSignOut(false)}>
+          <View style={ms.overlay}>
+            <View style={ms.confirmCard}>
+              <View style={ms.confirmIconBg}><AppIcon name="signOut" size={28} color={C.primary} /></View>
+              <Text style={ms.confirmTitle}>{`${t('signOut')}?`}</Text>
+              <Text style={ms.confirmSub}>{'Are you sure you want to sign out?\nYour data will be saved.'}</Text>
+              <View style={{ flexDirection: 'row', gap: 12, width: '100%' }}>
+                <Pressable style={ms.cancelBtn} onPress={() => setShowSignOut(false)}><Text style={ms.cancelTxt}>{t('cancel')}</Text></Pressable>
+                <Pressable style={ms.signOutActionBtn} onPress={() => { setShowSignOut(false); onSignOut(); }}><Text style={ms.signOutActionTxt}>{t('signOut')}</Text></Pressable>
+              </View>
+            </View>
+          </View>
+        </Modal>
+
+        <Modal visible={showEdit} animationType="slide" transparent onRequestClose={() => setShowEdit(false)}>
+          <View style={ms.editOverlay}>
+            <View style={ms.editSheet}>
+              <View style={ms.handle} />
+              <View style={ms.editHeader}>
+                <Text style={ms.editTitle}>Edit Profile</Text>
+                <TouchableOpacity onPress={() => setShowEdit(false)} style={ms.closeBtn}><Text style={ms.closeTxt}>✕</Text></TouchableOpacity>
+              </View>
+              <ScrollView showsVerticalScrollIndicator={false}>
+                <View style={ms.avatarSection}>
+                  <TouchableOpacity onPress={() => setShowImgPicker(true)} activeOpacity={0.85} style={{ alignItems: 'center' }}>
+                    <View style={ms.editAvatarRing}>
+                      {draftImage ? <Image source={{ uri: draftImage }} style={ms.editAvatarImg} /> : <View style={ms.editAvatarFallback}><Text style={ms.editAvatarInitials}>{initials}</Text></View>}
+                      <View style={ms.cameraOverlay}><AppIcon name="camera" size={18} color="#fff" /></View>
+                    </View>
+                    <Text style={ms.changePhotoTxt}>{t('tapToChangePhoto')}</Text>
+                  </TouchableOpacity>
+                </View>
+                {([
+                  ['Full Name', 'name'], ['Phone Number', 'phone'], ['Email', 'email'], ['City', 'city'], ['State', 'state'], ['Pincode', 'pincode'],
+                  ['Address', 'address'], ['GST Holder Name', 'gstHolderName'], ['GST Number', 'gstNumber'], ['PAN Holder Name', 'panHolderName'],
+                  ['PAN Number', 'panNumber'], ['Dealer Code', 'dealerCode'],
+                ] as [string, keyof Profile][]).map(([label, key]) => (
+                  <View key={key} style={ms.field}>
+                    <Text style={ms.fieldLabel}>{label}</Text>
+                    <TextInput value={draft[key]} onChangeText={(v) => setDraft((c) => ({ ...c, [key]: v }))} placeholder={`Enter ${label}`} placeholderTextColor={C.muted} style={ms.input} />
+                  </View>
+                ))}
+              </ScrollView>
+              <View style={ms.editActions}>
+                <Pressable onPress={() => setShowEdit(false)} style={ms.discardBtn}><Text style={ms.discardTxt}>{t('discard')}</Text></Pressable>
+                <Pressable onPress={saveProfile} style={ms.saveBtn}><Text style={ms.saveTxt}>{t('saveChanges')}</Text></Pressable>
+              </View>
+            </View>
+          </View>
+        </Modal>
+      </>
+    </PreferenceContext.Provider>
   );
 }
 
-const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: Colors.background },
-  content: { padding: 16, gap: 16, paddingBottom: 120 },
-  pageTitle: { fontSize: 22, fontWeight: '800', color: Colors.textDark, textAlign: 'center' },
-  profileCard: { backgroundColor: Colors.surface, borderRadius: 22, padding: 18, borderWidth: 1, borderColor: Colors.border, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 10, elevation: 3 },
-  profileTop: { flexDirection: 'row', alignItems: 'flex-start', gap: 14, marginBottom: 14 },
-  avatarWrap: { position: 'relative' },
-  avatar: { width: 72, height: 72, borderRadius: 20, backgroundColor: Colors.primary, alignItems: 'center', justifyContent: 'center' },
-  avatarText: { color: '#fff', fontSize: 26, fontWeight: '900' },
-  levelBadge: { position: 'absolute', bottom: -4, right: -4, width: 26, height: 26, borderRadius: 13, backgroundColor: Colors.gold, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: '#fff' },
-  levelText: { color: '#fff', fontSize: 9, fontWeight: '900' },
-  profileName: { fontSize: 18, fontWeight: '800', color: Colors.textDark },
-  profilePhone: { fontSize: 13, color: Colors.textMuted, marginTop: 3 },
-  profileDealer: { fontSize: 12, color: Colors.textMuted, marginTop: 2 },
-  profileCity: { fontSize: 12, color: Colors.textMuted },
-  editBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: Colors.primaryLight, alignItems: 'center', justifyContent: 'center' },
-  goldMemberRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#FFFBEB', borderRadius: 14, padding: 12, borderWidth: 1, borderColor: '#FEF3C7' },
-  goldMemberText: { fontSize: 14, fontWeight: '800', color: '#92400E' },
-  goldHint: { fontSize: 12, color: '#92400E', fontWeight: '600' },
-  card: { backgroundColor: Colors.surface, borderRadius: 22, padding: 18, borderWidth: 1, borderColor: Colors.border, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 8, elevation: 2 },
-  sectionTitle: { fontSize: 17, fontWeight: '800', color: Colors.textDark },
-  sectionLabel: { fontSize: 16, fontWeight: '800', color: Colors.textDark, paddingLeft: 2 },
-  editChip: { flexDirection: 'row', alignItems: 'center', backgroundColor: Colors.primaryLight, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 6 },
-  editChipText: { color: Colors.primary, fontSize: 13, fontWeight: '700' },
-  kycBanner: { flexDirection: 'row', gap: 10, alignItems: 'flex-start', backgroundColor: '#FFFBEB', borderWidth: 1, borderColor: '#FEF3C7', borderRadius: 14, padding: 12, marginBottom: 14 },
+const ps = StyleSheet.create({
+  screen: { flex: 1, backgroundColor: C.bg },
+  content: { padding: 16, gap: 14, paddingBottom: 120 },
+  pageHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  pageTitle: { fontSize: 26, fontWeight: '900' },
+  editHeaderBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, borderRadius: 14, paddingHorizontal: 14, paddingVertical: 9, borderWidth: 1 },
+  editHeaderText: { fontSize: 14, fontWeight: '700' },
+  heroCard: { borderRadius: 28, overflow: 'hidden', borderWidth: 1 },
+  blobTL: { position: 'absolute', top: -40, left: -40, width: 130, height: 130, borderRadius: 65, backgroundColor: 'rgba(232,69,60,0.1)' },
+  blobBR: { position: 'absolute', bottom: -30, right: -30, width: 110, height: 110, borderRadius: 55, backgroundColor: 'rgba(37,99,235,0.08)' },
+  heroTop: { flexDirection: 'row', alignItems: 'center', gap: 16, padding: 22, paddingBottom: 16 },
+  avatarWrap: { position: 'relative', paddingBottom: 4, paddingRight: 4 },
+  avatarRing: { width: 80, height: 80, borderRadius: 26, borderWidth: 2.5, borderColor: 'rgba(15,17,32,0.08)', overflow: 'hidden' },
+  avatarImg: { width: '100%', height: '100%' },
+  avatarFallback: { flex: 1, backgroundColor: C.primary, alignItems: 'center', justifyContent: 'center' },
+  avatarInitials: { color: '#fff', fontSize: 28, fontWeight: '900' },
+  levelBadge: { position: 'absolute', right: 2, bottom: 2, minWidth: 34, height: 34, borderRadius: 17, backgroundColor: C.gold, borderWidth: 2, borderColor: C.surface, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 7 },
+  levelTxt: { color: '#fff', fontSize: 10, fontWeight: '900' },
+  heroName: { fontSize: 20, fontWeight: '900', marginBottom: 3 },
+  heroPhone: { fontSize: 13, marginBottom: 10 },
+  tagRow: { flexDirection: 'row', gap: 8, flexWrap: 'wrap' },
+  tag: { borderRadius: 8, paddingHorizontal: 9, paddingVertical: 4 },
+  tagTxt: { fontSize: 11, fontWeight: '700' },
+  memberStrip: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', borderTopWidth: 1, paddingHorizontal: 22, paddingVertical: 14 },
+  memberStarWrap: { width: 28, height: 28, borderRadius: 14, backgroundColor: 'rgba(245,158,11,0.14)', alignItems: 'center', justifyContent: 'center' },
+  memberTitle: { fontSize: 13, fontWeight: '800', color: '#F59E0B' },
+  memberSub: { fontSize: 11, marginTop: 1 },
+  memberHint: { fontSize: 11, fontWeight: '600' },
+  progressTrack: { width: 100, height: 5, borderRadius: 3, backgroundColor: '#E8EAF1' },
+  progressFill: { width: '72%', height: '100%', borderRadius: 3, backgroundColor: '#F59E0B' },
+  statBox: { flex: 1, borderRadius: 20, padding: 14, alignItems: 'center', gap: 6, borderWidth: 1 },
+  statIcon: { width: 38, height: 38, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
+  statVal: { fontSize: 18, fontWeight: '900' },
+  statLbl: { fontSize: 11, fontWeight: '600' },
+  card: { borderRadius: 24, padding: 20, borderWidth: 1 },
+  cardHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
+  cardTitle: { fontSize: 17, fontWeight: '800' },
+  visibilityBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: C.primaryLight, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 7 },
+  visibilityText: { fontSize: 13, fontWeight: '700', color: C.primary },
+  kycBanner: { flexDirection: 'row', gap: 10, alignItems: 'center', backgroundColor: '#FFFBEB', borderWidth: 1.5, borderColor: '#FDE68A', borderRadius: 16, padding: 12, marginBottom: 14 },
+  kycIcon: { width: 40, height: 40, borderRadius: 12, backgroundColor: '#FEF3C7', alignItems: 'center', justifyContent: 'center' },
   kycTitle: { fontSize: 13, fontWeight: '800', color: '#92400E' },
   kycSub: { fontSize: 12, color: '#B45309', marginTop: 2 },
-  detailRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 13 },
-  detailBorder: { borderBottomWidth: 1, borderBottomColor: '#F5F5FB' },
-  detailLabel: { fontSize: 13, color: Colors.textMuted, flex: 1 },
-  detailValue: { fontSize: 13, fontWeight: '700', color: Colors.textDark, flex: 1, textAlign: 'right' },
-  detailValueEmpty: { color: Colors.textMuted, fontStyle: 'italic', fontWeight: '400' },
-  menuRow: { flexDirection: 'row', alignItems: 'center', gap: 14, paddingVertical: 14 },
-  menuRowBorder: { borderBottomWidth: 1, borderBottomColor: '#F5F5FB' },
-  menuIcon: { width: 44, height: 44, borderRadius: 14, alignItems: 'center', justifyContent: 'center', position: 'relative' },
-  notifDot: { position: 'absolute', top: 6, right: 6, width: 8, height: 8, borderRadius: 4, backgroundColor: Colors.primary, borderWidth: 1.5, borderColor: '#fff' },
-  menuLabel: { flex: 1, fontSize: 15, fontWeight: '600', color: Colors.textDark },
-  menuArrow: { fontSize: 22, color: '#C0C0D0' },
-  statsCard: { backgroundColor: '#2D3561', borderRadius: 22, padding: 20 },
-  statsTitle: { fontSize: 17, fontWeight: '800', color: '#fff' },
-  statsRow: { flexDirection: 'row', gap: 12 },
-  statBox: { flex: 1, borderRadius: 16, padding: 16, alignItems: 'center', justifyContent: 'center' },
-  statValue: { fontSize: 18, fontWeight: '900' },
-  statLabel: { fontSize: 12, color: 'rgba(255,255,255,0.65)', marginTop: 4, fontWeight: '600' },
-  signOutBtn: { backgroundColor: Colors.surface, borderRadius: 18, paddingVertical: 16, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8, borderWidth: 1, borderColor: Colors.border },
-  signOutText: { fontSize: 16, fontWeight: '700', color: Colors.primary },
-  confirmOverlay: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(28,30,46,0.5)' },
-  confirmCard: { backgroundColor: '#fff', borderRadius: 28, padding: 28, marginHorizontal: 32, alignItems: 'center', width: '85%', shadowColor: '#000', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.15, shadowRadius: 24, elevation: 10 },
-  confirmIconWrap: { width: 72, height: 72, borderRadius: 36, backgroundColor: Colors.primaryLight, alignItems: 'center', justifyContent: 'center', marginBottom: 16 },
-  confirmTitle: { fontSize: 20, fontWeight: '900', color: Colors.textDark, marginBottom: 8 },
-  confirmSub: { fontSize: 14, color: Colors.textMuted, textAlign: 'center', lineHeight: 20, marginBottom: 24 },
-  confirmActions: { flexDirection: 'row', gap: 12, width: '100%' },
-  confirmCancel: { flex: 1, height: 50, borderRadius: 16, backgroundColor: '#F3E9E1', alignItems: 'center', justifyContent: 'center' },
-  confirmCancelText: { fontSize: 15, fontWeight: '800', color: Colors.textDark },
-  confirmSignOut: { flex: 1, height: 50, borderRadius: 16, backgroundColor: Colors.primary, alignItems: 'center', justifyContent: 'center' },
-  confirmSignOutText: { color: '#fff', fontSize: 15, fontWeight: '800' },
-  modalOverlay: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(28,30,46,0.4)' },
-  modalCard: { maxHeight: '88%', backgroundColor: '#fff', borderTopLeftRadius: 28, borderTopRightRadius: 28, padding: 20 },
-  modalTitle: { fontSize: 19, fontWeight: '800', color: Colors.textDark, marginBottom: 16 },
-  modalField: { marginBottom: 14 },
-  modalLabel: { marginBottom: 7, fontSize: 12, fontWeight: '700', color: Colors.textMuted },
-  modalInput: { minHeight: 50, borderRadius: 16, borderWidth: 1, borderColor: Colors.border, backgroundColor: '#FFF9F4', paddingHorizontal: 14, fontSize: 14, color: Colors.textDark },
-  modalActions: { flexDirection: 'row', gap: 12, marginTop: 8 },
-  modalSecondary: { flex: 1, minHeight: 52, borderRadius: 16, backgroundColor: '#F3E9E1', alignItems: 'center', justifyContent: 'center' },
-  modalSecondaryText: { fontSize: 15, fontWeight: '800', color: Colors.textDark },
-  modalPrimary: { flex: 1, minHeight: 52, borderRadius: 16, backgroundColor: Colors.primary, alignItems: 'center', justifyContent: 'center' },
-  modalPrimaryText: { color: '#fff', fontSize: 15, fontWeight: '800' },
+  kycBadge: { backgroundColor: '#F59E0B', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4 },
+  kycBadgeTxt: { fontSize: 11, fontWeight: '800', color: '#fff' },
+  detailRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 12 },
+  detailBorder: { borderBottomWidth: 1, borderBottomColor: '#F2F2FA' },
+  detailLbl: { fontSize: 13, fontWeight: '500', width: 100 },
+  detailVal: { flex: 1, fontSize: 13, fontWeight: '700', textAlign: 'right' },
+  detailEmpty: { color: C.muted, fontStyle: 'italic', fontWeight: '400' },
+  menuRow: { flexDirection: 'row', alignItems: 'center', gap: 14, paddingVertical: 13 },
+  menuBorder: { borderBottomWidth: 1, borderBottomColor: '#F2F2FA' },
+  menuIcon: { width: 46, height: 46, borderRadius: 15, alignItems: 'center', justifyContent: 'center', position: 'relative' },
+  menuLabel: { flex: 1, fontSize: 15, fontWeight: '600' },
+  arrowWrap: { width: 28, height: 28, borderRadius: 9, alignItems: 'center', justifyContent: 'center' },
+  arrowTxt: { fontSize: 20, lineHeight: 24 },
+  notifDot: { position: 'absolute', top: 7, right: 7, width: 9, height: 9, borderRadius: 5, backgroundColor: C.primary, borderWidth: 1.5, borderColor: C.surface },
+  signOutBtn: { borderRadius: 20, paddingVertical: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, borderWidth: 1.5 },
+  signOutIconWrap: { width: 34, height: 34, borderRadius: 11, backgroundColor: C.primaryLight, alignItems: 'center', justifyContent: 'center' },
+  signOutTxt: { fontSize: 16, fontWeight: '700', color: C.primary },
+});
+
+const ms = StyleSheet.create({
+  overlay: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(15,17,32,0.55)' },
+  confirmCard: { backgroundColor: C.surface, borderRadius: 32, padding: 30, marginHorizontal: 28, width: '86%', alignItems: 'center' },
+  confirmIconBg: { width: 74, height: 74, borderRadius: 22, backgroundColor: C.primaryLight, alignItems: 'center', justifyContent: 'center', marginBottom: 18 },
+  confirmTitle: { fontSize: 21, fontWeight: '900', color: C.dark, marginBottom: 8 },
+  confirmSub: { fontSize: 14, color: C.muted, textAlign: 'center', lineHeight: 21, marginBottom: 26 },
+  cancelBtn: { flex: 1, height: 52, borderRadius: 17, backgroundColor: C.bg, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: C.border },
+  cancelTxt: { fontSize: 15, fontWeight: '800', color: C.dark },
+  signOutActionBtn: { flex: 1, height: 52, borderRadius: 17, backgroundColor: C.primary, alignItems: 'center', justifyContent: 'center' },
+  signOutActionTxt: { color: '#fff', fontSize: 15, fontWeight: '800' },
+  pickerOverlay: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(15,17,32,0.45)' },
+  pickerSheet: { backgroundColor: C.surface, borderTopLeftRadius: 32, borderTopRightRadius: 32, padding: 24, paddingBottom: 40 },
+  pickerTitle: { fontSize: 18, fontWeight: '800', color: C.dark, marginBottom: 20 },
+  pickerOption: { flexDirection: 'row', alignItems: 'center', gap: 16, paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: C.border },
+  pickerOptionIcon: { width: 52, height: 52, borderRadius: 16, backgroundColor: C.blueLight, alignItems: 'center', justifyContent: 'center' },
+  pickerOptionLabel: { fontSize: 16, fontWeight: '700', color: C.dark },
+  pickerOptionSub: { fontSize: 13, color: C.muted, marginTop: 2 },
+  pickerCancel: { marginTop: 16, height: 52, borderRadius: 18, backgroundColor: C.bg, alignItems: 'center', justifyContent: 'center' },
+  pickerCancelTxt: { fontSize: 15, fontWeight: '700', color: C.mid },
+  editOverlay: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(15,17,32,0.45)' },
+  editSheet: { maxHeight: '92%', backgroundColor: C.surface, borderTopLeftRadius: 32, borderTopRightRadius: 32, padding: 20, paddingBottom: Platform.OS === 'ios' ? 36 : 24 },
+  handle: { width: 42, height: 4, borderRadius: 2, backgroundColor: C.border, alignSelf: 'center', marginBottom: 16 },
+  editHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 },
+  editTitle: { fontSize: 20, fontWeight: '900', color: C.dark },
+  closeBtn: { width: 38, height: 38, borderRadius: 12, backgroundColor: C.bg, alignItems: 'center', justifyContent: 'center' },
+  closeTxt: { fontSize: 15, color: C.mid, fontWeight: '700' },
+  avatarSection: { alignItems: 'center', marginBottom: 24 },
+  editAvatarRing: { width: 96, height: 96, borderRadius: 30, borderWidth: 3, borderColor: C.primary, overflow: 'hidden', marginBottom: 8, position: 'relative' },
+  editAvatarImg: { width: '100%', height: '100%' },
+  editAvatarFallback: { flex: 1, backgroundColor: C.primary, alignItems: 'center', justifyContent: 'center' },
+  editAvatarInitials: { color: '#fff', fontSize: 32, fontWeight: '900' },
+  cameraOverlay: { position: 'absolute', bottom: 0, left: 0, right: 0, height: 32, backgroundColor: 'rgba(0,0,0,0.45)', alignItems: 'center', justifyContent: 'center' },
+  changePhotoTxt: { fontSize: 13, color: C.muted, fontWeight: '600' },
+  field: { marginBottom: 14 },
+  fieldLabel: { fontSize: 12, fontWeight: '700', color: C.muted, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 7 },
+  input: { height: 52, borderRadius: 16, borderWidth: 1.5, borderColor: C.border, backgroundColor: C.bg, paddingHorizontal: 16, fontSize: 14, fontWeight: '500', color: C.dark },
+  editActions: { flexDirection: 'row', gap: 12, marginTop: 10 },
+  discardBtn: { flex: 1, height: 54, borderRadius: 18, backgroundColor: C.bg, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: C.border },
+  discardTxt: { fontSize: 15, fontWeight: '800', color: C.mid },
+  saveBtn: { flex: 2, height: 54, borderRadius: 18, backgroundColor: C.primary, alignItems: 'center', justifyContent: 'center' },
+  saveTxt: { color: '#fff', fontSize: 15, fontWeight: '900' },
 });

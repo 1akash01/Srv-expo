@@ -13,7 +13,7 @@ import {
   useWindowDimensions,
 } from 'react-native';
 import Svg, { Circle, Path, Rect } from 'react-native-svg';
-import type { Screen } from '../../types';
+import type { Screen, UserRole } from '../../types';
 import ProfileFlipCard from './ProfileFlipCard';
 
 const logoImage = require('../../../assets/banners/srv-logo.jpeg');
@@ -156,7 +156,15 @@ function ChevronRight({ color = '#10254A', size = 16 }: { color?: string; size?:
   );
 }
 
-export function HomeScreen({ onNavigate, onOpenProductCategory }: { onNavigate: (screen: Screen) => void; onOpenProductCategory: (category: string) => void }) {
+export function HomeScreen({
+  currentRole,
+  onNavigate,
+  onOpenProductCategory,
+}: {
+  currentRole: UserRole;
+  onNavigate: (screen: Screen) => void;
+  onOpenProductCategory: (category: string) => void;
+}) {
   const { width } = useWindowDimensions();
   const [slide, setSlide] = useState(0);
   const fadeAnim = useRef(new Animated.Value(1)).current;
@@ -271,7 +279,7 @@ export function HomeScreen({ onNavigate, onOpenProductCategory }: { onNavigate: 
           </View>
         </View>
 
-        <ProfileFlipCard profile={DUMMY_PROFILE} role="electrician" />
+        <ProfileFlipCard profile={DUMMY_PROFILE} role={currentRole} />
 
         <View style={styles.statRow}>
           <View style={styles.statCard}>
