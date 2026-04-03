@@ -40,8 +40,8 @@ export default function App() {
 
   if (showOnboarding) {
     return (
-      <View style={[styles.root, { paddingTop: androidTopInset }]}>
-        <ExpoStatusBar style="dark" />
+      <View style={styles.root}>
+        <ExpoStatusBar hidden />
         <OnboardingScreen
           language={language}
           onLanguageChange={setLanguage}

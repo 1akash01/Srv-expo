@@ -3,11 +3,11 @@ import { colors } from '../theme';
 import type { AppLanguage, Screen } from '../types';
 
 const items: Array<{ id: Screen; label: Record<AppLanguage, string>; glyph: string }> = [
-  { id: 'home', label: { en: 'Home', hi: 'होम' }, glyph: 'HM' },
-  { id: 'product', label: { en: 'Product', hi: 'प्रोडक्ट' }, glyph: 'PD' },
-  { id: 'scan', label: { en: 'Scan', hi: 'स्कैन' }, glyph: 'QR' },
-  { id: 'rewards', label: { en: 'Rewards', hi: 'रिवॉर्ड्स' }, glyph: 'RW' },
-  { id: 'profile', label: { en: 'More', hi: 'और' }, glyph: 'ME' },
+  { id: 'home', label: { en: 'Home', hi: 'होम', pa: 'ਹੋਮ' }, glyph: 'HM' },
+  { id: 'product', label: { en: 'Product', hi: 'प्रोडक्ट', pa: 'ਪ੍ਰੋਡਕਟ' }, glyph: 'PD' },
+  { id: 'scan', label: { en: 'Scan', hi: 'स्कैन', pa: 'ਸਕੈਨ' }, glyph: 'QR' },
+  { id: 'rewards', label: { en: 'Rewards', hi: 'रिवॉर्ड्स', pa: 'ਰਿਵਾਰਡਸ' }, glyph: 'RW' },
+  { id: 'profile', label: { en: 'More', hi: 'और', pa: 'ਹੋਰ' }, glyph: 'ME' },
 ];
 
 export function BottomNav({ currentScreen, onNavigate, language }: { currentScreen: Screen; onNavigate: (screen: Screen) => void; language: AppLanguage }) {

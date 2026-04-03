@@ -49,6 +49,27 @@ const copy = {
     viewAll: 'सभी देखें',
     recentActivity: 'हाल की गतिविधि',
   },
+  pa: {
+    greeting: 'ਸਤ ਸ੍ਰੀ ਅਕਾਲ',
+    dealerDashboard: 'ਡੀਲਰ ਡੈਸ਼ਬੋਰਡ',
+    electricianDashboard: 'ਇਲੈਕਟ੍ਰੀਸ਼ਨ ਡੈਸ਼ਬੋਰਡ',
+    weekly: 'ਹਫਤਾਵਾਰੀ',
+    level: 'ਲੇਵਲ',
+    role: 'ਰੋਲ',
+    dealer: 'ਡੀਲਰ',
+    electrician: 'ਇਲੈਕਟ੍ਰੀਸ਼ਨ',
+    shopNow: 'ਹੁਣੇ ਵੇਖੋ',
+    scanQr: 'ਕਿਊਆਰ ਸਕੈਨ',
+    earnPoints: 'ਪੌਇੰਟ ਕਮਾਓ',
+    support: 'ਸਹਾਇਤਾ',
+    rewards: 'ਰਿਵਾਰਡਸ',
+    redeemNow: 'ਰੀਡੀਮ ਕਰੋ',
+    profile: 'ਪ੍ਰੋਫਾਈਲ',
+    moreOptions: 'ਹੋਰ ਵਿਕਲਪ',
+    featuredProducts: 'ਫੀਚਰਡ ਪ੍ਰੋਡਕਟਸ',
+    viewAll: 'ਸਭ ਵੇਖੋ',
+    recentActivity: 'ਹਾਲੀਆ ਗਤੀਵਿਧੀ',
+  },
 } as const;
 
 export function HomeScreen({ onNavigate, role, language }: { onNavigate: (screen: Screen) => void; role: UserRole; language: AppLanguage }) {
@@ -206,4 +227,3 @@ const styles = StyleSheet.create({
   positive: { color: colors.success },
   negative: { color: colors.primary },
 });
-
