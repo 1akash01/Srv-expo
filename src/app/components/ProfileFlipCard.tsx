@@ -1,9 +1,4 @@
-/**
- * ProfileFlipCard — Expo React Native
- * 3D flip animation using react-native-reanimated
- * Front: profile info | Back: dealer/address info + QR
- */
-
+import { LinearGradient } from 'expo-linear-gradient';
 import { useEffect, useRef, useState } from 'react';
 import {
   Animated,
@@ -14,7 +9,8 @@ import {
   View,
 } from 'react-native';
 
-// ─── Types ────────────────────────────────────────────────────────────────────
+const logoImage = require('../../../assets/banners/srv-logo.jpeg');
+
 interface Profile {
   name?: string;
   phone?: string;
@@ -33,359 +29,223 @@ interface Props {
   role?: 'dealer' | 'electrician';
 }
 
-// ─── BackRow helper ───────────────────────────────────────────────────────────
-function BackRow({ icon, label, bold, accent }: { icon: string; label?: string; bold?: boolean; accent?: boolean }) {
+function DetailPill({ label, value }: { label: string; value: string }) {
   return (
-    <View style={bStyles.row}>
-      <Text style={bStyles.icon}>{icon}</Text>
-      <Text
-        numberOfLines={1}
-        style={[
-          bStyles.label,
-          bold && bStyles.labelBold,
-          accent && bStyles.labelAccent,
-        ]}
-      >
-        {label || '—'}
-      </Text>
+    <View style={styles.detailPill}>
+      <Text style={styles.detailLabel}>{label}</Text>
+      <Text style={styles.detailValue} numberOfLines={1}>{value}</Text>
     </View>
   );
 }
 
-const bStyles = StyleSheet.create({
-  row: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 5 },
-  icon: { fontSize: 12, width: 16 },
-  label: { fontSize: 11, fontWeight: '500', color: 'rgba(255,255,255,0.65)', flex: 1 },
-  labelBold: { fontSize: 13, fontWeight: '700', color: '#FFFFFF' },
-  labelAccent: { color: '#FFD54F', fontWeight: '700' },
-});
-
-// ─── Flip Icon SVG-like using Text ────────────────────────────────────────────
-function FlipIcon() {
-  return (
-    <View style={styles.flipIconBox}>
-      <Text style={{ color: 'rgba(255,255,255,0.5)', fontSize: 14 }}>⇄</Text>
-    </View>
-  );
-}
-
-// ─── Main Component ───────────────────────────────────────────────────────────
-export default function ProfileFlipCard({ profile, role }: Props) {
+export default function ProfileFlipCard({ profile, role = 'electrician' }: Props) {
   const [flipped, setFlipped] = useState(false);
   const flipAnim = useRef(new Animated.Value(0)).current;
 
-  // On mount: auto flip to back at 5s, return at 9.5s
-  useEffect(() => {
-    const t1 = setTimeout(() => doFlip(true), 5000);
-    const t2 = setTimeout(() => doFlip(false), 9500);
-    return () => { clearTimeout(t1); clearTimeout(t2); };
-  }, []);
-
-  const doFlip = (toBack: boolean) => {
-    setFlipped(toBack);
-    Animated.spring(flipAnim, {
-      toValue: toBack ? 1 : 0,
-      useNativeDriver: true,
-      tension: 60,
-      friction: 8,
-    }).start();
-  };
-
-  const handlePress = () => {
-    const next = !flipped;
-    doFlip(next);
-    if (next) {
-      setTimeout(() => doFlip(false), 5000);
-    }
-  };
-
   const initials = (profile?.name || 'U')
     .split(' ')
-    .map((w) => w[0])
+    .map((word) => word[0])
     .join('')
     .toUpperCase()
     .slice(0, 2);
 
   const code = role === 'dealer' ? profile?.dealer_code : profile?.electrician_code;
-
-  // Interpolate front and back rotations
-  const frontRotate = flipAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['0deg', '180deg'],
-  });
-  const backRotate = flipAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['180deg', '360deg'],
-  });
-  const frontOpacity = flipAnim.interpolate({
-    inputRange: [0, 0.49, 0.5, 1],
-    outputRange: [1, 1, 0, 0],
-  });
-  const backOpacity = flipAnim.interpolate({
-    inputRange: [0, 0.49, 0.5, 1],
-    outputRange: [0, 0, 1, 1],
-  });
-
-  // QR from quickchart.io
   const qrValue = code || profile?.phone || 'SRV';
-  const qrUrl = `https://quickchart.io/qr?text=${encodeURIComponent(qrValue)}&size=200&margin=1&dark=000000&light=ffffff`;
+  const qrUrl = 'https://quickchart.io/qr?text=' + encodeURIComponent(qrValue) + '&size=220&margin=1&dark=111827&light=FFFFFF';
+
+  const frontRotate = flipAnim.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '180deg'] });
+  const backRotate = flipAnim.interpolate({ inputRange: [0, 1], outputRange: ['180deg', '360deg'] });
+  const frontOpacity = flipAnim.interpolate({ inputRange: [0, 0.5, 0.51, 1], outputRange: [1, 1, 0, 0] });
+  const backOpacity = flipAnim.interpolate({ inputRange: [0, 0.5, 0.51, 1], outputRange: [0, 0, 1, 1] });
+
+  const animateTo = (toBack: boolean) => {
+    setFlipped(toBack);
+    Animated.spring(flipAnim, {
+      toValue: toBack ? 1 : 0,
+      useNativeDriver: true,
+      tension: 70,
+      friction: 9,
+    }).start();
+  };
+
+  useEffect(() => {
+    const showBack = setTimeout(() => animateTo(true), 4500);
+    const showFront = setTimeout(() => animateTo(false), 9000);
+    return () => {
+      clearTimeout(showBack);
+      clearTimeout(showFront);
+    };
+  }, []);
+
+  const onToggle = () => {
+    const next = !flipped;
+    animateTo(next);
+    if (next) {
+      setTimeout(() => animateTo(false), 4500);
+    }
+  };
+
+  const backTitle = role === 'dealer' ? (profile?.name || 'Harshvardhan') : (profile?.dealer_name || 'Bansal Chauke');
+  const backSub = role === 'dealer'
+    ? ((profile?.district || 'Mansa') + ', ' + (profile?.state || 'Punjab'))
+    : ((profile?.dealer_town || 'Chauke') + ' � +91 ' + (profile?.dealer_phone || '9465258788'));
 
   return (
-    <TouchableOpacity onPress={handlePress} activeOpacity={1}>
-      <View style={styles.cardContainer}>
+    <TouchableOpacity activeOpacity={0.98} onPress={onToggle}>
+      <View style={styles.container}>
+        <Animated.View style={[styles.face, { opacity: frontOpacity, transform: [{ rotateY: frontRotate }] }]}> 
+          <LinearGradient colors={['#152848', '#12213A', '#0C1628']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.gradientFill}>
+            <View style={styles.textureOne} />
+            <View style={styles.textureTwo} />
 
-        {/* ── FRONT FACE ── */}
-        <Animated.View
-          style={[
-            styles.face,
-            styles.front,
-            { opacity: frontOpacity, transform: [{ rotateY: frontRotate }] },
-          ]}
-        >
-          {/* Avatar */}
-          <View style={styles.avatar}>
-            <Text style={styles.avatarText}>{initials}</Text>
-          </View>
-
-          {/* Info */}
-          <View style={styles.info}>
-            <Text style={styles.roleLabel}>
-              {role === 'dealer' ? '🏪 Dealer Account' : '🔌 Electrician Account'}
-            </Text>
-            <Text style={styles.name} numberOfLines={1}>
-              {profile?.name || 'Harshvardhan'}
-            </Text>
-            <View style={styles.codePill}>
-              <Text style={styles.codeText}>{code || 'PB03900-001'}</Text>
+            <View style={styles.frontTopRow}>
+              <View style={styles.identityWrap}>
+                <View style={styles.avatarWrap}>
+                  <Text style={styles.avatarText}>{initials}</Text>
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.roleText}>{role === 'dealer' ? 'Dealer Partner' : 'Electrician Partner'}</Text>
+                  <Text style={styles.nameText} numberOfLines={1}>{profile?.name || 'Harshvardhan'}</Text>
+                  <Text style={styles.phoneText}>+91 {profile?.phone || '9162038214'}</Text>
+                </View>
+              </View>
+              <View style={styles.logoMiniWrap}>
+                <Image source={logoImage} style={styles.logoMini} resizeMode="contain" />
+              </View>
             </View>
-          </View>
 
-          {/* Flip hint */}
-          <View style={styles.flipHint}>
-            <FlipIcon />
-            <Text style={styles.flipLabel}>FLIP</Text>
-          </View>
+            <View style={styles.frontBottomRow}>
+              <DetailPill label="Code" value={code || 'PB03900-001'} />
+              <DetailPill label="Location" value={profile?.town || 'Chauke, Punjab'} />
+            </View>
+          </LinearGradient>
         </Animated.View>
 
-        {/* ── BACK FACE ── */}
-        <Animated.View
-          style={[
-            styles.face,
-            styles.back,
-            { opacity: backOpacity, transform: [{ rotateY: backRotate }] },
-          ]}
-        >
-          {/* Left: address */}
-          <View style={styles.backLeft}>
-            <Text style={styles.backSectionLabel}>
-              {role === 'dealer' ? 'Shop Address' : 'Connected Dealer'}
-            </Text>
-            {role === 'dealer' ? (
-              <>
-                <BackRow icon="🏪" label={profile?.name || 'Harshvardhan'} bold />
-                <BackRow icon="📍" label={profile?.town || 'Chauke'} />
-                <BackRow icon="🏙️" label={`${profile?.district || 'Mansa'}, ${profile?.state || 'Punjab'}`} />
-                <BackRow icon="📱" label={`+91 ${profile?.phone || '9162038214'}`} />
-              </>
-            ) : (
-              <>
-                <BackRow icon="🏪" label={profile?.dealer_name || 'Bansal Chauke'} bold />
-                <BackRow icon="📍" label={profile?.dealer_town || 'Chauke'} />
-                <BackRow icon="📱" label={`+91 ${profile?.dealer_phone || '9465258788'}`} />
-                <BackRow icon="🔖" label={profile?.dealer_code || 'PB-03-900017-001'} accent />
-              </>
-            )}
-          </View>
+        <Animated.View style={[styles.face, { opacity: backOpacity, transform: [{ rotateY: backRotate }] }]}> 
+          <LinearGradient colors={['#0B1324', '#101D35', '#172C52']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.gradientFill}>
+            <View style={styles.backContent}>
+              <View style={styles.backLeft}>
+                <Text style={styles.backHeading}>{role === 'dealer' ? 'Business Details' : 'Connected Dealer'}</Text>
+                <Text style={styles.backMain} numberOfLines={1}>{backTitle}</Text>
+                <Text style={styles.backSub}>{backSub}</Text>
 
-          {/* Right: QR code */}
-          <View style={styles.backRight}>
-            <View style={styles.qrBox}>
-              <Image
-                source={{ uri: qrUrl }}
-                style={styles.qrImage}
-                resizeMode="contain"
-              />
+                <View style={styles.metaStack}>
+                  <DetailPill label="Dealer Code" value={profile?.dealer_code || 'PB-03-900017-001'} />
+                  <DetailPill label="Tap Action" value="Flip to profile" />
+                </View>
+              </View>
+
+              <View style={styles.qrPanel}>
+                <View style={styles.qrFrame}>
+                  <Image source={{ uri: qrUrl }} style={styles.qrImage} resizeMode="contain" />
+                </View>
+                <Text style={styles.qrCodeText} numberOfLines={2}>{qrValue}</Text>
+              </View>
             </View>
-            <Text style={styles.qrLabel} numberOfLines={2}>
-              {qrValue}
-            </Text>
-          </View>
+          </LinearGradient>
         </Animated.View>
-
       </View>
 
-      <Text style={styles.tapHint}>
-        Tap card to {flipped ? 'see profile' : 'see address & QR'}
-      </Text>
+      <Text style={styles.tapHint}>Tap card to {flipped ? 'view profile front' : 'view QR & details'}</Text>
     </TouchableOpacity>
   );
 }
 
-// ─── Styles ───────────────────────────────────────────────────────────────────
-const CARD_HEIGHT = 130;
-
 const styles = StyleSheet.create({
-  cardContainer: {
+  container: {
     width: '100%',
-    height: CARD_HEIGHT,
+    height: 172,
     position: 'relative',
   },
-
-  // Both faces share absolute positioning
   face: {
     position: 'absolute',
     width: '100%',
-    height: CARD_HEIGHT,
-    borderRadius: 20,
-    backgroundColor: '#2D3561',
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 16,
+    height: 172,
+    borderRadius: 28,
     overflow: 'hidden',
-    // iOS shadow
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.18,
-    shadowRadius: 12,
-    elevation: 6,
+    shadowColor: '#020617',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.22,
+    shadowRadius: 20,
+    elevation: 9,
   },
-
-  front: {
-    gap: 14,
+  gradientFill: {
+    flex: 1,
+    padding: 18,
   },
-
-  back: {
-    gap: 14,
-    paddingVertical: 14,
-    paddingHorizontal: 16,
+  textureOne: {
+    position: 'absolute',
+    width: 180,
+    height: 180,
+    borderRadius: 90,
+    backgroundColor: 'rgba(59,130,246,0.16)',
+    top: -30,
+    right: -40,
   },
-
-  // ── Front ──
-  avatar: {
+  textureTwo: {
+    position: 'absolute',
+    width: 130,
+    height: 130,
+    borderRadius: 65,
+    backgroundColor: 'rgba(232,69,60,0.14)',
+    bottom: -24,
+    left: -18,
+  },
+  frontTopRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 16,
+    gap: 12,
+  },
+  identityWrap: { flexDirection: 'row', gap: 12, flex: 1 },
+  avatarWrap: {
     width: 64,
     height: 64,
+    borderRadius: 22,
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  avatarText: { color: '#10254A', fontSize: 24, fontWeight: '900' },
+  roleText: { color: '#AFC0E4', fontSize: 10.5, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 1.1, marginBottom: 4 },
+  nameText: { color: '#FFFFFF', fontSize: 20, fontWeight: '900' },
+  phoneText: { color: '#D8E3F8', fontSize: 12.5, marginTop: 5 },
+  logoMiniWrap: {
+    width: 54,
+    height: 54,
     borderRadius: 18,
-    flexShrink: 0,
-    backgroundColor: '#FF6B6B',
-    alignItems: 'center',
-    justifyContent: 'center',
-    // gradient simulation with border
-    borderWidth: 2.5,
-    borderColor: 'rgba(255,255,255,0.18)',
-    shadowColor: '#FF6B6B',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.45,
-    shadowRadius: 8,
-    elevation: 4,
+    backgroundColor: '#FFFFFF',
+    padding: 6,
   },
-  avatarText: {
-    color: '#fff',
-    fontSize: 22,
-    fontWeight: '800',
-  },
-
-  info: {
+  logoMini: { width: '100%', height: '100%', borderRadius: 12 },
+  frontBottomRow: { flexDirection: 'row', gap: 10 },
+  detailPill: {
     flex: 1,
-    minWidth: 0,
-    gap: 2,
-  },
-  roleLabel: {
-    color: 'rgba(255,255,255,0.5)',
-    fontSize: 10,
-    fontWeight: '600',
-    letterSpacing: 0.8,
-    textTransform: 'uppercase',
-    marginBottom: 3,
-  },
-  name: {
-    color: '#fff',
-    fontWeight: '800',
-    fontSize: 17,
-  },
-  codePill: {
-    marginTop: 6,
     backgroundColor: 'rgba(255,255,255,0.1)',
+    borderRadius: 18,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.15)',
-    borderRadius: 20,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    alignSelf: 'flex-start',
+    borderColor: 'rgba(255,255,255,0.08)',
   },
-  codeText: {
-    color: '#FFD54F',
-    fontSize: 11,
-    fontWeight: '800',
-    letterSpacing: 0.5,
+  detailLabel: { color: '#96A7C5', fontSize: 10, fontWeight: '700', marginBottom: 4, textTransform: 'uppercase', letterSpacing: 0.8 },
+  detailValue: { color: '#FFFFFF', fontSize: 12, fontWeight: '800' },
+  backContent: { flexDirection: 'row', flex: 1, gap: 14 },
+  backLeft: { flex: 1, justifyContent: 'space-between' },
+  backHeading: { color: '#9AB0D5', fontSize: 10.5, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 1 },
+  backMain: { color: '#FFFFFF', fontSize: 18, fontWeight: '900', marginTop: 6 },
+  backSub: { color: '#C3D2EA', fontSize: 12, lineHeight: 18, marginTop: 6 },
+  metaStack: { gap: 9, marginTop: 12 },
+  qrPanel: { width: 96, alignItems: 'center', justifyContent: 'center' },
+  qrFrame: {
+    width: 92,
+    height: 92,
+    borderRadius: 22,
+    backgroundColor: '#FFFFFF',
+    padding: 8,
   },
-
-  flipHint: {
-    flexShrink: 0,
-    alignItems: 'center',
-    gap: 3,
-  },
-  flipIconBox: {
-    width: 28,
-    height: 28,
-    borderRadius: 8,
-    backgroundColor: 'rgba(255,255,255,0.08)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  flipLabel: {
-    fontSize: 8,
-    color: 'rgba(255,255,255,0.3)',
-    fontWeight: '600',
-    letterSpacing: 0.3,
-  },
-
-  // ── Back ──
-  backLeft: {
-    flex: 1,
-    minWidth: 0,
-  },
-  backSectionLabel: {
-    color: 'rgba(255,255,255,0.4)',
-    fontSize: 9,
-    fontWeight: '700',
-    letterSpacing: 1,
-    textTransform: 'uppercase',
-    marginBottom: 8,
-  },
-
-  backRight: {
-    flexShrink: 0,
-    width: 88,
-    alignItems: 'center',
-    gap: 4,
-  },
-  qrBox: {
-    width: 80,
-    height: 80,
-    backgroundColor: '#fff',
-    borderRadius: 8,
-    overflow: 'hidden',
-    padding: 3,
-  },
-  qrImage: {
-    width: '100%',
-    height: '100%',
-  },
-  qrLabel: {
-    fontSize: 7,
-    color: 'rgba(255,255,255,0.35)',
-    fontWeight: '600',
-    textAlign: 'center',
-    width: '100%',
-    lineHeight: 10,
-  },
-
-  // ── Hint below card ──
-  tapHint: {
-    textAlign: 'center',
-    fontSize: 10,
-    color: 'rgba(255,255,255,0.3)',
-    marginTop: 6,
-    letterSpacing: 0.3,
-  },
+  qrImage: { width: '100%', height: '100%' },
+  qrCodeText: { color: '#AFC0E4', fontSize: 9.5, fontWeight: '700', textAlign: 'center', marginTop: 8 },
+  tapHint: { textAlign: 'center', color: 'rgba(255,255,255,0.5)', fontSize: 10.5, marginTop: 8, marginBottom: 2 },
 });

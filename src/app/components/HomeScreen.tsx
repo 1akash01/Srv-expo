@@ -1,13 +1,3 @@
-/**
- * HomeScreen.tsx — SRV Electricals
- * ✅ Real website banners (full image, no text overlay)
- * ✅ Swipe gesture to change slides (PanResponder)
- * ✅ Auto-slide every 4 seconds
- * ✅ Wallet button added next to Bell
- * ✅ Animated progress bar
- * ✅ All existing features preserved
- */
-
 import { LinearGradient } from 'expo-linear-gradient';
 import { useEffect, useRef, useState } from 'react';
 import {
@@ -22,105 +12,64 @@ import {
   View,
   useWindowDimensions,
 } from 'react-native';
+import Svg, { Circle, Path, Rect } from 'react-native-svg';
+import type { Screen } from '../../types';
 import ProfileFlipCard from './ProfileFlipCard';
 
-// ─── Theme ────────────────────────────────────────────────────────────────────
-const Colors = {
-  primary: '#E8453C',
-  primaryLight: '#FFF0F0',
-  background: '#F0F4FF',
-  surface: '#FFFFFF',
-  border: '#EEEEF3',
-  textDark: '#2D3561',
-  textMuted: '#B0B0C0',
-  success: '#22c55e',
-  successLight: '#e6fdf0',
-  gold: '#F59E0B',
-  blue: '#3B82F6',
-};
+const logoImage = require('../../../assets/banners/srv-logo.jpeg');
 
-// ─── Banner Slides — Real srvelectricals.com images ───────────────────────────
-// These are the actual homepage slideshow/hero banner images from the website.
-// Replace any URL below with newer ones if the site updates its CDN.
 const BANNER_SLIDES = [
-  {
-    img: 'https://srvelectricals.com/cdn/shop/files/ACO_100A_FP_533x.png?v=1757426480',
-    link: 'https://srvelectricals.com/products/automatic-change-over-100a-tp',
-    tag: 'New Arrival',
-    title: 'AUTOMATIC',
-    sub: 'CHANGE OVER SWITCH',
-    colors: ['#0f2027', '#203a43', '#2c5364'] as const,
-  },
-  {
-    img: 'https://srvelectricals.com/cdn/shop/files/F8_3_18-40.png?v=1757426631&width=533',
-    link: 'https://srvelectricals.com/products/fan-box-3-range',
-    tag: '🔥 Best Seller',
-    title: 'FAN BOX',
-    sub: '3″ RANGE — 18 TO 40 PC',
-    colors: ['#1a0005', '#2d0b00', '#3a1000'] as const,
-  },
-  {
-    img: 'https://srvelectricals.com/cdn/shop/files/3x3_679e5d30-ecf2-446e-9452-354bbf4c4a26.png?v=1757426377&width=533',
-    link: 'https://srvelectricals.com/products/module-box-platinum-range',
-    tag: '💎 Premium',
-    title: 'MODULE BOX',
-    sub: 'PLATINUM RANGE',
-    colors: ['#001a05', '#062a06', '#0a3a08'] as const,
-  },
-  {
-    img: 'https://srvelectricals.com/cdn/shop/files/AP-Turtle-Fan.webp?v=1747938680&width=533',
-    link: 'https://srvelectricals.com/products/7159',
-    tag: '⭐ Popular',
-    title: 'KITCHEN FAN',
-    sub: 'TURTLE SERIES',
-    colors: ['#1a0a00', '#2d1800', '#3a2000'] as const,
-  },
-  {
-    img: 'https://srvelectricals.com/cdn/shop/files/CRD_PL_3.png?v=1757426566&width=533',
-    link: 'https://srvelectricals.com/products/concealed-box-3-range',
-    tag: '🏆 Top Pick',
-    title: 'CONCEALED BOX',
-    sub: '3″ PRECISION RANGE',
-    colors: ['#0a001a', '#16002e', '#220040'] as const,
-  },
+  { image: require('../../../assets/banners/aco.jpg.jpeg') },
+  { image: require('../../../assets/banners/appliances.jpg.jpeg') },
+  { image: require('../../../assets/banners/co.jpg.jpeg') },
+  { image: require('../../../assets/banners/light.jpg.jpeg') },
+  { image: require('../../../assets/banners/mcb-box.jpg.jpeg') },
+  { image: require('../../../assets/banners/vs-poster.jpg.jpeg') },
 ];
 
-// ─── Products ─────────────────────────────────────────────────────────────────
 const PRODUCTS = [
   {
     name: 'Fan Box 3" Range',
-    description: 'F8/FC/FDB 18/40 PC',
+    description: 'F8 / FC / FDB 18-40 PC',
     img: 'https://srvelectricals.com/cdn/shop/files/F8_3_18-40.png?v=1757426631&width=300',
-    link: 'https://srvelectricals.com/products/fan-box-3-range',
-    price: '₹89', points: 10, bg: '#FEF9E7',
+    category: 'fanbox',
+    price: 'Rs 89',
+    points: 10,
+    colors: ['#FFF6E8', '#FAD7A0', '#F59E0B'] as const,
   },
   {
     name: 'Concealed Box 3"',
-    description: 'CRD PL 3" Precision',
+    description: 'CRD PL precision series',
     img: 'https://srvelectricals.com/cdn/shop/files/CRD_PL_3.png?v=1757426566&width=300',
-    link: 'https://srvelectricals.com/products/concealed-box-3-range',
-    price: '₹120', points: 15, bg: '#EFF6FF',
+    category: 'concealedbox',
+    price: 'Rs 120',
+    points: 15,
+    colors: ['#EFF6FF', '#BFDBFE', '#3B82F6'] as const,
   },
   {
     name: 'Module Box Platinum',
-    description: 'Platinum Range',
+    description: 'Premium modular metal box',
     img: 'https://srvelectricals.com/cdn/shop/files/3x3_679e5d30-ecf2-446e-9452-354bbf4c4a26.png?v=1757426377&width=300',
-    link: 'https://srvelectricals.com/products/module-box-platinum-range',
-    price: '₹245', points: 25, bg: '#F3F0FF',
+    category: 'modular',
+    price: 'Rs 245',
+    points: 25,
+    colors: ['#F5F3FF', '#DDD6FE', '#8B5CF6'] as const,
   },
   {
     name: 'Kitchen Fan Turtle',
-    description: 'Premium Ventilation',
+    description: 'Ventilation with premium styling',
     img: 'https://srvelectricals.com/cdn/shop/files/AP-Turtle-Fan.webp?v=1747938680&width=300',
-    link: 'https://srvelectricals.com/products/7159',
-    price: '₹1,610', points: 45, bg: '#FFF0F0',
+    category: 'exhaust',
+    price: 'Rs 1,610',
+    points: 45,
+    colors: ['#ECFEFF', '#BAE6FD', '#0EA5E9'] as const,
   },
 ];
 
 const RECENT_ACTIVITY = [
-  { emoji: '📷', bg: Colors.primaryLight, label: 'SRV Switch 16A scanned', time: 'Today, 10:23 AM', amount: '+50', amtColor: Colors.success },
-  { emoji: '🕐', bg: Colors.successLight, label: 'Cashback redeemed', time: 'Yesterday', amount: '−200', amtColor: Colors.primary },
-  { emoji: '⭐', bg: '#FFF8E1', label: 'Referral bonus earned', time: '2 days ago', amount: '+100', amtColor: Colors.success },
+  { title: 'QR scanned successfully', time: 'Today, 10:23 AM', amount: '+50', amountColor: '#22C55E' },
+  { title: 'Reward redeemed', time: 'Yesterday', amount: '-200', amountColor: '#E8453C' },
+  { title: 'Referral bonus added', time: '2 days ago', amount: '+100', amountColor: '#22C55E' },
 ];
 
 const DUMMY_PROFILE = {
@@ -136,77 +85,126 @@ const DUMMY_PROFILE = {
   state: 'Punjab',
 };
 
-type Screen = 'home' | 'scan' | 'rewards' | 'profile' | 'product' | 'wallet' | 'onboarding';
+function WalletIcon({ color = '#10254A', size = 22 }: { color?: string; size?: number }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Rect x="3" y="6" width="18" height="13" rx="2.4" stroke={color} strokeWidth={1.8} />
+      <Path d="M15.5 11.5H21V16h-5.5a2.25 2.25 0 010-4.5z" stroke={color} strokeWidth={1.8} />
+      <Circle cx="16.8" cy="13.75" r="1.05" fill={color} />
+      <Path d="M7 6V4.8A1.8 1.8 0 018.8 3h7.7" stroke={color} strokeWidth={1.8} strokeLinecap="round" />
+    </Svg>
+  );
+}
 
-// ─── Main Component ───────────────────────────────────────────────────────────
-export function HomeScreen({ onNavigate }: { onNavigate: (screen: Screen) => void }) {
+function BellIcon({ color = '#10254A', size = 22 }: { color?: string; size?: number }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M6 16.5V11a6 6 0 1112 0v5.5l1.2 1.2a.8.8 0 01-.57 1.36H5.37a.8.8 0 01-.57-1.36L6 16.5z"
+        stroke={color}
+        strokeWidth={1.8}
+        strokeLinejoin="round"
+      />
+      <Path d="M10 20a2 2 0 004 0" stroke={color} strokeWidth={1.8} strokeLinecap="round" />
+    </Svg>
+  );
+}
+
+function ScanIcon({ color = '#10254A', size = 22 }: { color?: string; size?: number }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Rect x="4" y="4" width="6" height="6" rx="1.2" stroke={color} strokeWidth={1.8} />
+      <Rect x="14" y="4" width="6" height="6" rx="1.2" stroke={color} strokeWidth={1.8} />
+      <Rect x="4" y="14" width="6" height="6" rx="1.2" stroke={color} strokeWidth={1.8} />
+      <Path d="M14 14h2v2h-2zM18 14h2v6h-6v-2h4v-4z" fill={color} />
+    </Svg>
+  );
+}
+
+function GiftIcon({ color = '#10254A', size = 22 }: { color?: string; size?: number }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Rect x="3" y="8" width="18" height="4" rx="1.2" stroke={color} strokeWidth={1.8} />
+      <Path d="M19 12v7a2 2 0 01-2 2H7a2 2 0 01-2-2v-7" stroke={color} strokeWidth={1.8} />
+      <Path d="M12 8v13M12 8C12 8 9 6 9 4.5a3 3 0 016 0C15 6 12 8 12 8z" stroke={color} strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" />
+    </Svg>
+  );
+}
+
+function WhatsAppIcon({ color = '#10254A', size = 22 }: { color?: string; size?: number }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M12 4.25A7.75 7.75 0 005.21 15.7L4 19.75l4.17-1.1A7.75 7.75 0 1012 4.25z"
+        stroke={color}
+        strokeWidth={1.9}
+        strokeLinejoin="round"
+      />
+      <Path
+        d="M9.15 8.95c.18-.4.39-.42.57-.42h.49c.15 0 .36.06.54.46.18.4.6 1.45.66 1.56.06.11.1.24.02.38-.08.15-.13.25-.25.38-.11.13-.24.29-.34.39-.11.11-.22.22-.09.42.13.2.58.95 1.25 1.54.86.76 1.58 1 1.8 1.1.22.1.35.09.48-.07.13-.16.54-.64.68-.86.14-.22.29-.18.48-.11.2.07 1.24.59 1.45.7.21.1.35.16.4.25.05.09.05.54-.13 1.04-.18.51-1.02.98-1.42 1.03-.37.06-.85.09-1.36-.07-.31-.1-.71-.23-1.23-.46-2.15-.94-3.56-3.16-3.67-3.32-.11-.16-.89-1.18-.89-2.25 0-1.07.56-1.6.76-1.82z"
+        fill={color}
+      />
+    </Svg>
+  );
+}
+
+function ChevronRight({ color = '#10254A', size = 16 }: { color?: string; size?: number }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 16 16" fill="none">
+      <Path d="M6 3.5L10.5 8 6 12.5" stroke={color} strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" />
+    </Svg>
+  );
+}
+
+export function HomeScreen({ onNavigate, onOpenProductCategory }: { onNavigate: (screen: Screen) => void; onOpenProductCategory: (category: string) => void }) {
   const { width } = useWindowDimensions();
   const [slide, setSlide] = useState(0);
   const fadeAnim = useRef(new Animated.Value(1)).current;
-  const progressAnim = useRef(new Animated.Value(0)).current;
-  const waPulse = useRef(new Animated.Value(0)).current;
   const autoSlideRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const cardW = (width - 14 * 2 - 12) / 2;
+  const cardW = (width - 28 - 12) / 2;
+  const heroImageHeight = Math.round((width - 28) * 0.56);
 
-  // ── Banner dimensions: full-width, 16:9 ratio ──────────────────────────────
-  const BANNER_WIDTH = width - 28; // paddingHorizontal 14 * 2
-  const BANNER_HEIGHT = Math.round(BANNER_WIDTH * (9 / 16));
-
-  // ── Animated slide transition ──────────────────────────────────────────────
   const goToSlide = (next: number) => {
     Animated.sequence([
-      Animated.timing(fadeAnim, { toValue: 0.1, duration: 180, useNativeDriver: true }),
+      Animated.timing(fadeAnim, { toValue: 0.45, duration: 140, useNativeDriver: true }),
       Animated.timing(fadeAnim, { toValue: 1, duration: 220, useNativeDriver: true }),
     ]).start();
-    setSlide(next);
   };
 
-  // ── Auto-slide every 4 seconds ─────────────────────────────────────────────
   const resetAutoSlide = () => {
-    if (autoSlideRef.current) clearInterval(autoSlideRef.current);
+    if (autoSlideRef.current) {
+      clearInterval(autoSlideRef.current);
+    }
     autoSlideRef.current = setInterval(() => {
-      setSlide(prev => {
-        const next = (prev + 1) % BANNER_SLIDES.length;
-        Animated.sequence([
-          // Animated.timing(fadeAnim, { toValue: 0.1, duration: 180, useNativeDriver: true }),
-          Animated.timing(fadeAnim, { toValue: 1, duration: 220, useNativeDriver: true }),
-        ]).start();
-        return next;
-      });
-    }, 4000);
+      setSlide((prev) => (prev + 1) % BANNER_SLIDES.length);
+    }, 4200);
   };
 
   useEffect(() => {
     resetAutoSlide();
-    return () => { if (autoSlideRef.current) clearInterval(autoSlideRef.current); };
+    return () => {
+      if (autoSlideRef.current) {
+        clearInterval(autoSlideRef.current);
+      }
+    };
   }, []);
 
-  // ── Swipe gesture (PanResponder) ───────────────────────────────────────────
   const panResponder = useRef(
     PanResponder.create({
       onStartShouldSetPanResponder: () => false,
-      onMoveShouldSetPanResponder: (_, gs) =>
-        Math.abs(gs.dx) > 10 && Math.abs(gs.dx) > Math.abs(gs.dy),
+      onMoveShouldSetPanResponder: (_, gs) => Math.abs(gs.dx) > 12 && Math.abs(gs.dx) > Math.abs(gs.dy),
       onPanResponderRelease: (_, gs) => {
         if (gs.dx < -40) {
-          // Swipe left → next
-          setSlide(prev => {
+          setSlide((prev) => {
             const next = (prev + 1) % BANNER_SLIDES.length;
-            Animated.sequence([
-              // Animated.timing(fadeAnim, { toValue: 0.1, duration: 150, useNativeDriver: true }),
-              Animated.timing(fadeAnim, { toValue: 1, duration: 200, useNativeDriver: true }),
-            ]).start();
+            goToSlide(next);
             return next;
           });
           resetAutoSlide();
         } else if (gs.dx > 40) {
-          // Swipe right → prev
-          setSlide(prev => {
+          setSlide((prev) => {
             const next = (prev - 1 + BANNER_SLIDES.length) % BANNER_SLIDES.length;
-            Animated.sequence([
-              // Animated.timing(fadeAnim, { toValue: 0.1, duration: 150, useNativeDriver: true }),
-              Animated.timing(fadeAnim, { toValue: 1, duration: 200, useNativeDriver: true }),
-            ]).start();
+            goToSlide(next);
             return next;
           });
           resetAutoSlide();
@@ -215,273 +213,134 @@ export function HomeScreen({ onNavigate }: { onNavigate: (screen: Screen) => voi
     })
   ).current;
 
-  // ── Progress bar animate on mount ─────────────────────────────────────────
-  useEffect(() => {
-    Animated.timing(progressAnim, {
-      toValue: 0.85,
-      duration: 1300,
-      delay: 500,
-      useNativeDriver: false,
-    }).start();
-  }, []);
-
-  // ── WhatsApp pulse ─────────────────────────────────────────────────────────
-  useEffect(() => {
-    const loop = Animated.loop(
-      Animated.sequence([
-        Animated.timing(waPulse, { toValue: 1, duration: 1300, useNativeDriver: false }),
-        Animated.timing(waPulse, { toValue: 0, duration: 1300, useNativeDriver: false }),
-      ])
-    );
-    loop.start();
-    return () => loop.stop();
-  }, []);
-
-  const handleWhatsApp = () =>
-    Linking.openURL('https://wa.me/918837684004?text=Hello%20SRV%20Electricals%2C%20I%20need%20support');
-
-  const waShadowOpacity = waPulse.interpolate({ inputRange: [0, 1], outputRange: [0.25, 0.55] });
-  const progressWidth = progressAnim.interpolate({ inputRange: [0, 1], outputRange: ['0%', '100%'] });
-
-  const current = BANNER_SLIDES[slide];
-
   const quickActions = [
-    { emoji: '📷', bg: Colors.primaryLight, title: 'Scan QR', sub: 'Earn points', onPress: () => onNavigate('scan'), badge: null },
-    { emoji: '💬', bg: '#e6fdf0', title: 'WhatsApp', sub: 'Support', onPress: handleWhatsApp, badge: 'LIVE' },
-    { emoji: '⭐', bg: '#FFF8E1', title: 'Rewards', sub: '4 new', onPress: () => onNavigate('rewards'), badge: null },
-    { emoji: '👤', bg: '#EFF4FF', title: 'Profile', sub: 'Level 3', onPress: () => onNavigate('profile'), badge: null },
+    {
+      title: 'Scan & Earn',
+      sub: 'Instant points',
+      icon: ScanIcon,
+      iconColors: ['#E0F2FE', '#BAE6FD'] as const,
+      iconTint: '#0369A1',
+      onPress: () => onNavigate('scan'),
+    },
+    {
+      title: 'Wallet',
+      sub: 'Balance & history',
+      icon: WalletIcon,
+      iconColors: ['#FEF3C7', '#FDE68A'] as const,
+      iconTint: '#B45309',
+      onPress: () => onNavigate('wallet'),
+    },
+    {
+      title: 'Gift Store',
+      sub: 'Redeem rewards',
+      icon: GiftIcon,
+      iconColors: ['#F3E8FF', '#DDD6FE'] as const,
+      iconTint: '#7C3AED',
+      onPress: () => onNavigate('rewards'),
+    },
+    {
+      title: 'WhatsApp',
+      sub: 'Premium support',
+      icon: WhatsAppIcon,
+      iconColors: ['#DCFCE7', '#BBF7D0'] as const,
+      iconTint: '#16A34A',
+      onPress: () => Linking.openURL('https://wa.me/918837684004?text=Hello%20SRV%20Electricals%2C%20I%20need%20support'),
+    },
   ];
 
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+      <LinearGradient colors={['#08111F', '#10254A', '#142E59']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.heroShell}>
+        <View style={styles.heroGlowOne} />
+        <View style={styles.heroGlowTwo} />
 
-      {/* ════════════════════════════════════════════
-          HEADER
-      ════════════════════════════════════════════ */}
-      <LinearGradient
-        colors={['#1a235a', '#132050', '#1A2E6E']}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={styles.header}
-      >
-        {/* Top bar */}
-        <View style={styles.headerTop}>
-          {/* Brand */}
-          <View style={styles.brand}>
-            <View style={styles.brandLogoBox}>
-              {/* Replace with your actual logo image:
-                  <Image source={require('./assets/srv_logo.png')} style={styles.brandLogoImg} resizeMode="contain" /> */}
-              <Text style={styles.brandLogoText}>SRV</Text>
-            </View>
-            <View>
-              <Text style={styles.brandSRV}>SRV</Text>
-              <Text style={styles.brandSub}>ELECTRICALS</Text>
-              <Text style={styles.brandTagline}>Always improving</Text>
+        <View style={styles.topRow}>
+          <View style={styles.brandLockup}>
+            <View style={styles.logoWrap}>
+              <Image source={logoImage} style={styles.logoImage} resizeMode="contain" />
             </View>
           </View>
 
-          {/* ── Wallet + Bell ── */}
-          <View style={styles.headerActions}>
-
-            {/* 💳 WALLET BUTTON */}
-            <TouchableOpacity
-              onPress={() => onNavigate('wallet')}
-              style={styles.headerBtn}
-              activeOpacity={0.7}
-            >
-              <Text style={{ fontSize: 18 }}>💳</Text>
-              <View style={[styles.badgeDot, { backgroundColor: Colors.gold }]} />
+          <View style={styles.topActions}>
+            <TouchableOpacity onPress={() => onNavigate('wallet')} style={styles.topActionBtn} activeOpacity={0.85}>
+              <WalletIcon color="#FFFFFF" />
             </TouchableOpacity>
-
-            {/* 🔔 BELL BUTTON */}
-            <TouchableOpacity style={styles.headerBtn} activeOpacity={0.7}>
-              <Text style={{ fontSize: 18 }}>🔔</Text>
-              <View style={[styles.badgeDot, { backgroundColor: Colors.primary }]} />
+            <TouchableOpacity onPress={() => onNavigate('notification')} style={styles.topActionBtn} activeOpacity={0.85}>
+              <BellIcon color="#FFFFFF" />
             </TouchableOpacity>
-
           </View>
         </View>
 
-        {/* Profile flip card */}
         <ProfileFlipCard profile={DUMMY_PROFILE} role="electrician" />
 
-        {/* Points strip */}
-        <View style={styles.pointsStrip}>
-          <View>
-            <Text style={styles.pointsLabel}>TOTAL POINTS</Text>
-            <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 4 }}>
-              <Text style={styles.pointsValue}>4,250</Text>
-              <Text style={styles.ptsCurrency}>pts</Text>
-            </View>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 5 }}>
-              <Text style={{ color: Colors.success, fontSize: 13, fontWeight: '700' }}>↗</Text>
-              <Text style={styles.trendText}>+120 pts this week</Text>
-            </View>
+        <View style={styles.statRow}>
+          <View style={styles.statCard}>
+            <Text style={styles.statLabel}>Total Points</Text>
+            <Text style={styles.statValue}>4,250</Text>
+            <Text style={styles.statHint}>+120 this week</Text>
           </View>
-          <View style={{ alignItems: 'flex-end', gap: 8 }}>
-            <View style={styles.goldBadge}>
-              <View style={styles.goldDot} />
-              <Text style={styles.goldText}>Gold</Text>
-            </View>
-            <View style={{ width: 118 }}>
-              <View style={styles.progressMeta}>
-                <Text style={styles.progressMetaText}>Gold</Text>
-                <Text style={styles.progressMetaText}>5k → Platinum</Text>
-              </View>
-              <View style={styles.progressBg}>
-                <Animated.View style={[styles.progressFill, { width: progressWidth }]} />
-              </View>
-            </View>
+          <View style={styles.statCard}>
+            <Text style={styles.statLabel}>Member Tier</Text>
+            <Text style={styles.statValue}>Gold</Text>
+            <Text style={styles.statHint}>750 to Platinum</Text>
           </View>
         </View>
       </LinearGradient>
 
-      {/* ════════════════════════════════════════════
-          BODY
-      ════════════════════════════════════════════ */}
       <View style={styles.body}>
-
-        {/* ── BANNER CAROUSEL ────────────────────────────────────────────────
-            Full-width image, 16:9 ratio, swipe + auto-slide
-        ─────────────────────────────────────────────────────────────────── */}
-        <Animated.View
-          style={{ opacity: fadeAnim, marginBottom: 20 }}
-          {...panResponder.panHandlers}
-        >
-          <LinearGradient
-            colors={current.colors}
-            style={[styles.banner, { height: BANNER_HEIGHT + 89 }]}
-          >
-            {/* Decorative circles */}
-            <View style={styles.bannerCircle1} />
-            <View style={styles.bannerCircle2} />
-
-            {/* ── Full product image fills the top area ── */}
-            <TouchableOpacity
-              onPress={() => Linking.openURL(current.link)}
-              activeOpacity={0.92}
-              style={[styles.bannerImgTouch, { height: BANNER_HEIGHT }]}
-            >
-              <Image
-                source={{ uri: current.img }}
-                style={styles.bannerImg}
-                resizeMode="contain"
-              />
-            </TouchableOpacity>
-
-            {/* ── Bottom strip: tag + title + shop btn ── */}
-            <View style={styles.bannerBottom}>
-              <View style={{ flex: 1 }}>
-                <View style={styles.bannerTagPill}>
-                  <Text style={styles.bannerTagText}>{current.tag}</Text>
-                </View>
-                <Text style={styles.bannerTitle} numberOfLines={1}>{current.title}</Text>
-                <Text style={styles.bannerSub} numberOfLines={1}>{current.sub}</Text>
-              </View>
-              <TouchableOpacity
-                onPress={() => Linking.openURL(current.link)}
-                style={styles.shopBtn}
-              >
-                <Text style={styles.shopBtnText}>Shop →</Text>
-              </TouchableOpacity>
-            </View>
-
-            {/* Dots */}
-            <View style={styles.dotsRow}>
-              {BANNER_SLIDES.map((_, i) => (
-                <TouchableOpacity
-                  key={i}
-                  onPress={() => { goToSlide(i); resetAutoSlide(); }}
-                  hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}
-                >
-                  <View style={[styles.dot, i === slide && styles.dotActive]} />
-                </TouchableOpacity>
-              ))}
-            </View>
-          </LinearGradient>
+        <Animated.View style={{ opacity: fadeAnim }} {...panResponder.panHandlers}>
+          <View style={[styles.bannerCard, { height: heroImageHeight }]}>
+            <Image source={BANNER_SLIDES[slide].image} style={styles.bannerImage} resizeMode="cover" />
+          </View>
         </Animated.View>
 
-        {/* ── QUICK ACTIONS ──────────────────────────────────────────────── */}
-        <Text style={styles.sectionLabel}>QUICK ACTIONS</Text>
-        <View style={styles.quickGrid}>
-          {quickActions.map((item, i) => (
-            <TouchableOpacity
-              key={i}
-              onPress={item.onPress}
-              style={[styles.quickCard, { width: cardW }]}
-              activeOpacity={0.75}
-            >
-              <View style={styles.quickCardTop}>
-                <View style={[styles.quickIconBox, { backgroundColor: item.bg }]}>
-                  <Text style={{ fontSize: 22 }}>{item.emoji}</Text>
-                </View>
-                {item.badge && (
-                  <View style={styles.liveBadge}>
-                    <Text style={styles.liveBadgeText}>{item.badge}</Text>
-                  </View>
-                )}
-              </View>
-              <Text style={styles.quickTitle}>{item.title}</Text>
-              <Text style={styles.quickSub}>{item.sub}</Text>
+        <View style={styles.dotsRow}>
+          {BANNER_SLIDES.map((_, index) => (
+            <TouchableOpacity key={index} onPress={() => { goToSlide(index); setSlide(index); resetAutoSlide(); }} activeOpacity={0.8}>
+              <View style={[styles.dot, index === slide && styles.dotActive]} />
             </TouchableOpacity>
           ))}
         </View>
 
-        {/* ── WHATSAPP BANNER ────────────────────────────────────────────── */}
-        <Animated.View
-          style={{
-            shadowOpacity: waShadowOpacity,
-            shadowColor: '#22c55e',
-            shadowOffset: { width: 0, height: 4 },
-            shadowRadius: 18,
-            elevation: 6,
-            marginBottom: 20,
-            borderRadius: 20,
-          }}
-        >
-          <TouchableOpacity onPress={handleWhatsApp} style={styles.waBanner} activeOpacity={0.85}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, flex: 1 }}>
-              <View style={styles.waIconBox}>
-                <Text style={{ fontSize: 22 }}>💬</Text>
-              </View>
-              <View>
-                <Text style={styles.waTitle}>Got a Query?</Text>
-                <Text style={styles.waSub}>Reach out on WhatsApp</Text>
-              </View>
-            </View>
-            <View style={styles.waChatBtn}>
-              <Text style={styles.waChatBtnText}>Chat Now</Text>
-            </View>
-          </TouchableOpacity>
-        </Animated.View>
+        <View style={styles.quickGrid}>
+          {quickActions.map((item) => {
+            const Icon = item.icon;
+            return (
+              <TouchableOpacity key={item.title} style={[styles.quickCard, { width: cardW }]} onPress={item.onPress} activeOpacity={0.9}>
+                <LinearGradient colors={item.iconColors} style={styles.quickIconBox}>
+                  <Icon color={item.iconTint} size={24} />
+                </LinearGradient>
+                <Text style={styles.quickTitle}>{item.title}</Text>
+                <Text style={styles.quickSub}>{item.sub}</Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
 
-        {/* ── FEATURED PRODUCTS ──────────────────────────────────────────── */}
         <View style={styles.sectionHeader}>
-          <Text style={styles.sectionLabel}>FEATURED PRODUCTS</Text>
-          <TouchableOpacity onPress={() => onNavigate('product')} style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <Text style={styles.viewAllText}>View All </Text>
-            <Text style={{ color: Colors.primary, fontSize: 16, fontWeight: '700' }}>›</Text>
+          <View>
+            <Text style={styles.sectionEyebrow}>Top Picks</Text>
+            <Text style={styles.sectionTitle}>Featured products</Text>
+          </View>
+          <TouchableOpacity onPress={() => onNavigate('product')} style={styles.inlineAction} activeOpacity={0.85}>
+            <Text style={styles.viewAllText}>View all</Text>
+            <ChevronRight color="#E8453C" />
           </TouchableOpacity>
         </View>
 
         <View style={styles.productsGrid}>
-          {PRODUCTS.map((p, idx) => (
-            <TouchableOpacity
-              key={idx}
-              onPress={() => Linking.openURL(p.link)}
-              style={[styles.productCard, { width: cardW }]}
-              activeOpacity={0.88}
-            >
-              <View style={[styles.productImgBox, { backgroundColor: p.bg }]}>
-                <Image source={{ uri: p.img }} style={styles.productImg} resizeMode="contain" />
-              </View>
+          {PRODUCTS.map((product) => (
+            <TouchableOpacity key={product.name} onPress={() => onOpenProductCategory(product.category)} style={[styles.productCard, { width: cardW }]} activeOpacity={0.9}>
+              <LinearGradient colors={product.colors} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.productImageZone}>
+                <Image source={{ uri: product.img }} style={styles.productImage} resizeMode="contain" />
+              </LinearGradient>
               <View style={styles.productInfo}>
-                <Text style={styles.productName} numberOfLines={1}>{p.name}</Text>
-                <Text style={styles.productDesc} numberOfLines={1}>{p.description}</Text>
-                <View style={styles.productBottom}>
-                  <Text style={styles.productPrice}>{p.price}</Text>
-                  <View style={styles.ptsTag}>
-                    <Text style={styles.ptsTagText}>+{p.points} pts</Text>
+                <Text style={styles.productName} numberOfLines={1}>{product.name}</Text>
+                <Text style={styles.productDesc} numberOfLines={2}>{product.description}</Text>
+                <View style={styles.productFooter}>
+                  <Text style={styles.productPrice}>{product.price}</Text>
+                  <View style={styles.pointsPill}>
+                    <Text style={styles.pointsPillText}>+{product.points} pts</Text>
                   </View>
                 </View>
               </View>
@@ -489,25 +348,28 @@ export function HomeScreen({ onNavigate }: { onNavigate: (screen: Screen) => voi
           ))}
         </View>
 
-        {/* ── RECENT ACTIVITY ────────────────────────────────────────────── */}
-        <Text style={[styles.sectionLabel, { marginBottom: 10 }]}>RECENT ACTIVITY</Text>
+        <View style={styles.sectionHeader}>
+          <View>
+            <Text style={styles.sectionEyebrow}>Recent Activity</Text>
+            <Text style={styles.sectionTitle}>Latest actions</Text>
+          </View>
+          <TouchableOpacity onPress={() => onNavigate('notification')} style={styles.inlineAction} activeOpacity={0.85}>
+            <Text style={styles.viewAllText}>Notifications</Text>
+            <ChevronRight color="#E8453C" />
+          </TouchableOpacity>
+        </View>
+
         <View style={styles.activityCard}>
-          {RECENT_ACTIVITY.map((item, i) => (
-            <View
-              key={i}
-              style={[
-                styles.activityRow,
-                i < RECENT_ACTIVITY.length - 1 && styles.activityRowBorder,
-              ]}
-            >
-              <View style={[styles.activityIcon, { backgroundColor: item.bg }]}>
-                <Text style={{ fontSize: 16 }}>{item.emoji}</Text>
+          {RECENT_ACTIVITY.map((item, index) => (
+            <View key={item.title} style={[styles.activityRow, index < RECENT_ACTIVITY.length - 1 && styles.activityDivider]}>
+              <View style={styles.activityIconWrap}>
+                <BellIcon color="#24437A" size={18} />
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={styles.activityLabel}>{item.label}</Text>
+                <Text style={styles.activityTitle}>{item.title}</Text>
                 <Text style={styles.activityTime}>{item.time}</Text>
               </View>
-              <Text style={[styles.activityAmt, { color: item.amtColor }]}>{item.amount}</Text>
+              <Text style={[styles.activityAmount, { color: item.amountColor }]}>{item.amount}</Text>
             </View>
           ))}
         </View>
@@ -518,259 +380,160 @@ export function HomeScreen({ onNavigate }: { onNavigate: (screen: Screen) => voi
   );
 }
 
-// ─── Styles ───────────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.background },
-
-  // ── Header ──────────────────────────────────────────────────────────────────
-  header: {
-    paddingHorizontal: 16,
-    paddingTop: 56,
-    paddingBottom: 22,
-    borderBottomLeftRadius: 30,
-    borderBottomRightRadius: 30,
-    gap: 14,
-  },
-  headerTop: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-
-  // Brand
-  brand: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  brandLogoBox: {
-    width: 44, height: 34,
-    backgroundColor: '#19024a',
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  brandLogoImg: { width: 40, height: 30 },        // use if you have logo asset
-  brandLogoText: { color: '#E8453C', fontWeight: '900', fontSize: 13, letterSpacing: 1 },
-  brandSRV: { color: '#FF6B6B', fontWeight: '900', fontSize: 16, letterSpacing: 2, lineHeight: 18 },
-  brandSub: { color: 'rgba(255,255,255,0.38)', fontSize: 8.5, fontWeight: '600', letterSpacing: 2.5 },
-  brandTagline: { color: 'rgba(255,255,255,0.2)', fontSize: 7.5, fontStyle: 'italic', letterSpacing: 0.8 },
-
-  // Header action buttons
-  headerActions: { flexDirection: 'row', gap: 8 },
-  headerBtn: {
-    width: 40, height: 40,
-    backgroundColor: 'rgba(255,255,255,0.1)',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.12)',
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  badgeDot: {
-    position: 'absolute',
-    top: 7, right: 7,
-    width: 8, height: 8,
-    borderRadius: 4,
-    borderWidth: 1.5,
-    borderColor: '#0B1437',
-  },
-
-  // ── Points strip ────────────────────────────────────────────────────────────
-  pointsStrip: {
-    backgroundColor: 'rgba(255,255,255,0.07)',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
-    borderRadius: 18,
-    padding: 14,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  pointsLabel: { color: 'rgba(255,255,255,0.38)', fontSize: 9, fontWeight: '700', letterSpacing: 2, marginBottom: 3 },
-  pointsValue: { color: '#fff', fontWeight: '900', fontSize: 30, letterSpacing: -1 },
-  ptsCurrency: { color: 'rgba(255,255,255,0.45)', fontSize: 13, fontWeight: '600' },
-  trendText: { color: Colors.success, fontSize: 11, fontWeight: '600' },
-  goldBadge: {
-    backgroundColor: 'rgba(245,158,11,0.12)',
-    borderWidth: 1.5,
-    borderColor: 'rgba(245,158,11,0.38)',
-    borderRadius: 20,
-    paddingHorizontal: 12,
-    paddingVertical: 5,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  goldDot: { width: 7, height: 7, borderRadius: 3.5, backgroundColor: Colors.gold },
-  goldText: { color: Colors.gold, fontSize: 12, fontWeight: '700' },
-  progressMeta: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 5 },
-  progressMetaText: { color: 'rgba(255,255,255,0.3)', fontSize: 9, fontWeight: '600' },
-  progressBg: { height: 6, backgroundColor: 'rgba(255,255,255,0.12)', borderRadius: 3, overflow: 'hidden' },
-  progressFill: { height: '100%', borderRadius: 3, backgroundColor: Colors.gold },
-
-  // ── Body ────────────────────────────────────────────────────────────────────
-  body: { paddingHorizontal: 14, paddingTop: 18 },
-  sectionLabel: { color: Colors.textMuted, fontSize: 9, fontWeight: '700', letterSpacing: 2, marginBottom: 12 },
-  sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
-  viewAllText: { color: Colors.primary, fontSize: 13, fontWeight: '600' },
-
-  // ── Banner ──────────────────────────────────────────────────────────────────
-  banner: {
-    borderRadius: 22,
+  container: { flex: 1, backgroundColor: '#EEF3F8' },
+  heroShell: {
+    paddingTop: 26,
+    paddingHorizontal: 14,
+    paddingBottom: 10,
+    borderBottomLeftRadius: 24,
+    borderBottomRightRadius: 24,
     overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.3,
-    shadowRadius: 16,
-    elevation: 10,
   },
-  bannerCircle1: {
+  heroGlowOne: {
     position: 'absolute',
-    width: 200, height: 200,
-    borderRadius: 100,
-    backgroundColor: 'rgba(255,255,255,0.03)',
-    top: -60, right: -40,
+    width: 220,
+    height: 220,
+    borderRadius: 110,
+    backgroundColor: 'rgba(37,99,235,0.24)',
+    top: -50,
+    right: -35,
   },
-  bannerCircle2: {
+  heroGlowTwo: {
     position: 'absolute',
-    width: 120, height: 120,
-    borderRadius: 60,
-    backgroundColor: 'rgba(255,255,255,0.02)',
-    bottom: 40, left: -20,
+    width: 160,
+    height: 160,
+    borderRadius: 80,
+    backgroundColor: 'rgba(232,69,60,0.16)',
+    bottom: 20,
+    left: -35,
   },
-  bannerImgTouch: {
-    width: '100%',
+  topRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+    gap: 12,
+  },
+  brandLockup: { flexDirection: 'row', flex: 1, alignItems: 'center' },
+  logoWrap: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  bannerImg: {
-    width: '100%',
-    height: '100%',
-  },
-  bannerBottom: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingTop: 8,
-    paddingBottom: 4,
-    gap: 10,
-  },
-  bannerTagPill: {
-    backgroundColor: 'rgba(255,107,107,0.2)',
+    backgroundColor: 'rgba(255,255,255,0.14)',
     borderWidth: 1,
-    borderColor: 'rgba(255,107,107,0.3)',
-    borderRadius: 20,
-    paddingHorizontal: 10,
-    paddingVertical: 2,
-    alignSelf: 'flex-start',
-    marginBottom: 3,
+    borderColor: 'rgba(255,255,255,0.16)',
+    overflow: 'hidden',
   },
-  bannerTagText: { color: '#ff9090', fontSize: 9.5, fontWeight: '700' },
-  bannerTitle: { color: '#fff', fontWeight: '900', fontSize: 15, letterSpacing: 0.5 },
-  bannerSub: { color: 'rgba(255,255,255,0.4)', fontSize: 9, letterSpacing: 1.5, textTransform: 'uppercase' },
-  shopBtn: {
+  logoImage: { width: 64, height: 64 },
+  topActions: { flexDirection: 'row', gap: 8 },
+  topActionBtn: {
+    width: 42,
+    height: 42,
+    borderRadius: 14,
     backgroundColor: 'rgba(255,255,255,0.12)',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.22)',
-    borderRadius: 18,
-    paddingHorizontal: 14,
-    paddingVertical: 7,
-    flexShrink: 0,
-  },
-  shopBtnText: { color: '#fff', fontSize: 11, fontWeight: '700' },
-  dotsRow: {
-    flexDirection: 'row',
+    borderColor: 'rgba(255,255,255,0.14)',
+    alignItems: 'center',
     justifyContent: 'center',
-    gap: 6,
-    paddingBottom: 10,
-    marginTop: 2,
   },
-  dot: { width: 6, height: 6, borderRadius: 3, backgroundColor: 'rgba(255,255,255,0.3)' },
-  dotActive: { width: 20, height: 6, borderRadius: 3, backgroundColor: '#FF6B6B' },
-
-  // ── Quick actions ────────────────────────────────────────────────────────────
-  quickGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginBottom: 20 },
+  statRow: { flexDirection: 'row', gap: 12, marginTop: 6 },
+  statCard: {
+    flex: 1,
+    backgroundColor: 'rgba(255,255,255,0.11)',
+    borderRadius: 20,
+    padding: 13,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.12)',
+  },
+  statLabel: { color: 'rgba(255,255,255,0.58)', fontSize: 10.5, fontWeight: '700', marginBottom: 5 },
+  statValue: { color: '#FFFFFF', fontSize: 22, fontWeight: '900' },
+  statHint: { color: '#B8C6E5', fontSize: 11, marginTop: 3 },
+  body: { paddingHorizontal: 14, paddingTop: 18 },
+  sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 12 },
+  sectionEyebrow: { color: '#7D8AA5', fontSize: 11, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 1.1, marginBottom: 5 },
+  sectionTitle: { color: '#14213D', fontSize: 21, fontWeight: '900' },
+  bannerCard: {
+    borderRadius: 28,
+    overflow: 'hidden',
+    backgroundColor: '#D9E3F2',
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.16,
+    shadowRadius: 22,
+    elevation: 9,
+  },
+  bannerImage: { width: '100%', height: '100%' },
+  dotsRow: { flexDirection: 'row', justifyContent: 'center', gap: 8, marginTop: 14, marginBottom: 22 },
+  dot: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#C7D2E3' },
+  dotActive: { width: 28, backgroundColor: '#0F172A' },
+  quickGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginBottom: 22 },
   quickCard: {
-    backgroundColor: Colors.surface,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    borderRadius: 20,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 22,
     padding: 14,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.07,
+    shadowRadius: 18,
+    elevation: 4,
   },
-  quickCardTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 },
-  quickIconBox: { width: 46, height: 46, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
-  liveBadge: { backgroundColor: '#22c55e', borderRadius: 6, paddingHorizontal: 6, paddingVertical: 2 },
-  liveBadgeText: { color: '#fff', fontSize: 8, fontWeight: '800' },
-  quickTitle: { color: Colors.textDark, fontSize: 14, fontWeight: '700' },
-  quickSub: { color: Colors.textMuted, fontSize: 12, marginTop: 2 },
-
-  // ── WhatsApp banner ──────────────────────────────────────────────────────────
-  waBanner: {
-    backgroundColor: '#e6fff2',
-    borderWidth: 1,
-    borderColor: '#bbf7d0',
-    borderRadius: 20,
-    padding: 14,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  waIconBox: {
-    width: 48, height: 48,
-    backgroundColor: '#22c55e',
-    borderRadius: 14,
+  quickIconBox: {
+    width: 56,
+    height: 56,
+    borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
+    marginBottom: 14,
   },
-  waTitle: { fontSize: 14, fontWeight: '800', color: '#15803d' },
-  waSub: { fontSize: 11, color: '#16a34a', marginTop: 2 },
-  waChatBtn: {
-    backgroundColor: '#22c55e',
-    borderRadius: 22,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-  },
-  waChatBtnText: { color: '#fff', fontSize: 13, fontWeight: '700' },
-
-  // ── Products ─────────────────────────────────────────────────────────────────
+  quickTitle: { color: '#152238', fontSize: 14, fontWeight: '800' },
+  quickSub: { color: '#74829D', fontSize: 11.5, marginTop: 3 },
+  inlineAction: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  viewAllText: { color: '#E8453C', fontSize: 13, fontWeight: '800' },
   productsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginBottom: 24 },
   productCard: {
-    backgroundColor: Colors.surface,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    borderRadius: 20,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 22,
     overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    elevation: 3,
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.08,
+    shadowRadius: 16,
+    elevation: 5,
   },
-  productImgBox: { height: 110, alignItems: 'center', justifyContent: 'center' },
-  productImg: { width: 88, height: 88 },
-  productInfo: { padding: 12 },
-  productName: { color: Colors.textDark, fontSize: 13, fontWeight: '700', marginBottom: 3 },
-  productDesc: { color: Colors.textMuted, fontSize: 11, marginBottom: 10 },
-  productBottom: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  productPrice: { color: Colors.textDark, fontWeight: '800', fontSize: 15 },
-  ptsTag: { backgroundColor: Colors.successLight, borderRadius: 20, paddingHorizontal: 8, paddingVertical: 3 },
-  ptsTagText: { color: Colors.success, fontSize: 11, fontWeight: '700' },
-
-  // ── Activity ─────────────────────────────────────────────────────────────────
+  productImageZone: { height: 138, alignItems: 'center', justifyContent: 'center' },
+  productImage: { width: 112, height: 112 },
+  productInfo: { padding: 13 },
+  productName: { color: '#152238', fontSize: 13.5, fontWeight: '800' },
+  productDesc: { color: '#70819C', fontSize: 11, lineHeight: 16, marginTop: 4, minHeight: 32 },
+  productFooter: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 12 },
+  productPrice: { color: '#152238', fontSize: 15, fontWeight: '900' },
+  pointsPill: { backgroundColor: '#EAF8F0', borderRadius: 999, paddingHorizontal: 8, paddingVertical: 4 },
+  pointsPillText: { color: '#16A34A', fontSize: 10.5, fontWeight: '800' },
   activityCard: {
-    backgroundColor: Colors.surface,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    borderRadius: 18,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 22,
+    marginBottom: 12,
     overflow: 'hidden',
-    marginBottom: 8,
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.05,
+    shadowRadius: 18,
+    elevation: 4,
   },
   activityRow: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14 },
-  activityRowBorder: { borderBottomWidth: 1, borderBottomColor: '#F5F5FB' },
-  activityIcon: { width: 36, height: 36, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
-  activityLabel: { color: Colors.textDark, fontSize: 13, fontWeight: '600' },
-  activityTime: { color: Colors.textMuted, fontSize: 11, marginTop: 2 },
-  activityAmt: { fontSize: 15, fontWeight: '700' },
+  activityDivider: { borderBottomWidth: 1, borderBottomColor: '#EEF2F7' },
+  activityIconWrap: {
+    width: 42,
+    height: 42,
+    borderRadius: 14,
+    backgroundColor: '#EDF4FF',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  activityTitle: { color: '#152238', fontSize: 13, fontWeight: '700' },
+  activityTime: { color: '#7E8BA5', fontSize: 11, marginTop: 3 },
+  activityAmount: { fontSize: 14, fontWeight: '900' },
 });

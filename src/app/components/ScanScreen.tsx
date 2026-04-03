@@ -23,7 +23,7 @@ const Colors = {
   success: '#22c55e',
 };
 
-type Screen = 'home' | 'scan' | 'rewards' | 'profile' | 'product' | 'wallet' | 'onboarding';
+type Screen = 'home' | 'scan' | 'rewards' | 'profile' | 'product' | 'wallet';
 
 function FlashlightIcon({ size = 22, color = Colors.textDark }: { size?: number; color?: string }) {
   return (

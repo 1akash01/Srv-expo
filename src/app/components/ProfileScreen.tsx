@@ -39,7 +39,7 @@ const defaultProfile = {
 };
 
 type Profile = typeof defaultProfile;
-type Screen = 'home' | 'scan' | 'rewards' | 'profile' | 'product' | 'wallet' | 'onboarding';
+type Screen = 'home' | 'scan' | 'rewards' | 'profile' | 'product' | 'wallet';
 
 const menuItems = [
   { label: 'My Redemption', emoji: '🎁', bg: Colors.primaryLight, screen: 'wallet' as Screen },
@@ -58,7 +58,7 @@ const settingsItems = [
   { label: 'Contact Support', emoji: '📞', bg: '#E6FDF0', badge: false },
 ];
 
-export function ProfileScreen({ onNavigate }: { onNavigate: (screen: Screen) => void }) {
+export function ProfileScreen({ onNavigate, onSignOut }: { onNavigate: (screen: Screen) => void; onSignOut: () => void }) {
   const [profile, setProfile] = useState<Profile>(defaultProfile);
   const [draft, setDraft] = useState<Profile>(defaultProfile);
   const [showEdit, setShowEdit] = useState(false);
@@ -73,9 +73,9 @@ export function ProfileScreen({ onNavigate }: { onNavigate: (screen: Screen) => 
 
   // Sign Out → goes to onboarding/login screen
  const confirmSignOut = () => {
-  setShowSignOutConfirm(false);
-  onNavigate('onboarding'); //  correct
-};
+    setShowSignOutConfirm(false);
+    onSignOut();
+  };
 
   return (
     <>

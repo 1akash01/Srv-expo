@@ -26,17 +26,17 @@ const Colors = {
   textMuted: '#9898A8',
 };
 
-const CAT_COLORS: Record<string, { gradient: [string, string]; scanBg: string; scanText: string; cardBg: string; iconBg: string }> = {
-  fanbox:       { gradient: ['#E87820', '#F4A040'], scanBg: '#FFF3E0', scanText: '#E87820', cardBg: '#FEF3E2', iconBg: '#FFE0B2' },
-  concealedbox: { gradient: ['#1565C0', '#1E88E5'], scanBg: '#E3F2FD', scanText: '#1565C0', cardBg: '#EBF4FE', iconBg: '#BBDEFB' },
-  modular:      { gradient: ['#6A1B9A', '#AB47BC'], scanBg: '#F3E5F5', scanText: '#6A1B9A', cardBg: '#F5EDFC', iconBg: '#E1BEE7' },
-  mcb:          { gradient: ['#00695C', '#26A69A'], scanBg: '#E0F2F1', scanText: '#00695C', cardBg: '#E5F4F2', iconBg: '#B2DFDB' },
-  busbar:       { gradient: ['#B71C1C', '#E53935'], scanBg: '#FFEBEE', scanText: '#B71C1C', cardBg: '#FDECEA', iconBg: '#FFCDD2' },
-  exhaust:      { gradient: ['#0277BD', '#039BE5'], scanBg: '#E1F5FE', scanText: '#0277BD', cardBg: '#E8F5FE', iconBg: '#B3E5FC' },
-  led:          { gradient: ['#E65100', '#FF8F00'], scanBg: '#FFF8E1', scanText: '#E65100', cardBg: '#FFF9E6', iconBg: '#FFE082' },
-  changeover:   { gradient: ['#263238', '#546E7A'], scanBg: '#ECEFF1', scanText: '#37474F', cardBg: '#EEF2F4', iconBg: '#CFD8DC' },
-  mainswitch:   { gradient: ['#4A148C', '#7B1FA2'], scanBg: '#EDE7F6', scanText: '#4A148C', cardBg: '#F2ECFC', iconBg: '#CE93D8' },
-  louver:       { gradient: ['#1B5E20', '#388E3C'], scanBg: '#E8F5E9', scanText: '#1B5E20', cardBg: '#EAF5EB', iconBg: '#A5D6A7' },
+const CAT_COLORS: Record<string, { gradient: [string, string, string]; scanBg: string; scanText: string; cardGradient: [string, string, string]; iconBg: string }> = {
+  fanbox:       { gradient: ['#C84E1B', '#E87820', '#F6B94B'], scanBg: '#FFF3E0', scanText: '#D2641A', cardGradient: ['#FFF8EA', '#FDE7C3', '#F8D78F'], iconBg: '#FFE0B2' },
+  concealedbox: { gradient: ['#0E4AA8', '#1E88E5', '#6CC5FF'], scanBg: '#E3F2FD', scanText: '#1565C0', cardGradient: ['#F2F8FF', '#D9EFFF', '#B8DDFF'], iconBg: '#BBDEFB' },
+  modular:      { gradient: ['#5B178B', '#8E37B9', '#D08AF8'], scanBg: '#F3E5F5', scanText: '#6A1B9A', cardGradient: ['#FAF2FF', '#E9D5FF', '#D8B4FE'], iconBg: '#E1BEE7' },
+  mcb:          { gradient: ['#005B4F', '#15937D', '#4DD2BC'], scanBg: '#E0F2F1', scanText: '#00695C', cardGradient: ['#ECFFFA', '#CFF7EE', '#A7ECE0'], iconBg: '#B2DFDB' },
+  busbar:       { gradient: ['#971616', '#D92D20', '#FF7A59'], scanBg: '#FFEBEE', scanText: '#B71C1C', cardGradient: ['#FFF4F2', '#FFD9D2', '#FFB5A7'], iconBg: '#FFCDD2' },
+  exhaust:      { gradient: ['#045A8D', '#0284C7', '#67D4FF'], scanBg: '#E1F5FE', scanText: '#0277BD', cardGradient: ['#F0FBFF', '#D2F4FF', '#AFE8FF'], iconBg: '#B3E5FC' },
+  led:          { gradient: ['#C24A00', '#FF8F00', '#FFD54F'], scanBg: '#FFF8E1', scanText: '#E65100', cardGradient: ['#FFFCEF', '#FFEFC2', '#FFDF8A'], iconBg: '#FFE082' },
+  changeover:   { gradient: ['#1F2937', '#475569', '#94A3B8'], scanBg: '#ECEFF1', scanText: '#37474F', cardGradient: ['#F8FAFC', '#E2E8F0', '#CBD5E1'], iconBg: '#CFD8DC' },
+  mainswitch:   { gradient: ['#3B0764', '#7B1FA2', '#D946EF'], scanBg: '#EDE7F6', scanText: '#6B21A8', cardGradient: ['#FBF5FF', '#E9D5FF', '#D8B4FE'], iconBg: '#CE93D8' },
+  louver:       { gradient: ['#14532D', '#2F855A', '#86EFAC'], scanBg: '#E8F5E9', scanText: '#1B5E20', cardGradient: ['#F3FFF5', '#DCFCE7', '#BBF7D0'], iconBg: '#A5D6A7' },
 };
 
 // ── Real SVG Category Icons ───────────────────────────────────────────
@@ -318,7 +318,7 @@ function ProductCard({
 
   const rotate = tiltX.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '4deg'] });
   // Image fills full card width zone — no circle reduction
-  const imgSize = cardW - 16;
+  const imgSize = cardW + 4;
 
   return (
     <Pressable onPressIn={handlePressIn} onPressOut={handlePressOut}>
@@ -332,10 +332,15 @@ function ProductCard({
           },
         ]}
       >
-        {/* Image zone — fixed height */}
-        <View style={[styles.imgZone, { backgroundColor: catColor.cardBg, height: cardW }]}>
+        {/* Image zone - fixed height */}
+        <LinearGradient
+          colors={catColor.cardGradient}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={[styles.imgZone, { height: cardW + 18 }]}
+        >
           {product.badge != null && (
-            <View style={[styles.badge, { backgroundColor: catColor.scanText }]}>
+            <View style={[styles.badge, { backgroundColor: catColor.scanText }]}> 
               <Text style={styles.badgeText}>{product.badge}</Text>
             </View>
           )}
@@ -343,7 +348,7 @@ function ProductCard({
             <Text style={[styles.ptsBadgeText, { color: catColor.scanText }]}>+{product.points} pts</Text>
           </View>
           <AnimatedProductImage uri={product.img} size={imgSize} />
-        </View>
+        </LinearGradient>
 
         {/* Info zone — fixed layout */}
         <View style={styles.infoZone}>
@@ -365,9 +370,9 @@ function ProductCard({
 }
 
 // ── Main Screen ───────────────────────────────────────────────────────
-export function ProductScreen({ onNavigate }: { onNavigate: (screen: Screen) => void }) {
+export function ProductScreen({ onNavigate, initialCategory = 'fanbox' }: { onNavigate: (screen: Screen) => void; initialCategory?: string }) {
   const { width } = useWindowDimensions();
-  const [category, setCategory] = useState('fanbox');
+  const [category, setCategory] = useState(initialCategory);
   const [search, setSearch] = useState('');
 
   const PADDING = 14;
