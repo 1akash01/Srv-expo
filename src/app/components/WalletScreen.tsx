@@ -84,9 +84,11 @@ export function WalletScreen({ onNavigate }: WalletScreenProps) {
             <BackIcon />
             <Text style={styles.backLabel}>Home</Text>
           </Pressable>
-          <View style={styles.heroBadge}>
-            <WalletGlyph />
-          </View>
+          <Pressable onPress={() => onNavigate?.('rewards')} style={styles.storeButton}>
+            <View style={styles.storeIconWrap}>
+              <GiftIcon />
+            </View>
+          </Pressable>
         </View>
 
         <Text style={styles.eyebrow}>SRV Premium Wallet</Text>
@@ -230,7 +232,7 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255,255,255,0.2)',
   },
   backLabel: { color: '#FFFFFF', fontSize: 13, fontWeight: '800' },
-  heroBadge: {
+  storeButton: {
     width: 54,
     height: 54,
     borderRadius: 20,
@@ -239,6 +241,14 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.16)',
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.2)',
+  },
+  storeIconWrap: {
+    width: 34,
+    height: 34,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FFF0DA',
   },
   eyebrow: { marginTop: 24, fontSize: 12, fontWeight: '800', letterSpacing: 1.2, textTransform: 'uppercase', color: '#FDE3B8' },
   heroTitle: { marginTop: 10, fontSize: 38, fontWeight: '900', color: '#FFFFFF' },
