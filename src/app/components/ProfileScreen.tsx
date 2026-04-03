@@ -190,13 +190,18 @@ function MenuIcon({ kind, color = '#1C1E2E', size = 18 }: { kind: string; color?
 export function ProfileScreen({ onNavigate, onSignOut }: { onNavigate: (screen: Screen) => void; onSignOut: () => void }) {
   const [profile, setProfile] = useState<Profile>(defaultProfile);
   const [draft, setDraft] = useState<Profile>(defaultProfile);
+  const [profileImage, setProfileImage] = useState<string | null>(null);
+  const [draftImage, setDraftImage] = useState<string | null>(null);
   const [showEdit, setShowEdit] = useState(false);
-  const [showSignOutConfirm, setShowSignOutConfirm] = useState(false);
+  const [showSignOut, setShowSignOut] = useState(false);
+  const [showImgPicker, setShowImgPicker] = useState(false);
+  const [subPage, setSubPage] = useState<SubPage>(null);
+  const [showFullProfile, setShowFullProfile] = useState(false);
 
-  const initials = useMemo(
-    () => profile.name.split(' ').map((w) => w[0]).join('').slice(0, 2).toUpperCase(),
-    [profile.name]
-  );
+  const theme = useMemo(() => getThemePalette(darkMode), [darkMode]);
+  const t = (key: keyof (typeof translations)['English']) => translations[language][key];
+  const preferenceValue = { language, setLanguage, darkMode, setDarkMode, t, theme };
+  const initials = useMemo(() => profile.name.split(' ').map((w) => w[0]).join('').slice(0, 2).toUpperCase(), [profile.name]);
 
   const saveProfile = () => {
     setProfile(draft);
@@ -207,6 +212,10 @@ export function ProfileScreen({ onNavigate, onSignOut }: { onNavigate: (screen: 
     setShowSignOutConfirm(false);
     onSignOut();
   };
+
+  if (subPage) {
+    return <PreferenceContext.Provider value={preferenceValue}>{subpages[subPage]}</PreferenceContext.Provider>;
+  }
 
   return (
     <>
@@ -239,7 +248,6 @@ export function ProfileScreen({ onNavigate, onSignOut }: { onNavigate: (screen: 
             </View>
             <Text style={styles.goldHint}>750 pts to Platinum {'>'}</Text>
           </View>
-        </View>
 
         <View style={styles.card}>
           <View style={styles.sectionHeadRow}>
@@ -256,25 +264,6 @@ export function ProfileScreen({ onNavigate, onSignOut }: { onNavigate: (screen: 
               <Text style={styles.kycSub}>Add PAN & GST details to get verified</Text>
             </View>
           </View>
-          {[
-            ['Mobile Number', profile.phone],
-            ['Email ID', profile.email || 'Not provided'],
-            ['State', profile.state],
-            ['City', profile.city],
-            ['Pincode', profile.pincode],
-            ['Address', profile.address],
-            ['GST Holder Name', profile.gstHolderName],
-            ['GST Number', profile.gstNumber],
-            ['PAN Holder Name', profile.panHolderName || 'Not provided'],
-            ['PAN Number', profile.panNumber || 'Not provided'],
-            ['Dealer Code', profile.dealerCode],
-          ].map(([label, value], i, arr) => (
-            <View key={label} style={[styles.detailRow, i < arr.length - 1 && styles.detailBorder]}>
-              <Text style={styles.detailLabel}>{label}</Text>
-              <Text style={[styles.detailValue, !value.trim() && styles.detailValueEmpty]}>{value}</Text>
-            </View>
-          ))}
-        </View>
 
         <View style={styles.card}>
           {menuItems.map((item, i) => (
@@ -316,29 +305,30 @@ export function ProfileScreen({ onNavigate, onSignOut }: { onNavigate: (screen: 
             <StarIcon size={13} color="#FFFFFF" />
             <Text style={styles.statsTitle}>Your Stats</Text>
           </View>
-          <View style={styles.statsRow}>
-            <View style={[styles.statBox, { backgroundColor: 'rgba(232,69,60,0.18)' }]}>
-              <Text style={[styles.statValue, { color: Colors.primary }]}>24</Text>
-              <Text style={styles.statLabel}>Scans</Text>
-            </View>
-            <View style={[styles.statBox, { backgroundColor: 'rgba(245,158,11,0.18)' }]}>
-              <Text style={[styles.statValue, { color: Colors.gold }]}>4,250</Text>
-              <Text style={styles.statLabel}>Points</Text>
-            </View>
-            <View style={[styles.statBox, { backgroundColor: 'rgba(34,197,94,0.18)' }]}>
-              <Text style={[styles.statValue, { color: Colors.success }]}>6</Text>
-              <Text style={styles.statLabel}>Rewards</Text>
-            </View>
+
+          <View style={[ps.card, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+            <Text style={[ps.cardTitle, { color: theme.textPrimary }]}>{t('quickActions')}</Text>
+            <View style={{ height: 12 }} />
+            {menuItems.map((item, i) => (
+              <TouchableOpacity key={item.label} style={[ps.menuRow, i < menuItems.length - 1 && [ps.menuBorder, { borderBottomColor: theme.border }]]} onPress={() => (item.route ? onNavigate(item.route) : setSubPage(item.screen as SubPage))} activeOpacity={0.75}>
+                <View style={[ps.menuIcon, { backgroundColor: item.bg }]}><AppIcon name={item.icon} size={20} color={item.color} /></View>
+                <Text style={[ps.menuLabel, { color: theme.textPrimary }]}>{item.label}</Text>
+                <View style={[ps.arrowWrap, { backgroundColor: theme.soft }]}><Text style={[ps.arrowTxt, { color: theme.textMuted }]}>›</Text></View>
+              </TouchableOpacity>
+            ))}
           </View>
-        </View>
 
         <TouchableOpacity style={styles.signOutBtn} onPress={() => setShowSignOutConfirm(true)} activeOpacity={0.8}>
           <LogoutIcon />
           <Text style={styles.signOutText}>Sign Out</Text>
         </TouchableOpacity>
 
-        <View style={{ height: 30 }} />
-      </ScrollView>
+          <TouchableOpacity style={[ps.signOutBtn, { backgroundColor: theme.surface, borderColor: darkMode ? theme.border : '#FFD6D4' }]} onPress={() => setShowSignOut(true)} activeOpacity={0.8}>
+            <View style={ps.signOutIconWrap}><AppIcon name="signOut" size={18} color={C.primary} /></View>
+            <Text style={ps.signOutTxt}>{t('signOut')}</Text>
+          </TouchableOpacity>
+          <View style={{ height: 40 }} />
+        </ScrollView>
 
       <Modal visible={showSignOutConfirm} animationType="fade" transparent onRequestClose={() => setShowSignOutConfirm(false)}>
         <View style={styles.confirmOverlay}>
@@ -357,8 +347,7 @@ export function ProfileScreen({ onNavigate, onSignOut }: { onNavigate: (screen: 
               </Pressable>
             </View>
           </View>
-        </View>
-      </Modal>
+        </Modal>
 
       <Modal visible={showEdit} animationType="slide" transparent onRequestClose={() => setShowEdit(false)}>
         <View style={styles.modalOverlay}>
@@ -382,21 +371,26 @@ export function ProfileScreen({ onNavigate, onSignOut }: { onNavigate: (screen: 
                     style={styles.modalInput}
                   />
                 </View>
-              ))}
-              <View style={{ height: 20 }} />
-            </ScrollView>
-            <View style={styles.modalActions}>
-              <Pressable onPress={() => setShowEdit(false)} style={styles.modalSecondary}>
-                <Text style={styles.modalSecondaryText}>Cancel</Text>
-              </Pressable>
-              <Pressable onPress={saveProfile} style={styles.modalPrimary}>
-                <Text style={styles.modalPrimaryText}>Save</Text>
-              </Pressable>
+                {([
+                  ['Full Name', 'name'], ['Phone Number', 'phone'], ['Email', 'email'], ['City', 'city'], ['State', 'state'], ['Pincode', 'pincode'],
+                  ['Address', 'address'], ['GST Holder Name', 'gstHolderName'], ['GST Number', 'gstNumber'], ['PAN Holder Name', 'panHolderName'],
+                  ['PAN Number', 'panNumber'], ['Dealer Code', 'dealerCode'],
+                ] as [string, keyof Profile][]).map(([label, key]) => (
+                  <View key={key} style={ms.field}>
+                    <Text style={ms.fieldLabel}>{label}</Text>
+                    <TextInput value={draft[key]} onChangeText={(v) => setDraft((c) => ({ ...c, [key]: v }))} placeholder={`Enter ${label}`} placeholderTextColor={C.muted} style={ms.input} />
+                  </View>
+                ))}
+              </ScrollView>
+              <View style={ms.editActions}>
+                <Pressable onPress={() => setShowEdit(false)} style={ms.discardBtn}><Text style={ms.discardTxt}>{t('discard')}</Text></Pressable>
+                <Pressable onPress={saveProfile} style={ms.saveBtn}><Text style={ms.saveTxt}>{t('saveChanges')}</Text></Pressable>
+              </View>
             </View>
           </View>
-        </View>
-      </Modal>
-    </>
+        </Modal>
+      </>
+    </PreferenceContext.Provider>
   );
 }
 

@@ -44,6 +44,7 @@ export default function App() {
       case 'home':
         return (
           <HomeScreen
+            currentRole={currentRole}
             onNavigate={handleNavigate}
             onOpenProductCategory={handleOpenProductCategory}
           />
@@ -57,18 +58,19 @@ export default function App() {
       case 'rewards':
         return <RewardsScreen />;
       case 'profile':
-        return <ProfileScreen onNavigate={handleNavigate} onSignOut={handleSignOut} />;
+        return <ProfileScreen currentRole={currentRole} onNavigate={handleNavigate} onSignOut={handleSignOut} />;
       case 'wallet':
         return <WalletScreen onNavigate={handleNavigate} />;
       default:
         return (
           <HomeScreen
+            currentRole={currentRole}
             onNavigate={handleNavigate}
             onOpenProductCategory={handleOpenProductCategory}
           />
         );
     }
-  }, [currentScreen, selectedProductCategory, showOnboarding]);
+  }, [currentRole, currentScreen, selectedProductCategory]);
 
   if (showOnboarding) {
     return (
