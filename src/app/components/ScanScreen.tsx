@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
+import * as ImagePicker from 'expo-image-picker';
 import {
+  Alert,
   Animated,
   Easing,
   Image,
@@ -68,6 +70,7 @@ export function ScanScreen({ onNavigate }: { onNavigate: (screen: Screen) => voi
   const { width } = useWindowDimensions();
   const [scanned, setScanned] = useState(false);
   const [scanning, setScanning] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const frameSize = Math.min(width - 64, 260);
 
   const laserY = useRef(new Animated.Value(0)).current;
@@ -180,9 +183,37 @@ export function ScanScreen({ onNavigate }: { onNavigate: (screen: Screen) => voi
   }, [scanned]);
 
   const startScan = () => {
+    setSelectedImage(null);
     setScanned(false);
     setScanning(true);
     setTimeout(() => { setScanning(false); setScanned(true); }, 3000);
+  };
+
+  const handlePickFromGallery = async () => {
+    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+    if (!permission.granted) {
+      Alert.alert('Permission needed', 'Gallery access allow karo taaki aap QR image select kar sako.');
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      allowsEditing: false,
+      quality: 1,
+    });
+
+    if (result.canceled || !result.assets?.length) {
+      return;
+    }
+
+    setSelectedImage(result.assets[0].uri);
+    setScanned(false);
+    setScanning(true);
+    setTimeout(() => {
+      setScanning(false);
+      setScanned(true);
+    }, 1800);
   };
 
   const laserTranslate = laserY.interpolate({ inputRange: [0, 1], outputRange: [0, frameSize - 10] });
@@ -275,7 +306,7 @@ export function ScanScreen({ onNavigate }: { onNavigate: (screen: Screen) => voi
             <FlashlightIcon size={20} color={Colors.textDark} />
             <Text style={styles.secondaryActionText}>Flashlight</Text>
           </Pressable>
-          <Pressable style={styles.secondaryAction}>
+          <Pressable style={styles.secondaryAction} onPress={handlePickFromGallery}>
             <GalleryIcon size={20} color={Colors.textDark} />
             <Text style={styles.secondaryActionText}>Gallery</Text>
           </Pressable>
@@ -365,3 +396,5 @@ const styles = StyleSheet.create({
   howIndexText: { color: '#fff', fontSize: 13, fontWeight: '800' },
   howText: { flex: 1, fontSize: 13, lineHeight: 20, color: Colors.textMuted },
 });
+
+

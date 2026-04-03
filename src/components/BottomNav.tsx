@@ -53,38 +53,31 @@ function ProductIcon({ color, size = 24 }: { color: string; size?: number }) {
   );
 }
 
-function GiftIcon({ color, size = 24 }: { color: string; size?: number }) {
+function WalletIcon({ color, size = 24 }: { color: string; size?: number }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-      <Rect x="3" y="8" width="18" height="4" rx="1" stroke={color} strokeWidth={2} />
+      <Rect x="3" y="6" width="18" height="13" rx="2.4" stroke={color} strokeWidth={2} />
       <Path
-        d="M19 12v7a2 2 0 01-2 2H7a2 2 0 01-2-2v-7"
+        d="M15.5 11.5H21V16h-5.5a2.25 2.25 0 010-4.5z"
         stroke={color}
         strokeWidth={2}
-        strokeLinecap="round"
       />
-      <Path
-        d="M12 8v13M12 8C12 8 9 6 9 4.5a3 3 0 016 0C15 6 12 8 12 8z"
-        stroke={color}
-        strokeWidth={2}
-        strokeLinejoin="round"
-        strokeLinecap="round"
-      />
+      <Circle cx="16.8" cy="13.75" r="1.05" fill={color} />
+      <Path d="M7 6V4.8A1.8 1.8 0 018.8 3h7.7" stroke={color} strokeWidth={2} strokeLinecap="round" />
     </Svg>
   );
 }
 
-function MoreIcon({ color, size = 24 }: { color: string; size?: number }) {
-  const positions: [number, number][] = [
-    [3, 3], [8, 3], [13, 3],
-    [3, 8], [8, 8], [13, 8],
-    [3, 13], [8, 13], [13, 13],
-  ];
+function ProfileIcon({ color, size = 24 }: { color: string; size?: number }) {
   return (
-    <Svg width={size} height={size} viewBox="0 0 16 16" fill="none">
-      {positions.map(([cx, cy], i) => (
-        <Circle key={i} cx={cx} cy={cy} r={1.4} fill={color} />
-      ))}
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Circle cx="12" cy="8.2" r="3.5" stroke={color} strokeWidth={2} />
+      <Path
+        d="M5 19.2c1.52-3.02 4.12-4.53 7-4.53 2.88 0 5.48 1.5 7 4.53"
+        stroke={color}
+        strokeWidth={2}
+        strokeLinecap="round"
+      />
     </Svg>
   );
 }
@@ -264,8 +257,8 @@ function NavTab({
     switch (id) {
       case 'home':    return <HomeIcon color={iconColor} />;
       case 'product': return <ProductIcon color={iconColor} />;
-      case 'rewards': return <GiftIcon color={iconColor} />;
-      case 'profile': return <MoreIcon color={iconColor} />;
+      case 'wallet': return <WalletIcon color={iconColor} />;
+      case 'profile': return <ProfileIcon color={iconColor} />;
       default:        return null;
     }
   };
@@ -280,7 +273,6 @@ function NavTab({
       <Text style={[styles.label, active && styles.labelActive]}>
         {label}
       </Text>
-      {active && <View style={styles.activeDot} />}
     </Pressable>
   );
 }
@@ -293,8 +285,8 @@ const LEFT: Array<{ id: Screen; label: string }> = [
 ];
 
 const RIGHT: Array<{ id: Screen; label: string }> = [
-  { id: 'rewards', label: 'Gift Store' },
-  { id: 'profile', label: 'More' },
+  { id: 'wallet', label: 'Wallet' },
+  { id: 'profile', label: 'Profile' },
 ];
 
 export function BottomNav({
@@ -366,6 +358,8 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
     gap: 3,
     minWidth: 50,
+    minHeight: 48,
+    justifyContent: 'flex-end',
   },
   iconWrap: {
     width: 26,
@@ -382,11 +376,7 @@ const styles = StyleSheet.create({
     color: colors.primary,
     fontWeight: '800',
   },
-  activeDot: {
-    width: 4,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: colors.primary,
-    marginTop: 1,
-  },
 });
+
+
+
