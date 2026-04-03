@@ -2,9 +2,11 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useEffect, useRef, useState } from 'react';
 import {
   Animated,
+  Easing,
   Image,
   Linking,
   PanResponder,
+  Pressable,
   ScrollView,
   StyleSheet,
   Text,
@@ -19,12 +21,12 @@ import ProfileFlipCard from './ProfileFlipCard';
 const logoImage = require('../../../assets/banners/srv-logo.jpeg');
 
 const BANNER_SLIDES = [
-  { image: require('../../../assets/banners/aco.jpg.jpeg') },
-  { image: require('../../../assets/banners/appliances.jpg.jpeg') },
-  { image: require('../../../assets/banners/co.jpg.jpeg') },
-  { image: require('../../../assets/banners/light.jpg.jpeg') },
-  { image: require('../../../assets/banners/mcb-box.jpg.jpeg') },
-  { image: require('../../../assets/banners/vs-poster.jpg.jpeg') },
+  { image: require('../../../assets/banners/aco.jpg.jpeg'), resizeMode: 'cover' as const, backgroundColor: '#192F67' },
+  { image: require('../../../assets/banners/appliances.jpg.jpeg'), resizeMode: 'cover' as const, backgroundColor: '#E8C973' },
+  { image: require('../../../assets/banners/co.jpg.jpeg'), resizeMode: 'cover' as const, backgroundColor: '#4153C8' },
+  { image: require('../../../assets/banners/light.jpg.jpeg'), resizeMode: 'cover' as const, backgroundColor: '#8A20B4' },
+  { image: require('../../../assets/banners/mcb-box.jpg.jpeg'), resizeMode: 'cover' as const, backgroundColor: '#7C8BD7' },
+  { image: require('../../../assets/banners/vs-poster.jpg.jpeg'), resizeMode: 'contain' as const, backgroundColor: '#19211F' },
 ];
 
 const PRODUCTS = [
@@ -85,6 +87,110 @@ const DUMMY_PROFILE = {
   state: 'Punjab',
 };
 
+const FEATURED_CARD_COLORS: Record<string, { gradient: readonly [string, string, string]; scanBg: string; scanText: string; cardGradient: readonly [string, string, string] }> = {
+  fanbox: { gradient: ['#C84E1B', '#E87820', '#F6B94B'], scanBg: '#FFF3E0', scanText: '#D2641A', cardGradient: ['#FFF8EA', '#FDE7C3', '#F8D78F'] },
+  concealedbox: { gradient: ['#0E4AA8', '#1E88E5', '#6CC5FF'], scanBg: '#E3F2FD', scanText: '#1565C0', cardGradient: ['#F2F8FF', '#D9EFFF', '#B8DDFF'] },
+  modular: { gradient: ['#5B178B', '#8E37B9', '#D08AF8'], scanBg: '#F3E5F5', scanText: '#6A1B9A', cardGradient: ['#FAF2FF', '#E9D5FF', '#D8B4FE'] },
+  exhaust: { gradient: ['#045A8D', '#0284C7', '#67D4FF'], scanBg: '#E1F5FE', scanText: '#0277BD', cardGradient: ['#F0FBFF', '#D2F4FF', '#AFE8FF'] },
+};
+function FeaturedProductImage({ uri, size }: { uri: string; size: number }) {
+  const floatY = useRef(new Animated.Value(0)).current;
+  const imgScale = useRef(new Animated.Value(1)).current;
+  useEffect(() => {
+    const floatLoop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(floatY, { toValue: -8, duration: 1600, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
+        Animated.timing(floatY, { toValue: 0, duration: 1600, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
+      ])
+    );
+    const scaleLoop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(imgScale, { toValue: 1.05, duration: 2200, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
+        Animated.timing(imgScale, { toValue: 1, duration: 2200, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
+      ])
+    );
+    floatLoop.start();
+    scaleLoop.start();
+    return () => {
+      floatLoop.stop();
+      scaleLoop.stop();
+    };
+  }, [floatY, imgScale]);
+  return (
+    <View style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }}>
+      <Animated.View style={{ transform: [{ translateY: floatY }, { scale: imgScale }] }}>
+        <Image source={{ uri }} style={{ width: size, height: size }} resizeMode="contain" />
+      </Animated.View>
+    </View>
+  );
+}
+function FeaturedProductCard({
+  product,
+  width,
+  onOpenCategory,
+  onScan,
+}: {
+  product: (typeof PRODUCTS)[number];
+  width: number;
+  onOpenCategory: (category: string) => void;
+  onScan: () => void;
+}) {
+  const palette = FEATURED_CARD_COLORS[product.category] ?? FEATURED_CARD_COLORS.fanbox;
+  const pressScale = useRef(new Animated.Value(1)).current;
+  const tilt = useRef(new Animated.Value(0)).current;
+  const handlePressIn = () => {
+    Animated.parallel([
+      Animated.spring(pressScale, { toValue: 0.965, useNativeDriver: true, tension: 110, friction: 7 }),
+      Animated.spring(tilt, { toValue: 1, useNativeDriver: true, tension: 110, friction: 7 }),
+    ]).start();
+  };
+  const handlePressOut = () => {
+    Animated.parallel([
+      Animated.spring(pressScale, { toValue: 1, useNativeDriver: true, tension: 110, friction: 7 }),
+      Animated.spring(tilt, { toValue: 0, useNativeDriver: true, tension: 110, friction: 7 }),
+    ]).start();
+  };
+  const rotateY = tilt.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '4deg'] });
+  const badgeText = product.points >= 25 ? 'Top Pick' : 'Popular';
+  return (
+    <Pressable onPress={() => onOpenCategory(product.category)} onPressIn={handlePressIn} onPressOut={handlePressOut}>
+      <Animated.View
+        style={[
+          styles.productCard,
+          {
+            width,
+            transform: [{ scale: pressScale }, { perspective: 900 }, { rotateY }],
+          },
+        ]}
+      >
+        <LinearGradient colors={palette.cardGradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.productImageZone}>
+          <LinearGradient colors={palette.gradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.productBadge}>
+            <Text style={styles.productBadgeText}>{badgeText}</Text>
+          </LinearGradient>
+          <View style={[styles.pointsPill, styles.pointsPillFloating, { borderColor: palette.scanText + '33' }]}>
+            <Text style={[styles.pointsPillText, { color: palette.scanText }]}>+{product.points} pts</Text>
+          </View>
+          <FeaturedProductImage uri={product.img} size={width + 6} />
+        </LinearGradient>
+        <View style={styles.productInfo}>
+          <Text style={styles.productName} numberOfLines={1}>{product.name}</Text>
+          <Text style={styles.productDesc} numberOfLines={2}>{product.description}</Text>
+          <View style={styles.productFooter}>
+            <Text style={styles.productPrice}>{product.price}</Text>
+          </View>
+          <TouchableOpacity
+            onPress={() => onScan()}
+            style={[styles.productScanBtn, { backgroundColor: palette.scanBg }]}
+            activeOpacity={0.85}
+          >
+            <ScanIcon color={palette.scanText} size={15} />
+            <Text style={[styles.productScanBtnText, { color: palette.scanText }]}>Scan to Earn</Text>
+          </TouchableOpacity>
+        </View>
+      </Animated.View>
+    </Pressable>
+  );
+}
 function WalletIcon({ color = '#10254A', size = 22 }: { color?: string; size?: number }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
@@ -109,6 +215,7 @@ function BellIcon({ color = '#10254A', size = 22 }: { color?: string; size?: num
     </Svg>
   );
 }
+
 
 function ScanIcon({ color = '#10254A', size = 22 }: { color?: string; size?: number }) {
   return (
@@ -156,10 +263,17 @@ function ChevronRight({ color = '#10254A', size = 16 }: { color?: string; size?:
   );
 }
 
-export function HomeScreen({ onNavigate, onOpenProductCategory }: { onNavigate: (screen: Screen) => void; onOpenProductCategory: (category: string) => void }) {
+export function HomeScreen({
+  onNavigate,
+  onOpenProductCategory,
+}: {
+  onNavigate: (screen: Screen) => void;
+  onOpenProductCategory: (category: string) => void;
+}) {
   const { width } = useWindowDimensions();
   const [slide, setSlide] = useState(0);
   const fadeAnim = useRef(new Animated.Value(1)).current;
+  const statsPulse = useRef(new Animated.Value(1)).current;
   const autoSlideRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const cardW = (width - 28 - 12) / 2;
   const heroImageHeight = Math.round((width - 28) * 0.56);
@@ -188,6 +302,18 @@ export function HomeScreen({ onNavigate, onOpenProductCategory }: { onNavigate: 
       }
     };
   }, []);
+
+  useEffect(() => {
+    const pulse = Animated.loop(
+      Animated.sequence([
+        Animated.timing(statsPulse, { toValue: 1.03, duration: 1300, useNativeDriver: true }),
+        Animated.timing(statsPulse, { toValue: 1, duration: 1300, useNativeDriver: true }),
+      ])
+    );
+
+    pulse.start();
+    return () => pulse.stop();
+  }, [statsPulse]);
 
   const panResponder = useRef(
     PanResponder.create({
@@ -250,9 +376,10 @@ export function HomeScreen({ onNavigate, onOpenProductCategory }: { onNavigate: 
 
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-      <LinearGradient colors={['#08111F', '#10254A', '#142E59']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.heroShell}>
+      <LinearGradient colors={['#EAF3FF', '#DDEEFF', '#F6EEFF']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.heroShell}>
         <View style={styles.heroGlowOne} />
         <View style={styles.heroGlowTwo} />
+        <View style={styles.heroGlowThree} />
 
         <View style={styles.topRow}>
           <View style={styles.brandLockup}>
@@ -262,35 +389,50 @@ export function HomeScreen({ onNavigate, onOpenProductCategory }: { onNavigate: 
           </View>
 
           <View style={styles.topActions}>
-            <TouchableOpacity onPress={() => onNavigate('wallet')} style={styles.topActionBtn} activeOpacity={0.85}>
-              <WalletIcon color="#FFFFFF" />
-            </TouchableOpacity>
             <TouchableOpacity onPress={() => onNavigate('notification')} style={styles.topActionBtn} activeOpacity={0.85}>
-              <BellIcon color="#FFFFFF" />
+              <View style={[styles.topIconCore, styles.notificationCore]}>
+                <BellIcon color="#C2410C" />
+              </View>
             </TouchableOpacity>
+
           </View>
         </View>
 
         <ProfileFlipCard profile={DUMMY_PROFILE} role="electrician" />
 
         <View style={styles.statRow}>
-          <View style={styles.statCard}>
-            <Text style={styles.statLabel}>Total Points</Text>
-            <Text style={styles.statValue}>4,250</Text>
-            <Text style={styles.statHint}>+120 this week</Text>
-          </View>
-          <View style={styles.statCard}>
-            <Text style={styles.statLabel}>Member Tier</Text>
-            <Text style={styles.statValue}>Gold</Text>
-            <Text style={styles.statHint}>750 to Platinum</Text>
-          </View>
+          <Animated.View style={[styles.statCardWrap, { transform: [{ scale: statsPulse }] }]}>
+            <LinearGradient colors={['#E0F2FE', '#DBEAFE', '#EDE9FE']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.statCard}>
+              <Animated.View style={[styles.statGlow, styles.statGlowBlue, { opacity: statsPulse }]} />
+              <Text style={styles.statLabel}>Total Points</Text>
+              <Text style={styles.statValue}>4,250</Text>
+              <Text style={styles.statHint}>+120 this week</Text>
+            </LinearGradient>
+          </Animated.View>
+          <Animated.View style={[styles.statCardWrap, { transform: [{ scale: statsPulse }] }]}>
+            <LinearGradient colors={['#FEF3C7', '#FDE68A', '#FBCFE8']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.statCard}>
+              <Animated.View style={[styles.statGlow, styles.statGlowWarm, { opacity: statsPulse }]} />
+              <Text style={styles.statLabel}>Member Tier</Text>
+              <Text style={styles.statValue}>Gold</Text>
+              <Text style={styles.statHint}>750 to Platinum</Text>
+            </LinearGradient>
+          </Animated.View>
         </View>
       </LinearGradient>
 
       <View style={styles.body}>
         <Animated.View style={{ opacity: fadeAnim }} {...panResponder.panHandlers}>
-          <View style={[styles.bannerCard, { height: heroImageHeight }]}>
-            <Image source={BANNER_SLIDES[slide].image} style={styles.bannerImage} resizeMode="cover" />
+          <View
+            style={[
+              styles.bannerCard,
+              { height: heroImageHeight, backgroundColor: BANNER_SLIDES[slide].backgroundColor },
+            ]}
+          >
+            <Image
+              source={BANNER_SLIDES[slide].image}
+              style={styles.bannerImage}
+              resizeMode={BANNER_SLIDES[slide].resizeMode}
+            />
           </View>
         </Animated.View>
 
@@ -330,21 +472,13 @@ export function HomeScreen({ onNavigate, onOpenProductCategory }: { onNavigate: 
 
         <View style={styles.productsGrid}>
           {PRODUCTS.map((product) => (
-            <TouchableOpacity key={product.name} onPress={() => onOpenProductCategory(product.category)} style={[styles.productCard, { width: cardW }]} activeOpacity={0.9}>
-              <LinearGradient colors={product.colors} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.productImageZone}>
-                <Image source={{ uri: product.img }} style={styles.productImage} resizeMode="contain" />
-              </LinearGradient>
-              <View style={styles.productInfo}>
-                <Text style={styles.productName} numberOfLines={1}>{product.name}</Text>
-                <Text style={styles.productDesc} numberOfLines={2}>{product.description}</Text>
-                <View style={styles.productFooter}>
-                  <Text style={styles.productPrice}>{product.price}</Text>
-                  <View style={styles.pointsPill}>
-                    <Text style={styles.pointsPillText}>+{product.points} pts</Text>
-                  </View>
-                </View>
-              </View>
-            </TouchableOpacity>
+            <FeaturedProductCard
+              key={product.name}
+              product={product}
+              width={cardW}
+              onOpenCategory={onOpenProductCategory}
+              onScan={() => onNavigate('scan')}
+            />
           ))}
         </View>
 
@@ -395,8 +529,8 @@ const styles = StyleSheet.create({
     width: 220,
     height: 220,
     borderRadius: 110,
-    backgroundColor: 'rgba(37,99,235,0.24)',
-    top: -50,
+    backgroundColor: 'rgba(59,130,246,0.18)',
+    top: -60,
     right: -35,
   },
   heroGlowTwo: {
@@ -404,9 +538,18 @@ const styles = StyleSheet.create({
     width: 160,
     height: 160,
     borderRadius: 80,
-    backgroundColor: 'rgba(232,69,60,0.16)',
-    bottom: 20,
-    left: -35,
+    backgroundColor: 'rgba(236,72,153,0.14)',
+    bottom: 18,
+    left: -28,
+  },
+  heroGlowThree: {
+    position: 'absolute',
+    width: 180,
+    height: 180,
+    borderRadius: 90,
+    backgroundColor: 'rgba(34,197,94,0.1)',
+    top: 72,
+    left: '34%',
   },
   topRow: {
     flexDirection: 'row',
@@ -430,27 +573,71 @@ const styles = StyleSheet.create({
   logoImage: { width: 64, height: 64 },
   topActions: { flexDirection: 'row', gap: 8 },
   topActionBtn: {
-    width: 42,
-    height: 42,
-    borderRadius: 14,
-    backgroundColor: 'rgba(255,255,255,0.12)',
+    width: 46,
+    height: 46,
+    borderRadius: 16,
+    backgroundColor: 'rgba(255,255,255,0.96)',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.14)',
+    borderColor: 'rgba(148,163,184,0.24)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.12,
+    shadowRadius: 14,
+    elevation: 4,
+  },
+
+  topIconCore: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  statRow: { flexDirection: 'row', gap: 12, marginTop: 6 },
+  walletCore: {
+    backgroundColor: '#FEF3C7',
+  },
+  notificationCore: {
+    backgroundColor: '#FFEDD5',
+  },
+  statRow: { flexDirection: 'row', gap: 8, marginTop: 6 },
+  statCardWrap: {
+    flex: 1,
+    borderRadius: 16,
+    overflow: 'hidden',
+    shadowColor: '#94A3B8',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.12,
+    shadowRadius: 16,
+    elevation: 4,
+  },
   statCard: {
     flex: 1,
-    backgroundColor: 'rgba(255,255,255,0.11)',
-    borderRadius: 20,
-    padding: 13,
+    overflow: 'hidden',
+    borderRadius: 16,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.12)',
+    borderColor: 'rgba(255,255,255,0.45)',
   },
-  statLabel: { color: 'rgba(255,255,255,0.58)', fontSize: 10.5, fontWeight: '700', marginBottom: 5 },
-  statValue: { color: '#FFFFFF', fontSize: 22, fontWeight: '900' },
-  statHint: { color: '#B8C6E5', fontSize: 11, marginTop: 3 },
+  statGlow: {
+    position: 'absolute',
+    width: 82,
+    height: 82,
+    borderRadius: 41,
+    top: -18,
+    right: -12,
+  },
+  statGlowBlue: {
+    backgroundColor: 'rgba(59,130,246,0.22)',
+  },
+  statGlowWarm: {
+    backgroundColor: 'rgba(244,114,182,0.2)',
+  },
+  statLabel: { color: '#5C6F91', fontSize: 9.5, fontWeight: '700', marginBottom: 4 },
+  statValue: { color: '#13294B', fontSize: 16, fontWeight: '900' },
+  statHint: { color: '#7A8CAA', fontSize: 9.5, marginTop: 2 },
   body: { paddingHorizontal: 14, paddingTop: 18 },
   sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 12 },
   sectionEyebrow: { color: '#7D8AA5', fontSize: 11, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 1.1, marginBottom: 5 },
@@ -497,21 +684,60 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderRadius: 22,
     overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: '#E6ECF5',
     shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 8 },
+    shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.08,
-    shadowRadius: 16,
+    shadowRadius: 18,
     elevation: 5,
   },
-  productImageZone: { height: 138, alignItems: 'center', justifyContent: 'center' },
+  productImageZone: {
+    height: 168,
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
+    overflow: 'hidden',
+  },
+  productBadge: {
+    position: 'absolute',
+    top: 12,
+    left: 12,
+    zIndex: 2,
+    borderRadius: 10,
+    paddingHorizontal: 9,
+    paddingVertical: 4,
+  },
+  productBadgeText: { color: '#FFFFFF', fontSize: 10, fontWeight: '800' },
   productImage: { width: 112, height: 112 },
-  productInfo: { padding: 13 },
-  productName: { color: '#152238', fontSize: 13.5, fontWeight: '800' },
+  productInfo: { padding: 13, paddingTop: 11 },
+  productName: { color: '#152238', fontSize: 13, fontWeight: '800', textTransform: 'uppercase' },
   productDesc: { color: '#70819C', fontSize: 11, lineHeight: 16, marginTop: 4, minHeight: 32 },
-  productFooter: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 12 },
+  productFooter: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 10, marginBottom: 8 },
   productPrice: { color: '#152238', fontSize: 15, fontWeight: '900' },
-  pointsPill: { backgroundColor: '#EAF8F0', borderRadius: 999, paddingHorizontal: 8, paddingVertical: 4 },
-  pointsPillText: { color: '#16A34A', fontSize: 10.5, fontWeight: '800' },
+  pointsPill: {
+    backgroundColor: 'rgba(255,255,255,0.92)',
+    borderRadius: 999,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderWidth: 1,
+  },
+  pointsPillFloating: {
+    position: 'absolute',
+    top: 12,
+    right: 12,
+    zIndex: 2,
+  },
+  pointsPillText: { fontSize: 10.5, fontWeight: '800' },
+  productScanBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 5,
+    borderRadius: 12,
+    paddingVertical: 9,
+  },
+  productScanBtnText: { fontSize: 11.5, fontWeight: '800' },
   activityCard: {
     backgroundColor: '#FFFFFF',
     borderRadius: 22,
@@ -537,3 +763,8 @@ const styles = StyleSheet.create({
   activityTime: { color: '#7E8BA5', fontSize: 11, marginTop: 3 },
   activityAmount: { fontSize: 14, fontWeight: '900' },
 });
+
+
+
+
+

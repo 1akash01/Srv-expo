@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+﻿import { useMemo, useState } from 'react';
 import {
   Modal,
   Pressable,
@@ -9,6 +9,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import Svg, { Circle, Path, Rect } from 'react-native-svg';
 
 const Colors = {
   primary: '#E8453C',
@@ -20,7 +21,6 @@ const Colors = {
   textMuted: '#9898A8',
   success: '#22c55e',
   gold: '#F59E0B',
-  blue: '#3B82F6',
 };
 
 const defaultProfile = {
@@ -42,21 +42,150 @@ type Profile = typeof defaultProfile;
 type Screen = 'home' | 'scan' | 'rewards' | 'profile' | 'product' | 'wallet';
 
 const menuItems = [
-  { label: 'My Redemption', emoji: '🎁', bg: Colors.primaryLight, screen: 'wallet' as Screen },
-  { label: 'Transfer Points', emoji: '↕️', bg: Colors.primaryLight, screen: null },
-  { label: 'My Orders', emoji: '🛍️', bg: Colors.primaryLight, screen: null },
-  { label: 'Bank Details', emoji: '💳', bg: '#FFF8E1', screen: null },
-  { label: 'Refer To A Friend', emoji: '👥', bg: '#EFF6FF', screen: null },
-  { label: 'Need Help', emoji: '❓', bg: '#E6FDF0', screen: null },
-  { label: 'Offers', emoji: '🏷️', bg: '#FFF8E1', screen: null },
+  { label: 'My Redemption', icon: 'MR', bg: Colors.primaryLight, screen: 'wallet' as Screen },
+  { label: 'Gift Store', icon: 'GS', bg: '#FFF8E1', screen: 'rewards' as Screen },
+  { label: 'Transfer Points', icon: 'TP', bg: Colors.primaryLight, screen: null },
+  { label: 'My Orders', icon: 'MO', bg: Colors.primaryLight, screen: null },
+  { label: 'Bank Details', icon: 'BD', bg: '#FFF8E1', screen: null },
+  { label: 'Refer To A Friend', icon: 'RF', bg: '#EFF6FF', screen: null },
+  { label: 'Need Help', icon: 'NH', bg: '#E6FDF0', screen: null },
+  { label: 'Offers', icon: 'OF', bg: '#FFF8E1', screen: null },
 ];
 
 const settingsItems = [
-  { label: 'Notifications', emoji: '🔔', bg: '#FFF8E1', badge: true },
-  { label: 'App Settings', emoji: '⚙️', bg: '#F3F0FF', badge: false },
-  { label: 'Scan History', emoji: '📷', bg: Colors.primaryLight, badge: false },
-  { label: 'Contact Support', emoji: '📞', bg: '#E6FDF0', badge: false },
+  { label: 'Notifications', icon: 'NT', bg: '#FFF8E1', badge: true },
+  { label: 'App Settings', icon: 'AS', bg: '#F3F0FF', badge: false },
+  { label: 'Scan History', icon: 'SH', bg: Colors.primaryLight, badge: false },
+  { label: 'Contact Support', icon: 'CS', bg: '#E6FDF0', badge: false },
 ];
+
+function PinIcon({ color = '#1C1E2E', size = 14 }: { color?: string; size?: number }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path d="M12 21s6-5.33 6-11a6 6 0 10-12 0c0 5.67 6 11 6 11z" stroke={color} strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" />
+      <Circle cx="12" cy="10" r="2.2" stroke={color} strokeWidth={1.8} />
+    </Svg>
+  );
+}
+
+function PencilIcon({ color = '#1C1E2E', size = 14 }: { color?: string; size?: number }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path d="M4 20l4.2-1 9-9a2.1 2.1 0 10-3-3l-9 9L4 20z" stroke={color} strokeWidth={1.8} strokeLinejoin="round" />
+      <Path d="M13 7l4 4" stroke={color} strokeWidth={1.8} strokeLinecap="round" />
+    </Svg>
+  );
+}
+
+function StarIcon({ color = '#92400E', size = 14 }: { color?: string; size?: number }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path d="M12 3l2.8 5.68 6.27.91-4.53 4.42 1.07 6.25L12 17.27 6.39 20.26l1.07-6.25L2.93 9.6l6.27-.91L12 3z" fill={color} />
+    </Svg>
+  );
+}
+
+function LogoutIcon({ color = '#E8453C', size = 16 }: { color?: string; size?: number }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path d="M10 17l5-5-5-5" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
+      <Path d="M15 12H4" stroke={color} strokeWidth={2} strokeLinecap="round" />
+      <Path d="M20 4v16" stroke={color} strokeWidth={2} strokeLinecap="round" />
+    </Svg>
+  );
+}
+
+function MenuIcon({ kind, color = '#1C1E2E', size = 18 }: { kind: string; color?: string; size?: number }) {
+  switch (kind) {
+    case 'MR':
+    case 'GS':
+      return (
+        <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+          <Rect x="3" y="8" width="18" height="4" rx="1.2" stroke={color} strokeWidth={1.8} />
+          <Path d="M19 12v7a2 2 0 01-2 2H7a2 2 0 01-2-2v-7" stroke={color} strokeWidth={1.8} />
+          <Path d="M12 8v13M12 8C12 8 9 6 9 4.5a3 3 0 016 0C15 6 12 8 12 8z" stroke={color} strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" />
+        </Svg>
+      );
+    case 'TP':
+      return (
+        <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+          <Path d="M7 7h10M7 7l3-3M7 7l3 3" stroke={color} strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" />
+          <Path d="M17 17H7m10 0l-3-3m3 3l-3 3" stroke={color} strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" />
+        </Svg>
+      );
+    case 'MO':
+      return (
+        <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+          <Path d="M6 6h15l-1.4 7.2a2 2 0 01-2 1.6H9a2 2 0 01-2-1.6L5.5 4H3" stroke={color} strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" />
+          <Circle cx="10" cy="19" r="1.5" fill={color} />
+          <Circle cx="17" cy="19" r="1.5" fill={color} />
+        </Svg>
+      );
+    case 'BD':
+      return (
+        <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+          <Rect x="3" y="6" width="18" height="12" rx="2.2" stroke={color} strokeWidth={1.8} />
+          <Path d="M3 10h18" stroke={color} strokeWidth={1.8} />
+          <Rect x="6" y="13" width="5" height="2" rx="1" fill={color} />
+        </Svg>
+      );
+    case 'RF':
+      return (
+        <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+          <Circle cx="9" cy="9" r="3" stroke={color} strokeWidth={1.8} />
+          <Circle cx="17" cy="10" r="2.5" stroke={color} strokeWidth={1.8} />
+          <Path d="M4.5 19c1.2-2.5 3.3-3.8 5.7-3.8 2.4 0 4.5 1.3 5.7 3.8" stroke={color} strokeWidth={1.8} strokeLinecap="round" />
+        </Svg>
+      );
+    case 'NH':
+      return (
+        <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+          <Circle cx="12" cy="12" r="9" stroke={color} strokeWidth={1.8} />
+          <Path d="M9.7 9.2a2.8 2.8 0 015.1 1.6c0 1.9-2.1 2.4-2.8 3.7" stroke={color} strokeWidth={1.8} strokeLinecap="round" />
+          <Circle cx="12" cy="17.2" r="1" fill={color} />
+        </Svg>
+      );
+    case 'OF':
+      return (
+        <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+          <Path d="M20 12l-8 8-8-8 8-8 8 8z" stroke={color} strokeWidth={1.8} strokeLinejoin="round" />
+          <Circle cx="12" cy="12" r="2" fill={color} />
+        </Svg>
+      );
+    case 'NT':
+      return (
+        <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+          <Path d="M6 16.5V11a6 6 0 1112 0v5.5l1.2 1.2a.8.8 0 01-.57 1.36H5.37a.8.8 0 01-.57-1.36L6 16.5z" stroke={color} strokeWidth={1.8} strokeLinejoin="round" />
+          <Path d="M10 20a2 2 0 004 0" stroke={color} strokeWidth={1.8} strokeLinecap="round" />
+        </Svg>
+      );
+    case 'AS':
+      return (
+        <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+          <Circle cx="12" cy="12" r="3.2" stroke={color} strokeWidth={1.8} />
+          <Path d="M19 12a7 7 0 00-.1-1l2-1.6-2-3.5-2.4 1a7 7 0 00-1.7-1L14.5 3h-5L9 5.9a7 7 0 00-1.7 1l-2.4-1-2 3.5 2 1.6a7 7 0 000 2.1l-2 1.6 2 3.5 2.4-1a7 7 0 001.7 1l.5 2.9h5l.5-2.9a7 7 0 001.7-1l2.4 1 2-3.5-2-1.6c.07-.34.1-.68.1-1z" stroke={color} strokeWidth={1.4} strokeLinejoin="round" />
+        </Svg>
+      );
+    case 'SH':
+      return (
+        <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+          <Rect x="4" y="4" width="6" height="6" rx="1.2" stroke={color} strokeWidth={1.8} />
+          <Rect x="14" y="4" width="6" height="6" rx="1.2" stroke={color} strokeWidth={1.8} />
+          <Rect x="4" y="14" width="6" height="6" rx="1.2" stroke={color} strokeWidth={1.8} />
+          <Path d="M14 14h2v2h-2zM18 14h2v6h-6v-2h4v-4z" fill={color} />
+        </Svg>
+      );
+    case 'CS':
+      return (
+        <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+          <Path d="M20 15a3 3 0 01-3 3H9l-5 3V7a3 3 0 013-3h10a3 3 0 013 3v8z" stroke={color} strokeWidth={1.8} strokeLinejoin="round" />
+          <Path d="M9 10h6M9 14h4" stroke={color} strokeWidth={1.8} strokeLinecap="round" />
+        </Svg>
+      );
+    default:
+      return <Circle cx="12" cy="12" r="4" fill={color} />;
+  }
+}
 
 export function ProfileScreen({ onNavigate, onSignOut }: { onNavigate: (screen: Screen) => void; onSignOut: () => void }) {
   const [profile, setProfile] = useState<Profile>(defaultProfile);
@@ -69,10 +198,12 @@ export function ProfileScreen({ onNavigate, onSignOut }: { onNavigate: (screen: 
     [profile.name]
   );
 
-  const saveProfile = () => { setProfile(draft); setShowEdit(false); };
+  const saveProfile = () => {
+    setProfile(draft);
+    setShowEdit(false);
+  };
 
-  // Sign Out → goes to onboarding/login screen
- const confirmSignOut = () => {
+  const confirmSignOut = () => {
     setShowSignOutConfirm(false);
     onSignOut();
   };
@@ -80,7 +211,7 @@ export function ProfileScreen({ onNavigate, onSignOut }: { onNavigate: (screen: 
   return (
     <>
       <ScrollView style={styles.screen} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <Text style={styles.pageTitle}>More</Text>
+        <Text style={styles.pageTitle}>Profile</Text>
 
         <View style={styles.profileCard}>
           <View style={styles.profileTop}>
@@ -92,34 +223,34 @@ export function ProfileScreen({ onNavigate, onSignOut }: { onNavigate: (screen: 
               <Text style={styles.profileName}>{profile.name}</Text>
               <Text style={styles.profilePhone}>{profile.phone}</Text>
               <Text style={styles.profileDealer}>Dealer: {profile.dealerCode}</Text>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2 }}>
-                <Text style={{ fontSize: 12 }}>📍</Text>
+              <View style={styles.inlineRow}>
+                <PinIcon size={13} color={Colors.textMuted} />
                 <Text style={styles.profileCity}>{profile.city}, {profile.state}</Text>
               </View>
             </View>
             <TouchableOpacity onPress={() => { setDraft(profile); setShowEdit(true); }} style={styles.editBtn}>
-              <Text style={{ fontSize: 16 }}>✏️</Text>
+              <PencilIcon size={15} color={Colors.primary} />
             </TouchableOpacity>
           </View>
           <View style={styles.goldMemberRow}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-              <Text style={{ fontSize: 16 }}>⭐</Text>
+            <View style={styles.inlineRowStrong}>
+              <StarIcon />
               <Text style={styles.goldMemberText}>Gold Member</Text>
             </View>
-            <Text style={styles.goldHint}>750 pts to Platinum →</Text>
+            <Text style={styles.goldHint}>750 pts to Platinum {'>'}</Text>
           </View>
         </View>
 
         <View style={styles.card}>
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+          <View style={styles.sectionHeadRow}>
             <Text style={styles.sectionTitle}>Profile Details</Text>
             <TouchableOpacity onPress={() => { setDraft(profile); setShowEdit(true); }} style={styles.editChip}>
-              <Text style={{ fontSize: 14 }}>✏️ </Text>
+              <PencilIcon size={13} color={Colors.primary} />
               <Text style={styles.editChipText}>Edit</Text>
             </TouchableOpacity>
           </View>
           <View style={styles.kycBanner}>
-            <Text style={{ fontSize: 16 }}>⚠️</Text>
+            <StarIcon size={13} color="#B45309" />
             <View style={{ flex: 1 }}>
               <Text style={styles.kycTitle}>Complete KYC to unlock all features</Text>
               <Text style={styles.kycSub}>Add PAN & GST details to get verified</Text>
@@ -147,13 +278,17 @@ export function ProfileScreen({ onNavigate, onSignOut }: { onNavigate: (screen: 
 
         <View style={styles.card}>
           {menuItems.map((item, i) => (
-            <TouchableOpacity key={item.label} onPress={() => item.screen && onNavigate(item.screen)}
-              style={[styles.menuRow, i < menuItems.length - 1 && styles.menuRowBorder]} activeOpacity={0.75}>
+            <TouchableOpacity
+              key={item.label}
+              onPress={() => item.screen && onNavigate(item.screen)}
+              style={[styles.menuRow, i < menuItems.length - 1 && styles.menuRowBorder]}
+              activeOpacity={0.75}
+            >
               <View style={[styles.menuIcon, { backgroundColor: item.bg }]}>
-                <Text style={{ fontSize: 18 }}>{item.emoji}</Text>
+                <MenuIcon kind={item.icon} />
               </View>
               <Text style={styles.menuLabel}>{item.label}</Text>
-              <Text style={styles.menuArrow}>›</Text>
+              <Text style={styles.menuArrow}>{'>'}</Text>
             </TouchableOpacity>
           ))}
         </View>
@@ -161,21 +296,24 @@ export function ProfileScreen({ onNavigate, onSignOut }: { onNavigate: (screen: 
         <Text style={styles.sectionLabel}>Settings</Text>
         <View style={styles.card}>
           {settingsItems.map((item, i) => (
-            <TouchableOpacity key={item.label}
-              style={[styles.menuRow, i < settingsItems.length - 1 && styles.menuRowBorder]} activeOpacity={0.75}>
+            <TouchableOpacity
+              key={item.label}
+              style={[styles.menuRow, i < settingsItems.length - 1 && styles.menuRowBorder]}
+              activeOpacity={0.75}
+            >
               <View style={[styles.menuIcon, { backgroundColor: item.bg }]}>
-                <Text style={{ fontSize: 18 }}>{item.emoji}</Text>
+                <MenuIcon kind={item.icon} />
                 {item.badge && <View style={styles.notifDot} />}
               </View>
               <Text style={styles.menuLabel}>{item.label}</Text>
-              <Text style={styles.menuArrow}>›</Text>
+              <Text style={styles.menuArrow}>{'>'}</Text>
             </TouchableOpacity>
           ))}
         </View>
 
         <View style={styles.statsCard}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 16 }}>
-            <Text style={{ fontSize: 20 }}>⭐</Text>
+          <View style={styles.inlineRowStrongSpace}>
+            <StarIcon size={13} color="#FFFFFF" />
             <Text style={styles.statsTitle}>Your Stats</Text>
           </View>
           <View style={styles.statsRow}>
@@ -195,22 +333,21 @@ export function ProfileScreen({ onNavigate, onSignOut }: { onNavigate: (screen: 
         </View>
 
         <TouchableOpacity style={styles.signOutBtn} onPress={() => setShowSignOutConfirm(true)} activeOpacity={0.8}>
-          <Text style={{ fontSize: 18 }}>↪️</Text>
+          <LogoutIcon />
           <Text style={styles.signOutText}>Sign Out</Text>
         </TouchableOpacity>
 
         <View style={{ height: 30 }} />
       </ScrollView>
 
-      {/* Sign Out Confirm Modal */}
       <Modal visible={showSignOutConfirm} animationType="fade" transparent onRequestClose={() => setShowSignOutConfirm(false)}>
         <View style={styles.confirmOverlay}>
           <View style={styles.confirmCard}>
             <View style={styles.confirmIconWrap}>
-              <Text style={{ fontSize: 36 }}>↪️</Text>
+              <LogoutIcon size={22} />
             </View>
             <Text style={styles.confirmTitle}>Sign Out?</Text>
-            <Text style={styles.confirmSub}>Are you sure you want to sign out?{'\n'}Your data will be saved.</Text>
+            <Text style={styles.confirmSub}>Are you sure you want to sign out?{"\n"}Your data will be saved.</Text>
             <View style={styles.confirmActions}>
               <Pressable onPress={() => setShowSignOutConfirm(false)} style={styles.confirmCancel}>
                 <Text style={styles.confirmCancelText}>Cancel</Text>
@@ -223,7 +360,6 @@ export function ProfileScreen({ onNavigate, onSignOut }: { onNavigate: (screen: 
         </View>
       </Modal>
 
-      {/* Edit Profile Modal */}
       <Modal visible={showEdit} animationType="slide" transparent onRequestClose={() => setShowEdit(false)}>
         <View style={styles.modalOverlay}>
           <View style={styles.modalCard}>
@@ -241,7 +377,9 @@ export function ProfileScreen({ onNavigate, onSignOut }: { onNavigate: (screen: 
                   <TextInput
                     value={draft[key as keyof Profile]}
                     onChangeText={(v) => setDraft((c) => ({ ...c, [key]: v }))}
-                    placeholder={label} placeholderTextColor="#AA9A90" style={styles.modalInput}
+                    placeholder={label}
+                    placeholderTextColor="#AA9A90"
+                    style={styles.modalInput}
                   />
                 </View>
               ))}
@@ -277,14 +415,18 @@ const styles = StyleSheet.create({
   profilePhone: { fontSize: 13, color: Colors.textMuted, marginTop: 3 },
   profileDealer: { fontSize: 12, color: Colors.textMuted, marginTop: 2 },
   profileCity: { fontSize: 12, color: Colors.textMuted },
+  inlineRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2 },
+  inlineRowStrong: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  inlineRowStrongSpace: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 16 },
   editBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: Colors.primaryLight, alignItems: 'center', justifyContent: 'center' },
   goldMemberRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#FFFBEB', borderRadius: 14, padding: 12, borderWidth: 1, borderColor: '#FEF3C7' },
   goldMemberText: { fontSize: 14, fontWeight: '800', color: '#92400E' },
   goldHint: { fontSize: 12, color: '#92400E', fontWeight: '600' },
   card: { backgroundColor: Colors.surface, borderRadius: 22, padding: 18, borderWidth: 1, borderColor: Colors.border, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 8, elevation: 2 },
+  sectionHeadRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 },
   sectionTitle: { fontSize: 17, fontWeight: '800', color: Colors.textDark },
   sectionLabel: { fontSize: 16, fontWeight: '800', color: Colors.textDark, paddingLeft: 2 },
-  editChip: { flexDirection: 'row', alignItems: 'center', backgroundColor: Colors.primaryLight, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 6 },
+  editChip: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: Colors.primaryLight, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 6 },
   editChipText: { color: Colors.primary, fontSize: 13, fontWeight: '700' },
   kycBanner: { flexDirection: 'row', gap: 10, alignItems: 'flex-start', backgroundColor: '#FFFBEB', borderWidth: 1, borderColor: '#FEF3C7', borderRadius: 14, padding: 12, marginBottom: 14 },
   kycTitle: { fontSize: 13, fontWeight: '800', color: '#92400E' },
@@ -299,7 +441,7 @@ const styles = StyleSheet.create({
   menuIcon: { width: 44, height: 44, borderRadius: 14, alignItems: 'center', justifyContent: 'center', position: 'relative' },
   notifDot: { position: 'absolute', top: 6, right: 6, width: 8, height: 8, borderRadius: 4, backgroundColor: Colors.primary, borderWidth: 1.5, borderColor: '#fff' },
   menuLabel: { flex: 1, fontSize: 15, fontWeight: '600', color: Colors.textDark },
-  menuArrow: { fontSize: 22, color: '#C0C0D0' },
+  menuArrow: { fontSize: 20, color: '#C0C0D0', fontWeight: '700' },
   statsCard: { backgroundColor: '#2D3561', borderRadius: 22, padding: 20 },
   statsTitle: { fontSize: 17, fontWeight: '800', color: '#fff' },
   statsRow: { flexDirection: 'row', gap: 12 },
