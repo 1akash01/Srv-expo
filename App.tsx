@@ -3,6 +3,7 @@ import { useMemo, useState } from 'react';
 import { Platform, SafeAreaView, StatusBar, StyleSheet, View } from 'react-native';
 import { BottomNav } from './src/components/BottomNav';
 import { HomeScreen } from './src/screens/HomeScreen';
+import { NotificationScreen } from './src/screens/NotificationScreen';
 import { OnboardingScreen } from './src/screens/OnboardingScreen';
 import { ProductScreen } from './src/screens/ProductScreen';
 import { ProfileScreen } from './src/screens/ProfileScreen';
@@ -17,25 +18,57 @@ export default function App() {
   const [currentScreen, setCurrentScreen] = useState<Screen>('home');
   const [showOnboarding, setShowOnboarding] = useState(true);
   const [currentRole, setCurrentRole] = useState<UserRole>('electrician');
+  const [selectedProductCategory, setSelectedProductCategory] = useState<string>('fanbox');
+
+  const handleNavigate = (screen: Screen) => {
+    if (screen === 'product') {
+      setSelectedProductCategory((current) => current || 'fanbox');
+    }
+
+    setCurrentScreen(screen);
+  };
+
+  const handleOpenProductCategory = (category: string) => {
+    setSelectedProductCategory(category);
+    setCurrentScreen('product');
+  };
+
+  const handleSignOut = () => {
+    setShowOnboarding(true);
+    setCurrentScreen('home');
+    setSelectedProductCategory('fanbox');
+  };
 
   const screen = useMemo(() => {
     switch (currentScreen) {
       case 'home':
-        return <HomeScreen onNavigate={setCurrentScreen} role={currentRole} />;
+        return (
+          <HomeScreen
+            onNavigate={handleNavigate}
+            onOpenProductCategory={handleOpenProductCategory}
+          />
+        );
       case 'product':
-        return <ProductScreen onNavigate={setCurrentScreen} />;
+        return <ProductScreen onNavigate={handleNavigate} initialCategory={selectedProductCategory} />;
+      case 'notification':
+        return <NotificationScreen onNavigate={handleNavigate} />;
       case 'scan':
-        return <ScanScreen onNavigate={setCurrentScreen} />;
+        return <ScanScreen onNavigate={handleNavigate} />;
       case 'rewards':
         return <RewardsScreen />;
       case 'profile':
-        return <ProfileScreen onNavigate={setCurrentScreen} />;
+        return <ProfileScreen onNavigate={handleNavigate} onSignOut={handleSignOut} />;
       case 'wallet':
-        return <WalletScreen />;
+        return <WalletScreen onNavigate={handleNavigate} />;
       default:
-        return <HomeScreen onNavigate={setCurrentScreen} role={currentRole} />;
+        return (
+          <HomeScreen
+            onNavigate={handleNavigate}
+            onOpenProductCategory={handleOpenProductCategory}
+          />
+        );
     }
-  }, [currentRole, currentScreen]);
+  }, [currentScreen, selectedProductCategory, showOnboarding]);
 
   if (showOnboarding) {
     return (
@@ -56,7 +89,7 @@ export default function App() {
     <SafeAreaView style={[styles.root, { paddingTop: androidTopInset }]}>
       <ExpoStatusBar style="dark" />
       <View style={styles.content}>{screen}</View>
-      <BottomNav currentScreen={currentScreen} onNavigate={setCurrentScreen} />
+      <BottomNav currentScreen={currentScreen} onNavigate={handleNavigate} />
     </SafeAreaView>
   );
 }
