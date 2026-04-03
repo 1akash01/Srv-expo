@@ -4,11 +4,57 @@ import { Image, Linking, Pressable, ScrollView, StyleSheet, Text, View, useWindo
 import { ScreenTitle, SectionCard, StatPill } from '../../components/Common';
 import { banners, featuredProducts, recentActivity } from '../../data/mock';
 import { colors } from '../../theme';
-import type { Screen, UserRole } from '../../types';
+import type { AppLanguage, Screen, UserRole } from '../../types';
 
-export function HomeScreen({ onNavigate, role }: { onNavigate: (screen: Screen) => void; role: UserRole }) {
+const copy = {
+  en: {
+    greeting: 'Good morning',
+    dealerDashboard: 'Dealer dashboard',
+    electricianDashboard: 'Electrician dashboard',
+    weekly: 'Weekly',
+    level: 'Level',
+    role: 'Role',
+    dealer: 'Dealer',
+    electrician: 'Electrician',
+    shopNow: 'Shop Now',
+    scanQr: 'Scan QR',
+    earnPoints: 'Earn points',
+    support: 'Support',
+    rewards: 'Rewards',
+    redeemNow: 'Redeem now',
+    profile: 'Profile',
+    moreOptions: 'More options',
+    featuredProducts: 'Featured Products',
+    viewAll: 'View all',
+    recentActivity: 'Recent Activity',
+  },
+  hi: {
+    greeting: 'सुप्रभात',
+    dealerDashboard: 'डीलर डैशबोर्ड',
+    electricianDashboard: 'इलेक्ट्रीशियन डैशबोर्ड',
+    weekly: 'साप्ताहिक',
+    level: 'लेवल',
+    role: 'रोल',
+    dealer: 'डीलर',
+    electrician: 'इलेक्ट्रीशियन',
+    shopNow: 'अभी देखें',
+    scanQr: 'क्यूआर स्कैन',
+    earnPoints: 'पॉइंट कमाएं',
+    support: 'सहायता',
+    rewards: 'रिवॉर्ड्स',
+    redeemNow: 'रिडीम करें',
+    profile: 'प्रोफाइल',
+    moreOptions: 'और विकल्प',
+    featuredProducts: 'फीचर्ड प्रोडक्ट्स',
+    viewAll: 'सभी देखें',
+    recentActivity: 'हाल की गतिविधि',
+  },
+} as const;
+
+export function HomeScreen({ onNavigate, role, language }: { onNavigate: (screen: Screen) => void; role: UserRole; language: AppLanguage }) {
   const { width } = useWindowDimensions();
   const [slide, setSlide] = useState(0);
+  const t = copy[language];
   const compactPhone = width < 370;
   const screenPadding = compactPhone ? 12 : 18;
   const contentWidth = width - screenPadding * 2;
@@ -24,14 +70,14 @@ export function HomeScreen({ onNavigate, role }: { onNavigate: (screen: Screen) 
     <ScrollView style={styles.screen} contentContainerStyle={[styles.content, { padding: screenPadding }]} showsVerticalScrollIndicator={false}>
       <LinearGradient colors={['#6E241B', '#B13127', '#D56C3E']} style={[styles.hero, compactPhone && styles.heroCompact]}>
         <ScreenTitle
-          title="Good morning"
-          subtitle={role === 'dealer' ? 'Dealer dashboard' : 'Electrician dashboard'}
+          title={t.greeting}
+          subtitle={role === 'dealer' ? t.dealerDashboard : t.electricianDashboard}
           right={<Text style={styles.heroChip}>4,250 pts</Text>}
         />
         <View style={[styles.statRow, compactPhone && styles.statRowCompact]}>
-          <StatPill label="Weekly" value="+120" accent="#FFD27A" />
-          <StatPill label="Level" value="Gold" accent="#FFFFFF" />
-          <StatPill label="Role" value={role === 'dealer' ? 'Dealer' : 'Electrician'} accent="#FFFFFF" />
+          <StatPill label={t.weekly} value="+120" accent="#FFD27A" />
+          <StatPill label={t.level} value="Gold" accent="#FFFFFF" />
+          <StatPill label={t.role} value={role === 'dealer' ? t.dealer : t.electrician} accent="#FFFFFF" />
         </View>
       </LinearGradient>
 
@@ -41,7 +87,7 @@ export function HomeScreen({ onNavigate, role }: { onNavigate: (screen: Screen) 
         <Text style={styles.bannerTitle}>{banners[slide].title}</Text>
         <Text style={styles.bannerSub}>{banners[slide].subtitle}</Text>
         <Pressable style={styles.bannerButton}>
-          <Text style={styles.bannerButtonText}>Shop Now</Text>
+          <Text style={styles.bannerButtonText}>{t.shopNow}</Text>
         </Pressable>
       </LinearGradient>
 
@@ -53,10 +99,10 @@ export function HomeScreen({ onNavigate, role }: { onNavigate: (screen: Screen) 
 
       <View style={styles.quickGrid}>
         {[
-          { key: 'scan', label: 'Scan QR', sub: 'Earn points', glyph: 'QR', action: () => onNavigate('scan') },
-          { key: 'wa', label: 'WhatsApp', sub: 'Support', glyph: 'WA', action: () => Linking.openURL('https://wa.me/918837684004?text=Hello%20SRV%20Electricals') },
-          { key: 'reward', label: 'Rewards', sub: 'Redeem now', glyph: 'RW', action: () => onNavigate('rewards') },
-          { key: 'profile', label: 'Profile', sub: 'More options', glyph: 'ME', action: () => onNavigate('profile') },
+          { key: 'scan', label: t.scanQr, sub: t.earnPoints, glyph: 'QR', action: () => onNavigate('scan') },
+          { key: 'wa', label: 'WhatsApp', sub: t.support, glyph: 'WA', action: () => Linking.openURL('https://wa.me/918837684004?text=Hello%20SRV%20Electricals') },
+          { key: 'reward', label: t.rewards, sub: t.redeemNow, glyph: 'RW', action: () => onNavigate('rewards') },
+          { key: 'profile', label: t.profile, sub: t.moreOptions, glyph: 'ME', action: () => onNavigate('profile') },
         ].map((item) => (
           <Pressable key={item.key} onPress={item.action} style={[styles.quickCard, { width: twoColWidth }]}>
             <View style={styles.quickGlyphBox}>
@@ -70,9 +116,9 @@ export function HomeScreen({ onNavigate, role }: { onNavigate: (screen: Screen) 
 
       <SectionCard>
         <View style={styles.sectionHead}>
-          <Text style={styles.sectionTitle}>Featured Products</Text>
+          <Text style={styles.sectionTitle}>{t.featuredProducts}</Text>
           <Pressable onPress={() => onNavigate('product')}>
-            <Text style={styles.linkText}>View all</Text>
+            <Text style={styles.linkText}>{t.viewAll}</Text>
           </Pressable>
         </View>
         <View style={styles.productGrid}>
@@ -93,7 +139,7 @@ export function HomeScreen({ onNavigate, role }: { onNavigate: (screen: Screen) 
       </SectionCard>
 
       <SectionCard>
-        <Text style={styles.sectionTitle}>Recent Activity</Text>
+        <Text style={styles.sectionTitle}>{t.recentActivity}</Text>
         <View style={{ marginTop: 10 }}>
           {recentActivity.map((item, index) => (
             <View key={item.id} style={[styles.activityRow, index < recentActivity.length - 1 && styles.activityBorder]}>

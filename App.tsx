@@ -10,18 +10,19 @@ import { RewardsScreen } from './src/screens/RewardsScreen';
 import { ScanScreen } from './src/screens/ScanScreen';
 import { WalletScreen } from './src/screens/WalletScreen';
 import { colors } from './src/theme';
-import type { Screen, UserRole } from './src/types';
+import type { AppLanguage, Screen, UserRole } from './src/types';
 
 export default function App() {
   const androidTopInset = Platform.OS === 'android' ? (StatusBar.currentHeight ?? 0) : 0;
   const [currentScreen, setCurrentScreen] = useState<Screen>('home');
   const [showOnboarding, setShowOnboarding] = useState(true);
   const [currentRole, setCurrentRole] = useState<UserRole>('electrician');
+  const [language, setLanguage] = useState<AppLanguage>('en');
 
   const screen = useMemo(() => {
     switch (currentScreen) {
       case 'home':
-        return <HomeScreen onNavigate={setCurrentScreen} role={currentRole} />;
+        return <HomeScreen onNavigate={setCurrentScreen} role={currentRole} language={language} />;
       case 'product':
         return <ProductScreen onNavigate={setCurrentScreen} />;
       case 'scan':
@@ -33,15 +34,17 @@ export default function App() {
       case 'wallet':
         return <WalletScreen />;
       default:
-        return <HomeScreen onNavigate={setCurrentScreen} role={currentRole} />;
+        return <HomeScreen onNavigate={setCurrentScreen} role={currentRole} language={language} />;
     }
-  }, [currentRole, currentScreen]);
+  }, [currentRole, currentScreen, language]);
 
   if (showOnboarding) {
     return (
       <View style={[styles.root, { paddingTop: androidTopInset }]}>
         <ExpoStatusBar style="dark" />
         <OnboardingScreen
+          language={language}
+          onLanguageChange={setLanguage}
           onGetStarted={(role) => {
             setCurrentRole(role);
             setCurrentScreen('home');
@@ -56,7 +59,7 @@ export default function App() {
     <SafeAreaView style={[styles.root, { paddingTop: androidTopInset }]}>
       <ExpoStatusBar style="dark" />
       <View style={styles.content}>{screen}</View>
-      <BottomNav currentScreen={currentScreen} onNavigate={setCurrentScreen} />
+      <BottomNav currentScreen={currentScreen} onNavigate={setCurrentScreen} language={language} />
     </SafeAreaView>
   );
 }

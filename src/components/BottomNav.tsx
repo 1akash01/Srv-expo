@@ -1,16 +1,16 @@
 import { Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { colors } from '../theme';
-import type { Screen } from '../types';
+import type { AppLanguage, Screen } from '../types';
 
-const items: Array<{ id: Screen; label: string; glyph: string }> = [
-  { id: 'home', label: 'Home', glyph: 'HM' },
-  { id: 'product', label: 'Product', glyph: 'PD' },
-  { id: 'scan', label: 'Scan', glyph: 'QR' },
-  { id: 'rewards', label: 'Rewards', glyph: 'RW' },
-  { id: 'profile', label: 'More', glyph: 'ME' },
+const items: Array<{ id: Screen; label: Record<AppLanguage, string>; glyph: string }> = [
+  { id: 'home', label: { en: 'Home', hi: 'होम' }, glyph: 'HM' },
+  { id: 'product', label: { en: 'Product', hi: 'प्रोडक्ट' }, glyph: 'PD' },
+  { id: 'scan', label: { en: 'Scan', hi: 'स्कैन' }, glyph: 'QR' },
+  { id: 'rewards', label: { en: 'Rewards', hi: 'रिवॉर्ड्स' }, glyph: 'RW' },
+  { id: 'profile', label: { en: 'More', hi: 'और' }, glyph: 'ME' },
 ];
 
-export function BottomNav({ currentScreen, onNavigate }: { currentScreen: Screen; onNavigate: (screen: Screen) => void }) {
+export function BottomNav({ currentScreen, onNavigate, language }: { currentScreen: Screen; onNavigate: (screen: Screen) => void; language: AppLanguage }) {
   const { width } = useWindowDimensions();
   const compactPhone = width < 370;
   return (
@@ -28,7 +28,7 @@ export function BottomNav({ currentScreen, onNavigate }: { currentScreen: Screen
             <View style={[styles.icon, compactPhone && styles.iconCompact, active && styles.iconActive, scan && styles.scanIcon, compactPhone && scan && styles.scanIconCompact]}>
               <Text style={[styles.glyph, active && styles.glyphActive, scan && styles.scanGlyph]}>{item.glyph}</Text>
             </View>
-            <Text style={[styles.label, compactPhone && styles.labelCompact, active && styles.labelActive, scan && styles.scanLabel]}>{item.label}</Text>
+            <Text style={[styles.label, compactPhone && styles.labelCompact, active && styles.labelActive, scan && styles.scanLabel]}>{item.label[language]}</Text>
           </Pressable>
         );
       })}
