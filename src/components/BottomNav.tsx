@@ -1,37 +1,339 @@
-import { Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { useEffect, useRef } from 'react';
+import {
+  Animated,
+  Easing,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
+import Svg, { Path, Rect, Circle } from 'react-native-svg';
 import { colors } from '../theme';
 import type { Screen } from '../types';
 
-const items: Array<{ id: Screen; label: string; glyph: string }> = [
-  { id: 'home', label: 'Home', glyph: 'HM' },
-  { id: 'product', label: 'Product', glyph: 'PD' },
-  { id: 'scan', label: 'Scan', glyph: 'QR' },
-  { id: 'rewards', label: 'Rewards', glyph: 'RW' },
-  { id: 'profile', label: 'More', glyph: 'ME' },
+// ── Icons ─────────────────────────────────────────────────────────────
+
+function HomeIcon({ color, size = 24 }: { color: string; size?: number }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H5a1 1 0 01-1-1V9.5z"
+        stroke={color}
+        strokeWidth={2}
+        strokeLinejoin="round"
+        fill={color === colors.primary ? colors.primary + '22' : 'none'}
+      />
+      <Path
+        d="M9 21V12h6v9"
+        stroke={color}
+        strokeWidth={2}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </Svg>
+  );
+}
+
+function ProductIcon({ color, size = 24 }: { color: string; size?: number }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"
+        stroke={color}
+        strokeWidth={2}
+        strokeLinejoin="round"
+      />
+      <Path
+        d="M3.27 6.96L12 12.01l8.73-5.05M12 22.08V12"
+        stroke={color}
+        strokeWidth={2}
+        strokeLinecap="round"
+      />
+    </Svg>
+  );
+}
+
+function GiftIcon({ color, size = 24 }: { color: string; size?: number }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Rect x="3" y="8" width="18" height="4" rx="1" stroke={color} strokeWidth={2} />
+      <Path
+        d="M19 12v7a2 2 0 01-2 2H7a2 2 0 01-2-2v-7"
+        stroke={color}
+        strokeWidth={2}
+        strokeLinecap="round"
+      />
+      <Path
+        d="M12 8v13M12 8C12 8 9 6 9 4.5a3 3 0 016 0C15 6 12 8 12 8z"
+        stroke={color}
+        strokeWidth={2}
+        strokeLinejoin="round"
+        strokeLinecap="round"
+      />
+    </Svg>
+  );
+}
+
+function MoreIcon({ color, size = 24 }: { color: string; size?: number }) {
+  const positions: [number, number][] = [
+    [3, 3], [8, 3], [13, 3],
+    [3, 8], [8, 8], [13, 8],
+    [3, 13], [8, 13], [13, 13],
+  ];
+  return (
+    <Svg width={size} height={size} viewBox="0 0 16 16" fill="none">
+      {positions.map(([cx, cy], i) => (
+        <Circle key={i} cx={cx} cy={cy} r={1.4} fill={color} />
+      ))}
+    </Svg>
+  );
+}
+
+function ScanQRIcon() {
+  return (
+    <Svg width={28} height={28} viewBox="0 0 24 24" fill="none">
+      {/* Top-left finder */}
+      <Rect x="3" y="3" width="7" height="7" rx="1.5" stroke="white" strokeWidth={2} />
+      <Rect x="5.5" y="5.5" width="2" height="2" fill="white" />
+      {/* Top-right finder */}
+      <Rect x="14" y="3" width="7" height="7" rx="1.5" stroke="white" strokeWidth={2} />
+      <Rect x="16.5" y="5.5" width="2" height="2" fill="white" />
+      {/* Bottom-left finder */}
+      <Rect x="3" y="14" width="7" height="7" rx="1.5" stroke="white" strokeWidth={2} />
+      <Rect x="5.5" y="16.5" width="2" height="2" fill="white" />
+      {/* Bottom-right data cells */}
+      <Rect x="14" y="14" width="3" height="3" rx={0.6} fill="white" />
+      <Rect x="18" y="14" width="3" height="3" rx={0.6} fill="white" />
+      <Rect x="14" y="18" width="3" height="3" rx={0.6} fill="white" />
+      <Rect x="18" y="18" width="3" height="3" rx={0.6} fill="white" />
+    </Svg>
+  );
+}
+
+// ── Scan Button ───────────────────────────────────────────────────────
+
+function ScanButton({ isActive, onPress }: { isActive: boolean; onPress: () => void }) {
+  const ring1Scale = useRef(new Animated.Value(1)).current;
+  const ring1Opacity = useRef(new Animated.Value(0.5)).current;
+  const ring2Scale = useRef(new Animated.Value(1)).current;
+  const ring2Opacity = useRef(new Animated.Value(0.3)).current;
+  const btnScale = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    const makeRingAnim = (
+      scale: Animated.Value,
+      opacity: Animated.Value,
+      delay: number
+    ) =>
+      Animated.loop(
+        Animated.sequence([
+          Animated.delay(delay),
+          Animated.parallel([
+            Animated.timing(scale, {
+              toValue: 1.4,
+              duration: 900,
+              easing: Easing.out(Easing.ease),
+              useNativeDriver: true,
+            }),
+            Animated.timing(opacity, {
+              toValue: 0,
+              duration: 900,
+              useNativeDriver: true,
+            }),
+          ]),
+          Animated.parallel([
+            Animated.timing(scale, { toValue: 1, duration: 0, useNativeDriver: true }),
+            Animated.timing(opacity, { toValue: 0.5, duration: 0, useNativeDriver: true }),
+          ]),
+          Animated.delay(200),
+        ])
+      );
+
+    makeRingAnim(ring1Scale, ring1Opacity, 0).start();
+    makeRingAnim(ring2Scale, ring2Opacity, 450).start();
+  }, []);
+
+  const handlePress = () => {
+    Animated.sequence([
+      Animated.timing(btnScale, { toValue: 0.87, duration: 80, useNativeDriver: true }),
+      Animated.spring(btnScale, { toValue: 1, tension: 200, friction: 7, useNativeDriver: true }),
+    ]).start();
+    onPress();
+  };
+
+  return (
+    <View style={scanStyles.wrapper}>
+      {/* Pulse rings */}
+      <Animated.View
+        style={[
+          scanStyles.ring,
+          { transform: [{ scale: ring1Scale }], opacity: ring1Opacity },
+        ]}
+      />
+      <Animated.View
+        style={[
+          scanStyles.ring,
+          { transform: [{ scale: ring2Scale }], opacity: ring2Opacity },
+        ]}
+      />
+
+      <Pressable onPress={handlePress} style={scanStyles.pressArea}>
+        <Animated.View
+          style={[scanStyles.btn, { transform: [{ scale: btnScale }] }]}
+        >
+          <ScanQRIcon />
+        </Animated.View>
+      </Pressable>
+
+      <Text style={[scanStyles.label, isActive && scanStyles.labelActive]}>
+        SCAN
+      </Text>
+    </View>
+  );
+}
+
+const scanStyles = StyleSheet.create({
+  wrapper: {
+    alignItems: 'center',
+    width: 72,
+  },
+  ring: {
+    position: 'absolute',
+    top: -22,
+    width: 60,
+    height: 60,
+    borderRadius: 18,
+    backgroundColor: colors.primary,
+    zIndex: 0,
+  },
+  pressArea: {
+    marginTop: -20,
+    marginBottom: 5,
+    zIndex: 1,
+  },
+  btn: {
+    width: 60,
+    height: 60,
+    borderRadius: 18,
+    backgroundColor: colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 5 },
+    shadowOpacity: 0.5,
+    shadowRadius: 12,
+    elevation: 12,
+  },
+  label: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: '#9E9189',
+    letterSpacing: 0.5,
+    marginTop: 1,
+  },
+  labelActive: {
+    color: colors.primary,
+  },
+});
+
+// ── Nav Tab ───────────────────────────────────────────────────────────
+
+function NavTab({
+  id,
+  label,
+  active,
+  onPress,
+}: {
+  id: Screen;
+  label: string;
+  active: boolean;
+  onPress: () => void;
+}) {
+  const iconColor = active ? colors.primary : '#A89A91';
+  const tabScale = useRef(new Animated.Value(1)).current;
+
+  const handlePress = () => {
+    Animated.sequence([
+      Animated.timing(tabScale, { toValue: 0.82, duration: 70, useNativeDriver: true }),
+      Animated.spring(tabScale, { toValue: 1, tension: 200, friction: 7, useNativeDriver: true }),
+    ]).start();
+    onPress();
+  };
+
+  const renderIcon = () => {
+    switch (id) {
+      case 'home':    return <HomeIcon color={iconColor} />;
+      case 'product': return <ProductIcon color={iconColor} />;
+      case 'rewards': return <GiftIcon color={iconColor} />;
+      case 'profile': return <MoreIcon color={iconColor} />;
+      default:        return null;
+    }
+  };
+
+  return (
+    <Pressable onPress={handlePress} style={styles.tab}>
+      <Animated.View
+        style={[styles.iconWrap, { transform: [{ scale: tabScale }] }]}
+      >
+        {renderIcon()}
+      </Animated.View>
+      <Text style={[styles.label, active && styles.labelActive]}>
+        {label}
+      </Text>
+      {active && <View style={styles.activeDot} />}
+    </Pressable>
+  );
+}
+
+// ── BottomNav ─────────────────────────────────────────────────────────
+
+const LEFT: Array<{ id: Screen; label: string }> = [
+  { id: 'home', label: 'Home' },
+  { id: 'product', label: 'Product' },
 ];
 
-export function BottomNav({ currentScreen, onNavigate }: { currentScreen: Screen; onNavigate: (screen: Screen) => void }) {
-  const { width } = useWindowDimensions();
-  const compactPhone = width < 370;
-  return (
-    <View style={[styles.wrap, compactPhone && styles.wrapCompact]}>
-      {items.map((item) => {
-        const active = currentScreen === item.id;
-        const scan = item.id === 'scan';
+const RIGHT: Array<{ id: Screen; label: string }> = [
+  { id: 'rewards', label: 'Gift Store' },
+  { id: 'profile', label: 'More' },
+];
 
-        return (
-          <Pressable
+export function BottomNav({
+  currentScreen,
+  onNavigate,
+}: {
+  currentScreen: Screen;
+  onNavigate: (screen: Screen) => void;
+}) {
+  return (
+    <View style={styles.wrap}>
+      <View style={styles.side}>
+        {LEFT.map((item) => (
+          <NavTab
             key={item.id}
+            id={item.id}
+            label={item.label}
+            active={currentScreen === item.id}
             onPress={() => onNavigate(item.id)}
-            style={[styles.item, compactPhone && styles.itemCompact, scan && styles.scanItem]}
-          >
-            <View style={[styles.icon, compactPhone && styles.iconCompact, active && styles.iconActive, scan && styles.scanIcon, compactPhone && scan && styles.scanIconCompact]}>
-              <Text style={[styles.glyph, active && styles.glyphActive, scan && styles.scanGlyph]}>{item.glyph}</Text>
-            </View>
-            <Text style={[styles.label, compactPhone && styles.labelCompact, active && styles.labelActive, scan && styles.scanLabel]}>{item.label}</Text>
-          </Pressable>
-        );
-      })}
+          />
+        ))}
+      </View>
+
+      <ScanButton
+        isActive={currentScreen === 'scan'}
+        onPress={() => onNavigate('scan')}
+      />
+
+      <View style={styles.side}>
+        {RIGHT.map((item) => (
+          <NavTab
+            key={item.id}
+            id={item.id}
+            label={item.label}
+            active={currentScreen === item.id}
+            onPress={() => onNavigate(item.id)}
+          />
+        ))}
+      </View>
     </View>
   );
 }
@@ -39,87 +341,52 @@ export function BottomNav({ currentScreen, onNavigate }: { currentScreen: Screen
 const styles = StyleSheet.create({
   wrap: {
     flexDirection: 'row',
-    justifyContent: 'space-around',
     alignItems: 'flex-end',
-    paddingHorizontal: 10,
+    justifyContent: 'space-between',
+    paddingHorizontal: 8,
     paddingTop: 10,
     paddingBottom: 14,
     backgroundColor: '#FFFDFC',
     borderTopWidth: 1,
-    borderTopColor: colors.border,
+    borderTopColor: '#EEEEF3',
     shadowColor: '#6F4C3A',
-    shadowOpacity: 0.07,
-    shadowRadius: 12,
+    shadowOpacity: 0.08,
+    shadowRadius: 14,
     shadowOffset: { width: 0, height: -4 },
-    elevation: 10,
+    elevation: 12,
   },
-  wrapCompact: {
-    paddingHorizontal: 6,
-    paddingTop: 8,
+  side: {
+    flex: 1,
+    flexDirection: 'row',
+    justifyContent: 'space-around',
   },
-  item: {
+  tab: {
+    flex: 1,
     alignItems: 'center',
-    gap: 6,
-    minWidth: 54,
+    paddingVertical: 2,
+    gap: 3,
+    minWidth: 50,
   },
-  itemCompact: {
-    minWidth: 48,
-    gap: 4,
-  },
-  scanItem: {
-    marginTop: -24,
-  },
-  icon: {
-    width: 42,
-    height: 42,
-    borderRadius: 16,
-    backgroundColor: '#F5EFE8',
+  iconWrap: {
+    width: 26,
+    height: 26,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  iconCompact: {
-    width: 38,
-    height: 38,
-    borderRadius: 14,
-  },
-  iconActive: {
-    backgroundColor: '#FDE7E3',
-  },
-  scanIcon: {
-    width: 62,
-    height: 62,
-    borderRadius: 22,
-    backgroundColor: colors.primary,
-  },
-  scanIconCompact: {
-    width: 56,
-    height: 56,
-    borderRadius: 20,
-  },
-  glyph: {
-    fontSize: 11,
-    fontWeight: '800',
-    color: '#A89A91',
-  },
-  glyphActive: {
-    color: colors.primary,
-  },
-  scanGlyph: {
-    color: '#FFFFFF',
-    fontSize: 14,
-  },
   label: {
     fontSize: 10,
-    fontWeight: '700',
-    color: '#9E9189',
-  },
-  labelCompact: {
-    fontSize: 9,
+    fontWeight: '600',
+    color: '#A89A91',
   },
   labelActive: {
     color: colors.primary,
+    fontWeight: '800',
   },
-  scanLabel: {
-    color: colors.primary,
+  activeDot: {
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: colors.primary,
+    marginTop: 1,
   },
 });
