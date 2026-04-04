@@ -1,9 +1,11 @@
 import { LinearGradient } from 'expo-linear-gradient';
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Animated,
+  Easing,
   Image,
   Linking,
+  Pressable,
   ScrollView,
   StyleSheet,
   Text,
@@ -73,29 +75,112 @@ function ChevronRight({ color = '#173E80', size = 16 }: { color?: string; size?:
   );
 }
 
+function FilterIcon({ color = '#173E80', size = 16 }: { color?: string; size?: number }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path d="M4 7h16M7 12h10M10 17h4" stroke={color} strokeWidth={1.9} strokeLinecap="round" />
+      <Circle cx="9" cy="7" r="2" fill="#FFFFFF" stroke={color} strokeWidth={1.7} />
+      <Circle cx="15" cy="12" r="2" fill="#FFFFFF" stroke={color} strokeWidth={1.7} />
+      <Circle cx="12" cy="17" r="2" fill="#FFFFFF" stroke={color} strokeWidth={1.7} />
+    </Svg>
+  );
+}
+
+function FeaturedProductImage({ uri, size }: { uri: string; size: number }) {
+  const floatY = useRef(new Animated.Value(0)).current;
+  const imgScale = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    const floatLoop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(floatY, { toValue: -7, duration: 1500, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
+        Animated.timing(floatY, { toValue: 0, duration: 1500, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
+      ])
+    );
+    const scaleLoop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(imgScale, { toValue: 1.04, duration: 2100, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
+        Animated.timing(imgScale, { toValue: 1, duration: 2100, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
+      ])
+    );
+
+    floatLoop.start();
+    scaleLoop.start();
+    return () => {
+      floatLoop.stop();
+      scaleLoop.stop();
+    };
+  }, [floatY, imgScale]);
+
+  return (
+    <View style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }}>
+      <Animated.View style={{ transform: [{ translateY: floatY }, { scale: imgScale }] }}>
+        <Image source={{ uri }} style={{ width: size, height: size }} resizeMode="contain" />
+      </Animated.View>
+    </View>
+  );
+}
+
 function FeaturedCard({
   title,
   subtitle,
   image,
   width,
+  accent,
+  badge,
   onPress,
 }: {
   title: string;
   subtitle: string;
   image: string;
   width: number;
+  accent: readonly [string, string, string];
+  badge: string;
   onPress: () => void;
 }) {
+  const pressScale = useRef(new Animated.Value(1)).current;
+  const tilt = useRef(new Animated.Value(0)).current;
+
+  const handlePressIn = () => {
+    Animated.parallel([
+      Animated.spring(pressScale, { toValue: 0.97, useNativeDriver: true, tension: 115, friction: 8 }),
+      Animated.spring(tilt, { toValue: 1, useNativeDriver: true, tension: 115, friction: 8 }),
+    ]).start();
+  };
+
+  const handlePressOut = () => {
+    Animated.parallel([
+      Animated.spring(pressScale, { toValue: 1, useNativeDriver: true, tension: 115, friction: 8 }),
+      Animated.spring(tilt, { toValue: 0, useNativeDriver: true, tension: 115, friction: 8 }),
+    ]).start();
+  };
+
+  const rotateY = tilt.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '4deg'] });
+
   return (
-    <TouchableOpacity style={[styles.productCard, { width }]} onPress={onPress} activeOpacity={0.9}>
-      <LinearGradient colors={['#F4F8FF', '#E5F0FF', '#D5E5FF']} style={styles.productImageWrap}>
-        <Image source={{ uri: image }} style={styles.productImage} resizeMode="contain" />
-      </LinearGradient>
-      <View style={styles.productInfo}>
-        <Text style={styles.productTitle} numberOfLines={1}>{title}</Text>
-        <Text style={styles.productSub} numberOfLines={2}>{subtitle}</Text>
-      </View>
-    </TouchableOpacity>
+    <Pressable onPress={onPress} onPressIn={handlePressIn} onPressOut={handlePressOut}>
+      <Animated.View
+        style={[
+          styles.productCard,
+          {
+            width,
+            transform: [{ scale: pressScale }, { perspective: 900 }, { rotateY }],
+          },
+        ]}
+      >
+        <LinearGradient colors={accent} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.productImageWrap}>
+          <View style={styles.productBadge}>
+            <Text style={styles.productBadgeText}>{badge}</Text>
+          </View>
+          <View style={styles.productShine} />
+          <FeaturedProductImage uri={image} size={width + 6} />
+        </LinearGradient>
+        <View style={styles.productInfo}>
+          <Text style={styles.productTitle} numberOfLines={1}>{title}</Text>
+          <Text style={styles.productSub} numberOfLines={2}>{subtitle}</Text>
+        </View>
+      </Animated.View>
+    </Pressable>
   );
 }
 
@@ -118,6 +203,25 @@ export function HomeScreen({
   const connectedCount = associatedElectricians.length;
   const tier = useMemo(() => getTier(connectedCount), [connectedCount]);
   const cardW = (width - 28 - 12) / 2;
+  const productFilters = ['All', 'Boxes', 'Fans'] as const;
+  const [selectedFilter, setSelectedFilter] = useState<(typeof productFilters)[number]>('All');
+
+  const filteredProducts = useMemo(() => {
+    const items = featuredProducts.slice(0, 6);
+    if (selectedFilter === 'Boxes') {
+      return items.filter((product) => {
+        const source = `${product.name} ${product.description}`.toLowerCase();
+        return source.includes('box');
+      });
+    }
+    if (selectedFilter === 'Fans') {
+      return items.filter((product) => {
+        const source = `${product.name} ${product.description}`.toLowerCase();
+        return source.includes('fan');
+      });
+    }
+    return items;
+  }, [selectedFilter]);
 
   useEffect(() => {
     const pulse = Animated.loop(
@@ -226,6 +330,26 @@ export function HomeScreen({
             <Text style={styles.sectionEyebrow}>Catalog</Text>
             <Text style={styles.sectionTitle}>Featured products</Text>
           </View>
+        </View>
+
+        <View style={styles.productsTopBar}>
+          <View style={styles.filterRow}>
+            {productFilters.map((filter) => {
+              const active = selectedFilter === filter;
+              return (
+                <TouchableOpacity
+                  key={filter}
+                  onPress={() => setSelectedFilter(filter)}
+                  style={[styles.filterChip, active && styles.filterChipActive]}
+                  activeOpacity={0.86}
+                >
+                  {filter === 'All' ? <FilterIcon color={active ? '#FFFFFF' : '#173E80'} size={15} /> : null}
+                  <Text style={[styles.filterChipText, active && styles.filterChipTextActive]}>{filter}</Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+
           <TouchableOpacity onPress={() => onNavigate('product')} style={styles.inlineAction} activeOpacity={0.85}>
             <Text style={styles.viewAllText}>View all</Text>
             <ChevronRight />
@@ -233,13 +357,21 @@ export function HomeScreen({
         </View>
 
         <View style={styles.productsGrid}>
-          {featuredProducts.slice(0, 4).map((product) => (
+          {filteredProducts.map((product, index) => (
             <FeaturedCard
               key={product.id}
               title={product.name}
               subtitle={product.description}
               image={product.image}
               width={cardW}
+              accent={
+                index % 3 === 0
+                  ? ['#FFF8EA', '#FDE7C3', '#F8D78F']
+                  : index % 3 === 1
+                    ? ['#F2F8FF', '#D9EFFF', '#B8DDFF']
+                    : ['#FAF2FF', '#E9D5FF', '#D8B4FE']
+              }
+              badge={index % 2 === 0 ? 'Top Pick' : 'Hot Deal'}
               onPress={() => onOpenProductCategory('fanbox')}
             />
           ))}
@@ -354,6 +486,25 @@ const styles = StyleSheet.create({
   sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 12 },
   sectionEyebrow: { color: '#7D8AA5', fontSize: 11, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 1.1, marginBottom: 5 },
   sectionTitle: { color: '#14213D', fontSize: 21, fontWeight: '900' },
+  productsTopBar: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 10, marginBottom: 12 },
+  filterRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, flex: 1 },
+  filterChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 9,
+    borderRadius: 999,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#D9E3F0',
+  },
+  filterChipActive: {
+    backgroundColor: '#173E80',
+    borderColor: '#173E80',
+  },
+  filterChipText: { color: '#173E80', fontSize: 11.5, fontWeight: '800' },
+  filterChipTextActive: { color: '#FFFFFF' },
   inlineAction: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   viewAllText: { color: '#173E80', fontSize: 13, fontWeight: '800' },
   productsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginBottom: 24 },
@@ -363,13 +514,39 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     borderWidth: 1,
     borderColor: '#E6ECF5',
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.08,
+    shadowRadius: 18,
+    elevation: 5,
   },
   productImageWrap: {
-    height: 150,
+    height: 168,
     alignItems: 'center',
     justifyContent: 'center',
+    position: 'relative',
+    overflow: 'hidden',
   },
-  productImage: { width: 124, height: 124 },
+  productBadge: {
+    position: 'absolute',
+    top: 12,
+    left: 12,
+    zIndex: 2,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 10,
+    backgroundColor: 'rgba(19,41,75,0.84)',
+  },
+  productBadgeText: { color: '#FFFFFF', fontSize: 10, fontWeight: '800' },
+  productShine: {
+    position: 'absolute',
+    width: 130,
+    height: 130,
+    borderRadius: 65,
+    backgroundColor: 'rgba(255,255,255,0.26)',
+    top: -34,
+    right: -22,
+  },
   productInfo: { padding: 13 },
   productTitle: { color: '#152238', fontSize: 13, fontWeight: '800' },
   productSub: { color: '#70819C', fontSize: 11, marginTop: 4, lineHeight: 16 },

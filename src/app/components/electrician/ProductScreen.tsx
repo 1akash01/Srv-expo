@@ -168,6 +168,17 @@ function ScanIcon({ size = 16, color = '#E87820' }: { size?: number; color?: str
   );
 }
 
+function FilterIcon({ size = 18, color = '#1C1E2E' }: { size?: number; color?: string }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path d="M4 7h16M7 12h10M10 17h4" stroke={color} strokeWidth="1.9" strokeLinecap="round" />
+      <Circle cx="9" cy="7" r="1.8" fill="#fff" stroke={color} strokeWidth="1.6" />
+      <Circle cx="15" cy="12" r="1.8" fill="#fff" stroke={color} strokeWidth="1.6" />
+      <Circle cx="12" cy="17" r="1.8" fill="#fff" stroke={color} strokeWidth="1.6" />
+    </Svg>
+  );
+}
+
 const categories = [
   { id: 'fanbox',       label: 'Fan Box',       count: 6 },
   { id: 'concealedbox', label: 'Concealed Box', count: 5 },
@@ -374,6 +385,7 @@ export function ProductScreen({ onNavigate, initialCategory = 'fanbox' }: { onNa
   const { width } = useWindowDimensions();
   const [category, setCategory] = useState(initialCategory);
   const [search, setSearch] = useState('');
+  const [showFilters, setShowFilters] = useState(false);
 
   const PADDING = 14;
   const GAP = 12;
@@ -423,7 +435,60 @@ export function ProductScreen({ onNavigate, initialCategory = 'fanbox' }: { onNa
             <Text style={{ fontSize: 15, color: Colors.textMuted }}>✕</Text>
           </Pressable>
         )}
+        <TouchableOpacity
+          onPress={() => setShowFilters((prev) => !prev)}
+          style={[styles.filterToggleBtn, showFilters && styles.filterToggleBtnActive]}
+          activeOpacity={0.82}
+        >
+          <FilterIcon color={showFilters ? '#FFFFFF' : Colors.textDark} />
+        </TouchableOpacity>
       </View>
+
+      {showFilters ? (
+        <View style={styles.filterPanel}>
+          <View style={styles.filterPanelHeader}>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.filterPanelTitle}>Filter products</Text>
+              <Text style={styles.filterPanelSub}>Choose a category to see matching product names and items.</Text>
+            </View>
+            <TouchableOpacity onPress={() => setShowFilters(false)} activeOpacity={0.8}>
+              <Text style={styles.filterPanelClose}>Close</Text>
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.filterGrid}>
+            {categories.map((cat) => {
+              const active = !isSearching && cat.id === category;
+              const cc = CAT_COLORS[cat.id];
+              return (
+                <TouchableOpacity
+                  key={cat.id}
+                  onPress={() => {
+                    setCategory(cat.id);
+                    setSearch('');
+                    setShowFilters(false);
+                  }}
+                  style={[
+                    styles.filterCard,
+                    active && { backgroundColor: cc.scanText, borderColor: cc.scanText },
+                  ]}
+                  activeOpacity={0.86}
+                >
+                  <View style={[styles.filterCardIcon, { backgroundColor: active ? 'rgba(255,255,255,0.2)' : cc.iconBg }]}>
+                    <CatIcon id={cat.id} size={22} color={active ? '#fff' : cc.scanText} />
+                  </View>
+                  <Text style={[styles.filterCardTitle, active && styles.filterCardTitleActive]} numberOfLines={1}>
+                    {cat.label}
+                  </Text>
+                  <Text style={[styles.filterCardMeta, active && styles.filterCardMetaActive]}>
+                    {allProducts.filter((product) => product.category === cat.id).length} products
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        </View>
+      ) : null}
 
       {/* Category Tabs — always visible, just disabled during search */}
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.tabList}>
@@ -530,6 +595,60 @@ const styles = StyleSheet.create({
     borderColor: Colors.border, paddingHorizontal: 14, height: 50,
   },
   searchInput: { flex: 1, fontSize: 15, color: Colors.textDark },
+  filterToggleBtn: {
+    width: 38,
+    height: 38,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#F4F6FA',
+  },
+  filterToggleBtnActive: {
+    backgroundColor: Colors.primary,
+  },
+  filterPanel: {
+    backgroundColor: Colors.surface,
+    borderRadius: 22,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 5 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 4,
+  },
+  filterPanelHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    gap: 10,
+    marginBottom: 12,
+  },
+  filterPanelTitle: { fontSize: 16, fontWeight: '800', color: Colors.textDark },
+  filterPanelSub: { fontSize: 12, color: Colors.textMuted, marginTop: 3, lineHeight: 17 },
+  filterPanelClose: { fontSize: 12.5, fontWeight: '800', color: Colors.primary },
+  filterGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
+  filterCard: {
+    width: '48%',
+    backgroundColor: '#FAFBFD',
+    borderWidth: 1,
+    borderColor: Colors.border,
+    borderRadius: 18,
+    padding: 12,
+  },
+  filterCardIcon: {
+    width: 42,
+    height: 42,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 10,
+  },
+  filterCardTitle: { fontSize: 13, fontWeight: '800', color: Colors.textDark },
+  filterCardTitleActive: { color: '#FFFFFF' },
+  filterCardMeta: { fontSize: 11.5, color: Colors.textMuted, marginTop: 4 },
+  filterCardMetaActive: { color: 'rgba(255,255,255,0.86)' },
 
   tabList: { gap: 10, paddingVertical: 2 },
   categoryTab: {

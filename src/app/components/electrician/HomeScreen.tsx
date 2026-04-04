@@ -1,5 +1,5 @@
 import { LinearGradient } from 'expo-linear-gradient';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Animated,
   Easing,
@@ -263,6 +263,17 @@ function ChevronRight({ color = '#10254A', size = 16 }: { color?: string; size?:
   );
 }
 
+function FilterIcon({ color = '#173E80', size = 16 }: { color?: string; size?: number }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path d="M4 7h16M7 12h10M10 17h4" stroke={color} strokeWidth={1.9} strokeLinecap="round" />
+      <Circle cx="9" cy="7" r="2" fill="#FFFFFF" stroke={color} strokeWidth={1.7} />
+      <Circle cx="15" cy="12" r="2" fill="#FFFFFF" stroke={color} strokeWidth={1.7} />
+      <Circle cx="12" cy="17" r="2" fill="#FFFFFF" stroke={color} strokeWidth={1.7} />
+    </Svg>
+  );
+}
+
 export function HomeScreen({
   onNavigate,
   onOpenProductCategory,
@@ -272,11 +283,28 @@ export function HomeScreen({
 }) {
   const { width } = useWindowDimensions();
   const [slide, setSlide] = useState(0);
+  const productFilters = ['All', 'Boxes', 'Fans'] as const;
+  const [selectedFilter, setSelectedFilter] = useState<(typeof productFilters)[number]>('All');
   const fadeAnim = useRef(new Animated.Value(1)).current;
   const statsPulse = useRef(new Animated.Value(1)).current;
   const autoSlideRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const cardW = (width - 28 - 12) / 2;
   const heroImageHeight = Math.round((width - 28) * 0.56);
+  const filteredProducts = useMemo(() => {
+    if (selectedFilter === 'Boxes') {
+      return PRODUCTS.filter((product) => {
+        const source = `${product.name} ${product.description}`.toLowerCase();
+        return source.includes('box');
+      });
+    }
+    if (selectedFilter === 'Fans') {
+      return PRODUCTS.filter((product) => {
+        const source = `${product.name} ${product.description}`.toLowerCase();
+        return source.includes('fan');
+      });
+    }
+    return PRODUCTS;
+  }, [selectedFilter]);
 
   const goToSlide = (next: number) => {
     Animated.sequence([
@@ -464,6 +492,26 @@ export function HomeScreen({
             <Text style={styles.sectionEyebrow}>Top Picks</Text>
             <Text style={styles.sectionTitle}>Featured products</Text>
           </View>
+        </View>
+
+        <View style={styles.productsTopBar}>
+          <View style={styles.filterRow}>
+            {productFilters.map((filter) => {
+              const active = selectedFilter === filter;
+              return (
+                <TouchableOpacity
+                  key={filter}
+                  onPress={() => setSelectedFilter(filter)}
+                  style={[styles.filterChip, active && styles.filterChipActive]}
+                  activeOpacity={0.86}
+                >
+                  {filter === 'All' ? <FilterIcon color={active ? '#FFFFFF' : '#173E80'} size={15} /> : null}
+                  <Text style={[styles.filterChipText, active && styles.filterChipTextActive]}>{filter}</Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+
           <TouchableOpacity onPress={() => onNavigate('product')} style={styles.inlineAction} activeOpacity={0.85}>
             <Text style={styles.viewAllText}>View all</Text>
             <ChevronRight color="#E8453C" />
@@ -471,7 +519,7 @@ export function HomeScreen({
         </View>
 
         <View style={styles.productsGrid}>
-          {PRODUCTS.map((product) => (
+          {filteredProducts.map((product) => (
             <FeaturedProductCard
               key={product.name}
               product={product}
@@ -679,6 +727,25 @@ const styles = StyleSheet.create({
   quickSub: { color: '#74829D', fontSize: 11.5, marginTop: 3 },
   inlineAction: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   viewAllText: { color: '#E8453C', fontSize: 13, fontWeight: '800' },
+  productsTopBar: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 10, marginBottom: 12 },
+  filterRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, flex: 1 },
+  filterChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 9,
+    borderRadius: 999,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#D9E3F0',
+  },
+  filterChipActive: {
+    backgroundColor: '#173E80',
+    borderColor: '#173E80',
+  },
+  filterChipText: { color: '#173E80', fontSize: 11.5, fontWeight: '800' },
+  filterChipTextActive: { color: '#FFFFFF' },
   productsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginBottom: 24 },
   productCard: {
     backgroundColor: '#FFFFFF',
