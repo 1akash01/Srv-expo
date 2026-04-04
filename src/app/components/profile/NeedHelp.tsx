@@ -8,6 +8,7 @@ export function NeedHelpPage({ onBack }: { onBack: () => void }) {
   const [subject, setSubject] = useState('');
   const [comment, setComment] = useState('');
   const [photo, setPhoto] = useState<string | null>(null);
+  const [pendingPhoto, setPendingPhoto] = useState<string | null>(null);
   const [showSubjectDropdown, setShowSubjectDropdown] = useState(false);
   const subjectOptions = ['Normal Inquiry', 'Bulk Inquiry', 'Electrician Related Inquiry', 'QR Related Inquiry'];
 
@@ -16,8 +17,18 @@ export function NeedHelpPage({ onBack }: { onBack: () => void }) {
     if (!permission.granted) {
       return Alert.alert('Permission required', 'Please allow gallery access.');
     }
-    const res = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ImagePicker.MediaTypeOptions.Images, allowsEditing: true, quality: 0.8 });
-    if (!res.canceled) setPhoto(res.assets[0].uri);
+    const res = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ImagePicker.MediaTypeOptions.Images, quality: 0.8 });
+    if (!res.canceled) setPendingPhoto(res.assets[0].uri);
+  };
+
+  const confirmPhoto = () => {
+    if (!pendingPhoto) return;
+    setPhoto(pendingPhoto);
+    setPendingPhoto(null);
+  };
+
+  const cancelPhoto = () => {
+    setPendingPhoto(null);
   };
 
   const submitHelp = () => {
@@ -94,6 +105,23 @@ export function NeedHelpPage({ onBack }: { onBack: () => void }) {
           </View>
         </Pressable>
       </Modal>
+
+      <Modal visible={!!pendingPhoto} animationType="fade" transparent onRequestClose={cancelPhoto}>
+        <View style={styles.dropdownOverlay}>
+          <View style={[styles.dropdownSheet, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+            {pendingPhoto ? <Image source={{ uri: pendingPhoto }} style={styles.confirmPreview} /> : null}
+            <Text style={[styles.dropdownTitle, { color: theme.textPrimary }]}>Use this photo?</Text>
+            <View style={styles.confirmActions}>
+              <TouchableOpacity style={styles.confirmCancelBtn} onPress={cancelPhoto} activeOpacity={0.85}>
+                <Text style={styles.confirmCancelText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.confirmDoneBtn} onPress={confirmPhoto} activeOpacity={0.85}>
+                <Text style={styles.confirmDoneText}>Done</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -118,4 +146,10 @@ const styles = StyleSheet.create({
   dropdownTitle: { fontSize: 17, fontWeight: '900', marginBottom: 12 },
   dropdownItem: { minHeight: 52, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 14 },
   dropdownItemText: { fontSize: 14, fontWeight: '600', flex: 1, marginRight: 12 },
+  confirmPreview: { width: 220, height: 220, borderRadius: 20, alignSelf: 'center', marginBottom: 16 },
+  confirmActions: { flexDirection: 'row', gap: 12, marginTop: 8 },
+  confirmCancelBtn: { flex: 1, height: 52, borderRadius: 16, backgroundColor: C.bg, borderWidth: 1, borderColor: C.border, alignItems: 'center', justifyContent: 'center' },
+  confirmCancelText: { fontSize: 15, fontWeight: '700', color: C.dark },
+  confirmDoneBtn: { flex: 1, height: 52, borderRadius: 16, backgroundColor: C.primary, alignItems: 'center', justifyContent: 'center' },
+  confirmDoneText: { fontSize: 15, fontWeight: '800', color: '#fff' },
 });
