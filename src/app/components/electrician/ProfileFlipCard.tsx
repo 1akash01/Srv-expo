@@ -27,6 +27,7 @@ interface Profile {
   town?: string;
   district?: string;
   state?: string;
+  address?: string;
 }
 
 interface Props {
@@ -173,6 +174,11 @@ export default function ProfileFlipCard({ profile, role = 'electrician' }: Props
     ? [profile?.town || 'Chauke', profile?.district || 'Mansa', profile?.state || 'Punjab'].filter(Boolean).join(', ')
     : [profile?.dealer_town || 'Chauke', profile?.district || 'Mansa', profile?.state || 'Punjab'].filter(Boolean).join(', ');
   const dealerPhone = '+91 ' + (role === 'dealer' ? (profile?.phone || '9162038214') : (profile?.dealer_phone || '9465258788'));
+  const dealerAddress = profile?.address || 'Green Valley Colony, Mansa, Punjab 151505, India';
+  const frontLocation = role === 'dealer' ? dealerLocation : (profile?.town || 'Chauke, Punjab');
+  const codeLabel = role === 'dealer' ? 'Dealer Code' : 'Electrician Code';
+  const backThirdLabel = role === 'dealer' ? 'Address' : 'Phone';
+  const backThirdValue = role === 'dealer' ? dealerAddress : dealerPhone;
   const exportName = ((profile?.name || dealerName || 'srv-profile-card')
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')
@@ -181,13 +187,16 @@ export default function ProfileFlipCard({ profile, role = 'electrician' }: Props
   const buildPdfHtml = (logoDataUri: string | null) => {
     const profileName = escapeHtml(profile?.name || 'Harshvardhan');
     const profilePhone = escapeHtml('+91 ' + (profile?.phone || '9162038214'));
-    const location = escapeHtml(profile?.town || 'Chauke, Punjab');
+    const location = escapeHtml(frontLocation);
     const safeCode = escapeHtml(code || 'PB03900-001');
     const safeDealerName = escapeHtml(dealerName);
     const safeDealerLocation = escapeHtml(dealerLocation);
     const safeDealerPhone = escapeHtml(dealerPhone);
+    const safeDealerAddress = escapeHtml(dealerAddress);
     const heading = escapeHtml(role === 'dealer' ? 'Business Details' : 'Connected Dealer');
     const partnerRole = escapeHtml(role === 'dealer' ? 'Dealer Partner' : 'Electrician Partner');
+    const safeBackThirdLabel = escapeHtml(backThirdLabel);
+    const safeBackThirdValue = escapeHtml(backThirdValue);
 
     return `
       <html>
@@ -252,7 +261,7 @@ export default function ProfileFlipCard({ profile, role = 'electrician' }: Props
                 <div class="stack">
                   <div class="pill"><div class="pill-label">Name</div><div class="pill-value">${safeDealerName}</div></div>
                   <div class="pill"><div class="pill-label">Location</div><div class="pill-value">${safeDealerLocation}</div></div>
-                  <div class="pill"><div class="pill-label">Phone</div><div class="pill-value">${safeDealerPhone}</div></div>
+                  <div class="pill"><div class="pill-label">${safeBackThirdLabel}</div><div class="pill-value">${role === 'dealer' ? safeDealerAddress : safeDealerPhone}</div></div>
                 </div>
               </div>
               <div class="qr-panel">
@@ -335,10 +344,10 @@ export default function ProfileFlipCard({ profile, role = 'electrician' }: Props
               </View>
 
               <View style={styles.frontBottomRow}>
-                <DetailPill label="Electrician Code" value={code || 'PB03900-001'} />
+                <DetailPill label={codeLabel} value={code || 'PB03900-001'} />
                 <DetailPill
                   label="Location"
-                  value={profile?.town || 'Chauke, Punjab'}
+                  value={frontLocation}
                   icon={<LocationIcon />}
                 />
               </View>
@@ -355,7 +364,7 @@ export default function ProfileFlipCard({ profile, role = 'electrician' }: Props
                   <View style={styles.metaStack}>
                     <DetailPill label="Name" value={dealerName} compact />
                     <DetailPill label="Location" value={dealerLocation} compact lines={2} />
-                    <DetailPill label="Phone" value={dealerPhone} compact />
+                    <DetailPill label={backThirdLabel} value={backThirdValue} compact lines={role === 'dealer' ? 3 : undefined} />
                   </View>
                 </View>
 

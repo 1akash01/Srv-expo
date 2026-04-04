@@ -2,6 +2,7 @@ import { StatusBar as ExpoStatusBar } from 'expo-status-bar';
 import { useMemo, useState } from 'react';
 import { Platform, SafeAreaView, StatusBar, StyleSheet, View } from 'react-native';
 import { BottomNav as DealerBottomNav } from './src/app/components/dealer/BottomNav';
+import { CallElectricianScreen as DealerCallElectricianScreen } from './src/screens/dealer/CallElectricianScreen';
 import { BottomNav as ElectricianBottomNav } from './src/app/components/electrician/BottomNav';
 import { ElectriciansScreen as DealerElectriciansScreen } from './src/screens/dealer/ElectriciansScreen';
 import { HomeScreen as DealerHomeScreen } from './src/screens/dealer/HomeScreen';
@@ -68,6 +69,8 @@ export default function App() {
           );
         case 'electricians':
           return <DealerElectriciansScreen onNavigate={handleNavigate} />;
+        case 'call_electrician':
+          return <DealerCallElectricianScreen />;
         case 'notification':
           return <DealerNotificationScreen onNavigate={handleNavigate} />;
         case 'wallet':
