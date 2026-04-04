@@ -53,13 +53,19 @@ export function ProfileScreen({
   const [showImgPicker, setShowImgPicker] = useState(false);
   const [subPage, setSubPage] = useState<SubPage>(null);
   const [showFullProfile, setShowFullProfile] = useState(false);
+  const [photoUploaded, setPhotoUploaded] = useState(false);
 
   const theme = useMemo(() => getThemePalette(darkMode), [darkMode]);
   const t = (key: keyof (typeof translations)['English']) => translations[language][key];
   const preferenceValue = { language, setLanguage, darkMode, setDarkMode, t, theme };
   const initials = useMemo(() => profile.name.split(' ').map((w) => w[0]).join('').slice(0, 2).toUpperCase(), [profile.name]);
 
-  const openEdit = () => { setDraft(profile); setDraftImage(profileImage); setShowEdit(true); };
+  const openEdit = () => {
+    setDraft(profile);
+    setDraftImage(profileImage);
+    setPhotoUploaded(false);
+    setShowEdit(true);
+  };
   const updateDraftField = (key: keyof Profile, value: string) => {
     let nextValue = value;
     if (key === 'name' || key === 'city' || key === 'state' || key === 'gstHolderName' || key === 'panHolderName') {
@@ -92,17 +98,39 @@ export function ProfileScreen({
     }
     setProfile(draft);
     setProfileImage(draftImage);
+    setPhotoUploaded(false);
     setShowEdit(false);
   };
   const pickFromGallery = async () => {
     setShowImgPicker(false);
+    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permission.granted) {
+      return Alert.alert('Permission required', 'Please allow gallery access.');
+    }
     const res = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ImagePicker.MediaTypeOptions.Images, allowsEditing: true, aspect: [1, 1], quality: 0.85 });
-    if (!res.canceled) setDraftImage(res.assets[0].uri);
+    if (!res.canceled) {
+      setDraftImage(res.assets[0].uri);
+      setPhotoUploaded(false);
+    }
   };
   const pickFromCamera = async () => {
     setShowImgPicker(false);
+    const permission = await ImagePicker.requestCameraPermissionsAsync();
+    if (!permission.granted) {
+      return Alert.alert('Permission required', 'Please allow camera access.');
+    }
     const res = await ImagePicker.launchCameraAsync({ allowsEditing: true, aspect: [1, 1], quality: 0.85 });
-    if (!res.canceled) setDraftImage(res.assets[0].uri);
+    if (!res.canceled) {
+      setDraftImage(res.assets[0].uri);
+      setPhotoUploaded(false);
+    }
+  };
+
+  const uploadDraftPhoto = () => {
+    if (!draftImage) return;
+    setProfileImage(draftImage);
+    setPhotoUploaded(true);
+    Alert.alert('Photo uploaded', 'Your selected profile image has been uploaded. Tap Save Changes to keep it.');
   };
 
   const subpages: Record<Exclude<SubPage, null>, React.ReactElement> = {
@@ -114,7 +142,7 @@ export function ProfileScreen({
         onOpenTransferPoints={() => setSubPage('Transfer Points')}
       />
     ),
-    'Transfer Points': <TransferPointsPage onBack={() => setSubPage(null)} />,
+    'Transfer Points': <TransferPointsPage onBack={() => setSubPage(null)} onNavigate={onNavigate} />,
     'My Orders': <MyOrdersPage onBack={() => setSubPage(null)} />,
     'Bank Details': <BankDetailsPage onBack={() => setSubPage(null)} />,
     'Refer To A Friend': <ReferFriendPage onBack={() => setSubPage(null)} />,
@@ -298,6 +326,12 @@ export function ProfileScreen({
                     </View>
                     <Text style={ms.changePhotoTxt}>{t('tapToChangePhoto')}</Text>
                   </TouchableOpacity>
+                  {draftImage ? (
+                    <TouchableOpacity onPress={uploadDraftPhoto} activeOpacity={0.85} style={photoUploaded ? ms.photoUploadedBtn : ms.photoUploadBtn}>
+                      <AppIcon name="check" size={16} color="#fff" />
+                      <Text style={ms.photoUploadText}>{photoUploaded ? 'Uploaded' : 'Upload Photo'}</Text>
+                    </TouchableOpacity>
+                  ) : null}
                 </View>
                 {([
                   ['Full Name', 'name'], ['Phone Number', 'phone'], ['Email', 'email'], ['City', 'city'], ['State', 'state'], ['Pincode', 'pincode'],
@@ -417,6 +451,9 @@ const ms = StyleSheet.create({
   editAvatarInitials: { color: '#fff', fontSize: 32, fontWeight: '900' },
   cameraOverlay: { position: 'absolute', bottom: 0, left: 0, right: 0, height: 32, backgroundColor: 'rgba(0,0,0,0.45)', alignItems: 'center', justifyContent: 'center' },
   changePhotoTxt: { fontSize: 13, color: C.muted, fontWeight: '600' },
+  photoUploadBtn: { marginTop: 12, minWidth: 144, height: 42, borderRadius: 14, backgroundColor: C.primary, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingHorizontal: 16 },
+  photoUploadedBtn: { marginTop: 12, minWidth: 144, height: 42, borderRadius: 14, backgroundColor: C.success, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingHorizontal: 16 },
+  photoUploadText: { color: '#fff', fontSize: 14, fontWeight: '800' },
   field: { marginBottom: 14 },
   fieldLabel: { fontSize: 12, fontWeight: '700', color: C.muted, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 7 },
   input: { height: 52, borderRadius: 16, borderWidth: 1.5, borderColor: C.border, backgroundColor: C.bg, paddingHorizontal: 16, fontSize: 14, fontWeight: '500', color: C.dark },

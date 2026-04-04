@@ -7,24 +7,27 @@ const referImage = require('./assets/referfriend.png');
 export function ReferFriendPage({ onBack }: { onBack: () => void }) {
   const { t, theme } = usePreferenceContext();
   const referCode = '330276';
+  const referralLink = `https://srvelectricals.com/referral?code=${referCode}`;
+  const shareMessage = `Join SRV Electricals with my referral link: ${referralLink}`;
 
   const copyCode = async () => {
     if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
-      await navigator.clipboard.writeText(referCode);
-      return Alert.alert('Copied!', 'Referral code copied to clipboard.');
+      await navigator.clipboard.writeText(referralLink);
+      return Alert.alert('Copied!', 'Referral link copied to clipboard.');
     }
-    await Share.share({ message: `SRV referral code: ${referCode}` });
+    await Share.share({ message: shareMessage, url: referralLink });
   };
 
   const shareCode = async () => {
-    await Share.share({ message: `Join SRV Electricals and use my referral code: ${referCode}` });
+    await Share.share({ message: shareMessage, url: referralLink });
   };
 
   return (
     <View style={{ flex: 1, backgroundColor: theme.bg }}>
       <PageHeader title={t('referFriend')} onBack={onBack} />
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        <View style={[styles.heroCard, { backgroundColor: theme.heroSurface, borderColor: theme.border }]}>
+        <View style={[styles.heroCard, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+          <View style={styles.heroAccent} />
           <Text style={[styles.heroTitle, { color: theme.textPrimary }]}>Invite Friends</Text>
           <Image source={referImage} style={styles.heroImage} resizeMode="contain" />
           <Text style={[styles.heroSub, { color: theme.textMuted }]}>Copy Your Code, Share It With Your Friends.</Text>
@@ -35,10 +38,10 @@ export function ReferFriendPage({ onBack }: { onBack: () => void }) {
             <View style={styles.codeBadge}>
               <AppIcon name="refer" size={18} color={C.blue} />
             </View>
-            <Text style={[styles.codeLabel, { color: theme.textMuted }]}>Referral Code</Text>
+          <Text style={[styles.codeLabel, { color: theme.textMuted }]}>Referral Link</Text>
           </View>
           <View style={styles.codeRow}>
-            <Text style={[styles.codeValue, { color: theme.textPrimary }]}>{referCode}</Text>
+            <Text style={[styles.linkValue, { color: theme.textPrimary }]} numberOfLines={1}>{referralLink}</Text>
             <TouchableOpacity style={styles.copyBtn} onPress={copyCode}>
               <Text style={styles.copyText}>Copy</Text>
             </TouchableOpacity>
@@ -54,7 +57,7 @@ export function ReferFriendPage({ onBack }: { onBack: () => void }) {
         <Text style={[styles.sendTitle, { color: theme.textPrimary }]}>Send Invite With</Text>
         <View style={styles.shareRow}>
           {[['link', 'Share', shareCode], ['message', 'Message', shareCode], ['whatsapp', 'WhatsApp', shareCode]].map(([icon, label, fn]) => (
-            <TouchableOpacity key={label as string} style={[styles.shareBtn, { backgroundColor: theme.surface, borderColor: theme.border }]} onPress={fn as () => void} activeOpacity={0.8}>
+            <TouchableOpacity key={label as string} style={[styles.shareBtn, { backgroundColor: theme.soft, borderColor: theme.border }]} onPress={fn as () => void} activeOpacity={0.8}>
               <AppIcon name={icon as IconName} size={24} color={label === 'WhatsApp' ? '#16A34A' : C.primary} />
             </TouchableOpacity>
           ))}
@@ -73,17 +76,18 @@ export function ReferFriendPage({ onBack }: { onBack: () => void }) {
 
 const styles = StyleSheet.create({
   scrollContent: { padding: 16, gap: 16, paddingBottom: 32 },
-  heroCard: { borderRadius: 28, borderWidth: 1, padding: 20, alignItems: 'center', gap: 10 },
+  heroCard: { borderRadius: 28, borderWidth: 1, padding: 20, alignItems: 'center', gap: 10, overflow: 'hidden' },
+  heroAccent: { position: 'absolute', top: 0, left: 0, right: 0, height: 6, backgroundColor: C.blue },
   heroTitle: { fontSize: 18, fontWeight: '900' },
   heroImage: { width: '100%', height: 180, maxWidth: 260 },
   heroSub: { fontSize: 14, textAlign: 'center', lineHeight: 20 },
-  codeCard: { borderRadius: 24, borderWidth: 1, padding: 16, gap: 12 },
+  codeCard: { borderRadius: 26, borderWidth: 1, padding: 18, gap: 12 },
   codeTop: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  codeBadge: { width: 36, height: 36, borderRadius: 12, backgroundColor: C.blueLight, alignItems: 'center', justifyContent: 'center' },
+  codeBadge: { width: 40, height: 40, borderRadius: 14, backgroundColor: C.blueLight, alignItems: 'center', justifyContent: 'center' },
   codeLabel: { fontSize: 12, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5 },
-  codeRow: { flexDirection: 'row', alignItems: 'center', borderWidth: 1.5, borderColor: C.primary, borderRadius: 22, paddingLeft: 16, paddingRight: 6, paddingVertical: 6 },
-  codeValue: { flex: 1, fontSize: 24, fontWeight: '900', letterSpacing: 2 },
-  copyBtn: { backgroundColor: C.primary, borderRadius: 18, paddingHorizontal: 24, height: 38, alignItems: 'center', justifyContent: 'center' },
+  codeRow: { flexDirection: 'row', alignItems: 'center', borderWidth: 1.5, borderColor: C.blue, borderRadius: 22, paddingLeft: 16, paddingRight: 6, paddingVertical: 6, backgroundColor: '#F8FBFF' },
+  linkValue: { flex: 1, fontSize: 12, fontWeight: '700', marginRight: 10 },
+  copyBtn: { backgroundColor: C.blue, borderRadius: 18, paddingHorizontal: 24, height: 38, alignItems: 'center', justifyContent: 'center' },
   copyText: { color: '#fff', fontSize: 15, fontWeight: '800' },
   dividerRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   divider: { flex: 1, height: 1 },

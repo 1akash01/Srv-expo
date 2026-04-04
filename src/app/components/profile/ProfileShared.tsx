@@ -61,7 +61,7 @@ export type IconName =
   | 'order' | 'bank' | 'refer' | 'help' | 'offer' | 'notification' | 'settings'
   | 'history' | 'support' | 'camera' | 'gallery' | 'phone' | 'mail' | 'building'
   | 'link' | 'message' | 'whatsapp' | 'moon' | 'warning' | 'arrowLeft' | 'check'
-  | 'chevronRight' | 'chevronDown' | 'chevronUp' | 'location';
+  | 'chevronRight' | 'chevronDown' | 'chevronUp' | 'location' | 'search';
 
 export type AppLanguage = 'English' | 'Hindi' | 'Punjabi';
 
@@ -186,6 +186,7 @@ export function AppIcon({ name, size = 18, color = '#0F1120', strokeWidth = 1.8 
     case 'chevronDown': return <Svg width={size} height={size} viewBox="0 0 24 24" fill="none"><Path d="M6 9l6 6 6-6" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" /></Svg>;
     case 'chevronUp': return <Svg width={size} height={size} viewBox="0 0 24 24" fill="none"><Path d="M6 15l6-6 6 6" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" /></Svg>;
     case 'location': return <Svg width={size} height={size} viewBox="0 0 24 24" fill="none"><Path d="M12 21s6-4.8 6-10a6 6 0 10-12 0c0 5.2 6 10 6 10z" stroke={color} strokeWidth={strokeWidth} strokeLinejoin="round" /><Circle cx="12" cy="11" r="2.2" stroke={color} strokeWidth={strokeWidth} /></Svg>;
+    case 'search': return <Svg width={size} height={size} viewBox="0 0 24 24" fill="none"><Circle cx="11" cy="11" r="6.5" stroke={color} strokeWidth={strokeWidth} /><Path d="M16 16l4 4" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" /></Svg>;
     default: return null;
   }
 }
