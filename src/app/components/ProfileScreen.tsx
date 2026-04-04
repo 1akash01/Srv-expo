@@ -1,150 +1,37 @@
-import { useMemo, useState } from 'react';
-import {
-  Modal,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from 'react-native';
-import Svg, { Circle, Path, Rect } from 'react-native-svg';
-import type { Screen } from '../../types';
+﻿import React, { useMemo, useState } from 'react';
+import { Alert, Image, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import * as ImagePicker from 'expo-image-picker';
+import type { UserRole } from '../../types';
+import { AppIcon, C, defaultProfile, getThemePalette, IconName, PreferenceContext, Profile, Screen, SubPage, translations } from './profile/ProfileShared';
+import { RedemptionPage } from './profile/MyRedemption';
+import { TransferPointsPage } from './profile/TransferPoints';
+import { MyOrdersPage } from './profile/MyOrders';
+import { BankDetailsPage } from './profile/BankDetails';
+import { ReferFriendPage } from './profile/ReferFriend';
+import { NeedHelpPage } from './profile/NeedHelp';
+import { OffersPage } from './profile/Offers';
+import { NotificationsPage } from './profile/Notifications';
+import { AppSettingsPage } from './profile/AppSettings';
+import { ScanHistoryPage } from './profile/ScanHistory';
+import { ContactSupportPage } from './profile/ContactSupport';
 
-const Colors = {
-  primary: '#E8453C',
-  primaryLight: '#FFF0F0',
-  background: '#F2F3F7',
-  surface: '#FFFFFF',
-  border: '#EEEEF3',
-  textDark: '#1C1E2E',
-  textMuted: '#9898A8',
-  gold: '#F59E0B',
-};
-
-const defaultProfile = {
-  name: 'Harshvardhan',
-  phone: '9162038214',
-  email: '',
-  state: 'Punjab',
-  city: 'Mansa',
-  pincode: '151505',
-  address: 'YOUR+PC8, Green Valley',
-  gstHolderName: 'Harshvardhan',
-  gstNumber: 'BIBPB7675A',
-  panHolderName: '',
-  panNumber: '',
-  dealerCode: '215548',
-};
-
-type Profile = typeof defaultProfile;
-
-const quickLinks: Array<{ label: string; icon: string; bg: string; screen: Screen | null }> = [
-  { label: 'My Redemption', icon: 'MR', bg: Colors.primaryLight, screen: 'wallet' },
-  { label: 'Gift Store', icon: 'GS', bg: '#FFF8E1', screen: 'rewards' },
-  { label: 'Transfer Points', icon: 'TP', bg: Colors.primaryLight, screen: null },
-  { label: 'My Orders', icon: 'MO', bg: '#EFF6FF', screen: null },
-  { label: 'Bank Details', icon: 'BD', bg: '#FFF8E1', screen: null },
-  { label: 'Need Help', icon: 'NH', bg: '#E6FDF0', screen: null },
+const menuItems = [
+  { label: 'My Redemption', icon: 'gift' as IconName, bg: C.primaryLight, screen: 'My Redemption' as SubPage, color: C.primary },
+  { label: 'Gift Store', icon: 'gift' as IconName, bg: C.tealLight, route: 'rewards' as Screen, color: C.teal },
+  { label: 'Transfer Points', icon: 'transfer' as IconName, bg: C.blueLight, screen: 'Transfer Points' as SubPage, color: C.blue },
+  { label: 'My Orders', icon: 'order' as IconName, bg: C.purpleLight, screen: 'My Orders' as SubPage, color: C.purple },
+  { label: 'Bank Details', icon: 'bank' as IconName, bg: C.goldLight, screen: 'Bank Details' as SubPage, color: C.gold },
+  { label: 'Refer To A Friend', icon: 'refer' as IconName, bg: '#EFF6FF', screen: 'Refer To A Friend' as SubPage, color: C.blue },
+  { label: 'Need Help', icon: 'help' as IconName, bg: C.tealLight, screen: 'Need Help' as SubPage, color: C.teal },
+  { label: 'Offers & Promotions', icon: 'offer' as IconName, bg: C.goldLight, screen: 'Offers & Promotions' as SubPage, color: C.gold },
 ];
 
-const detailRows: Array<{ label: string; key: keyof Profile }> = [
-  { label: 'Phone Number', key: 'phone' },
-  { label: 'Email', key: 'email' },
-  { label: 'City', key: 'city' },
-  { label: 'State', key: 'state' },
-  { label: 'Pincode', key: 'pincode' },
-  { label: 'Address', key: 'address' },
-  { label: 'GST Holder', key: 'gstHolderName' },
-  { label: 'GST Number', key: 'gstNumber' },
-  { label: 'PAN Holder', key: 'panHolderName' },
-  { label: 'PAN Number', key: 'panNumber' },
-  { label: 'Dealer Code', key: 'dealerCode' },
+const settingsItems = [
+  { label: 'Notifications', icon: 'notification' as IconName, bg: C.goldLight, screen: 'Notifications' as SubPage, badge: true, color: C.gold },
+  { label: 'App Settings', icon: 'settings' as IconName, bg: C.purpleLight, screen: 'App Settings' as SubPage, badge: false, color: C.purple },
+  { label: 'Scan History', icon: 'history' as IconName, bg: C.primaryLight, screen: 'Scan History' as SubPage, badge: false, color: C.primary },
+  { label: 'Contact Support', icon: 'support' as IconName, bg: C.tealLight, screen: 'Contact Support' as SubPage, badge: false, color: C.teal },
 ];
-
-function PinIcon({ color = '#1C1E2E', size = 14 }: { color?: string; size?: number }) {
-  return (
-    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-      <Path d="M12 21s6-5.33 6-11a6 6 0 10-12 0c0 5.67 6 11 6 11z" stroke={color} strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" />
-      <Circle cx="12" cy="10" r="2.2" stroke={color} strokeWidth={1.8} />
-    </Svg>
-  );
-}
-
-function PencilIcon({ color = '#1C1E2E', size = 14 }: { color?: string; size?: number }) {
-  return (
-    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-      <Path d="M4 20l4.2-1 9-9a2.1 2.1 0 10-3-3l-9 9L4 20z" stroke={color} strokeWidth={1.8} strokeLinejoin="round" />
-      <Path d="M13 7l4 4" stroke={color} strokeWidth={1.8} strokeLinecap="round" />
-    </Svg>
-  );
-}
-
-function StarIcon({ color = '#92400E', size = 14 }: { color?: string; size?: number }) {
-  return (
-    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-      <Path d="M12 3l2.8 5.68 6.27.91-4.53 4.42 1.07 6.25L12 17.27 6.39 20.26l1.07-6.25L2.93 9.6l6.27-.91L12 3z" fill={color} />
-    </Svg>
-  );
-}
-
-function LogoutIcon({ color = '#E8453C', size = 16 }: { color?: string; size?: number }) {
-  return (
-    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-      <Path d="M10 17l5-5-5-5" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
-      <Path d="M15 12H4" stroke={color} strokeWidth={2} strokeLinecap="round" />
-      <Path d="M20 4v16" stroke={color} strokeWidth={2} strokeLinecap="round" />
-    </Svg>
-  );
-}
-
-function MenuIcon({ kind, color = '#1C1E2E', size = 18 }: { kind: string; color?: string; size?: number }) {
-  switch (kind) {
-    case 'MR':
-    case 'GS':
-      return (
-        <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-          <Rect x="3" y="8" width="18" height="4" rx="1.2" stroke={color} strokeWidth={1.8} />
-          <Path d="M19 12v7a2 2 0 01-2 2H7a2 2 0 01-2-2v-7" stroke={color} strokeWidth={1.8} />
-          <Path d="M12 8v13M12 8C12 8 9 6 9 4.5a3 3 0 016 0C15 6 12 8 12 8z" stroke={color} strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" />
-        </Svg>
-      );
-    case 'TP':
-      return (
-        <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-          <Path d="M7 7h10M7 7l3-3M7 7l3 3" stroke={color} strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" />
-          <Path d="M17 17H7m10 0l-3-3m3 3l-3 3" stroke={color} strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" />
-        </Svg>
-      );
-    case 'MO':
-      return (
-        <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-          <Path d="M6 6h15l-1.4 7.2a2 2 0 01-2 1.6H9a2 2 0 01-2-1.6L5.5 4H3" stroke={color} strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" />
-          <Circle cx="10" cy="19" r="1.5" fill={color} />
-          <Circle cx="17" cy="19" r="1.5" fill={color} />
-        </Svg>
-      );
-    case 'BD':
-      return (
-        <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-          <Rect x="3" y="6" width="18" height="12" rx="2.2" stroke={color} strokeWidth={1.8} />
-          <Path d="M3 10h18" stroke={color} strokeWidth={1.8} />
-          <Rect x="6" y="13" width="5" height="2" rx="1" fill={color} />
-        </Svg>
-      );
-    case 'NH':
-      return (
-        <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-          <Circle cx="12" cy="12" r="9" stroke={color} strokeWidth={1.8} />
-          <Path d="M9.7 9.2a2.8 2.8 0 015.1 1.6c0 1.9-2.1 2.4-2.8 3.7" stroke={color} strokeWidth={1.8} strokeLinecap="round" />
-          <Circle cx="12" cy="17.2" r="1" fill={color} />
-        </Svg>
-      );
-    default:
-      return <Circle cx="12" cy="12" r="4" fill={color} />;
-  }
-}
 
 export function ProfileScreen({
   currentRole,
@@ -159,21 +46,113 @@ export function ProfileScreen({
   const [draft, setDraft] = useState<Profile>(defaultProfile);
   const [showEdit, setShowEdit] = useState(false);
   const [showSignOut, setShowSignOut] = useState(false);
+  const [showImgPicker, setShowImgPicker] = useState(false);
+  const [subPage, setSubPage] = useState<SubPage>(null);
+  const [showFullProfile, setShowFullProfile] = useState(false);
+  const [photoUploaded, setPhotoUploaded] = useState(false);
 
-  const initials = useMemo(
-    () => profile.name.split(' ').map((part) => part[0]).join('').slice(0, 2).toUpperCase(),
-    [profile.name]
-  );
+  const theme = useMemo(() => getThemePalette(darkMode), [darkMode]);
+  const t = (key: keyof (typeof translations)['English']) => translations[language][key];
+  const preferenceValue = { language, setLanguage, darkMode, setDarkMode, t, theme };
+  const initials = useMemo(() => profile.name.split(' ').map((w) => w[0]).join('').slice(0, 2).toUpperCase(), [profile.name]);
 
   const openEdit = () => {
     setDraft(profile);
+    setDraftImage(profileImage);
+    setPhotoUploaded(false);
     setShowEdit(true);
   };
-
+  const updateDraftField = (key: keyof Profile, value: string) => {
+    let nextValue = value;
+    if (key === 'name' || key === 'city' || key === 'state' || key === 'gstHolderName' || key === 'panHolderName') {
+      nextValue = value.replace(/[^A-Za-z ]/g, '');
+    } else if (key === 'phone' || key === 'pincode' || key === 'dealerCode') {
+      nextValue = value.replace(/\D/g, '');
+    } else if (key === 'email') {
+      nextValue = value.replace(/\s/g, '');
+    }
+    setDraft((current) => ({ ...current, [key]: nextValue }));
+  };
   const saveProfile = () => {
+    if (draft.name.trim() && !/^[A-Za-z ]+$/.test(draft.name.trim())) {
+      return Alert.alert('Invalid name', 'Name should contain only alphabets and spaces.');
+    }
+    if (draft.phone.trim() && !/^\d+$/.test(draft.phone.trim())) {
+      return Alert.alert('Invalid phone number', 'Phone number should contain only integers.');
+    }
+    if (draft.email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(draft.email.trim())) {
+      return Alert.alert('Invalid email', 'Please enter a valid email address.');
+    }
+    if (draft.city.trim() && !/^[A-Za-z ]+$/.test(draft.city.trim())) {
+      return Alert.alert('Invalid city', 'City should contain only alphabets and spaces.');
+    }
+    if (draft.state.trim() && !/^[A-Za-z ]+$/.test(draft.state.trim())) {
+      return Alert.alert('Invalid state', 'State should contain only alphabets and spaces.');
+    }
+    if (draft.pincode.trim() && !/^\d+$/.test(draft.pincode.trim())) {
+      return Alert.alert('Invalid pincode', 'Pincode should contain only integers.');
+    }
     setProfile(draft);
+    setProfileImage(draftImage);
+    setPhotoUploaded(false);
     setShowEdit(false);
   };
+  const pickFromGallery = async () => {
+    setShowImgPicker(false);
+    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permission.granted) {
+      return Alert.alert('Permission required', 'Please allow gallery access.');
+    }
+    const res = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ImagePicker.MediaTypeOptions.Images, allowsEditing: true, aspect: [1, 1], quality: 0.85 });
+    if (!res.canceled) {
+      setDraftImage(res.assets[0].uri);
+      setPhotoUploaded(false);
+    }
+  };
+  const pickFromCamera = async () => {
+    setShowImgPicker(false);
+    const permission = await ImagePicker.requestCameraPermissionsAsync();
+    if (!permission.granted) {
+      return Alert.alert('Permission required', 'Please allow camera access.');
+    }
+    const res = await ImagePicker.launchCameraAsync({ allowsEditing: true, aspect: [1, 1], quality: 0.85 });
+    if (!res.canceled) {
+      setDraftImage(res.assets[0].uri);
+      setPhotoUploaded(false);
+    }
+  };
+
+  const uploadDraftPhoto = () => {
+    if (!draftImage) return;
+    setProfileImage(draftImage);
+    setPhotoUploaded(true);
+    Alert.alert('Photo uploaded', 'Your selected profile image has been uploaded. Tap Save Changes to keep it.');
+  };
+
+  const subpages: Record<Exclude<SubPage, null>, React.ReactElement> = {
+    'My Redemption': (
+      <RedemptionPage
+        onBack={() => setSubPage(null)}
+        onNavigate={onNavigate}
+        onOpenBankDetails={() => setSubPage('Bank Details')}
+        onOpenTransferPoints={() => setSubPage('Transfer Points')}
+      />
+    ),
+    'Transfer Points': <TransferPointsPage onBack={() => setSubPage(null)} onNavigate={onNavigate} />,
+    'My Orders': <MyOrdersPage onBack={() => setSubPage(null)} />,
+    'Bank Details': <BankDetailsPage onBack={() => setSubPage(null)} />,
+    'Refer To A Friend': <ReferFriendPage onBack={() => setSubPage(null)} />,
+    'Need Help': <NeedHelpPage onBack={() => setSubPage(null)} />,
+    'Offers & Promotions': <OffersPage onBack={() => setSubPage(null)} />,
+    Notifications: <NotificationsPage onBack={() => setSubPage(null)} />,
+    'App Settings': <AppSettingsPage onBack={() => setSubPage(null)} />,
+    'Scan History': <ScanHistoryPage onBack={() => setSubPage(null)} />,
+    'Contact Support': <ContactSupportPage onBack={() => setSubPage(null)} />,
+  };
+
+  if (subPage) {
+    return <PreferenceContext.Provider value={preferenceValue}>{subpages[subPage]}</PreferenceContext.Provider>;
+  }
 
   return (
     <>
@@ -211,29 +190,27 @@ export function ProfileScreen({
             </TouchableOpacity>
           </View>
 
-          <View style={styles.goldMemberRow}>
-            <View style={styles.inlineRowStrong}>
-              <StarIcon />
-              <Text style={styles.goldMemberText}>Gold Member</Text>
-            </View>
-            <Text style={styles.goldHint}>750 pts to Platinum {'>'}</Text>
-          </View>
-        </View>
-
-        <View style={styles.card}>
-          <View style={styles.sectionHeadRow}>
-            <Text style={styles.sectionTitle}>Profile Details</Text>
-            <TouchableOpacity onPress={openEdit} style={styles.editChip} activeOpacity={0.8}>
-              <PencilIcon size={13} color={Colors.primary} />
-              <Text style={styles.editChipText}>Edit</Text>
-            </TouchableOpacity>
+          <View style={{ flexDirection: 'row', gap: 10 }}>
+            {[
+              { val: '24', label: t('scans'), icon: 'scan' as IconName, bg: C.primaryLight, color: C.primary, onPress: () => setSubPage('Scan History') },
+              { val: '4,250', label: t('points'), icon: 'star' as IconName, bg: C.goldLight, color: C.gold, onPress: () => onNavigate('wallet') },
+              { val: '6', label: t('rewards'), icon: 'gift' as IconName, bg: C.tealLight, color: C.teal, onPress: () => onNavigate('rewards') },
+            ].map((s) => (
+              <TouchableOpacity key={s.label} style={[ps.statBox, { backgroundColor: theme.surface, borderColor: theme.border }]} onPress={s.onPress} activeOpacity={0.8}>
+                <View style={[ps.statIcon, { backgroundColor: s.bg }]}><AppIcon name={s.icon} size={18} color={s.color} /></View>
+                <Text style={[ps.statVal, { color: s.color }]}>{s.val}</Text>
+                <Text style={[ps.statLbl, { color: theme.textMuted }]}>{s.label}</Text>
+              </TouchableOpacity>
+            ))}
           </View>
 
-          <View style={styles.kycBanner}>
-            <StarIcon size={13} color="#B45309" />
-            <View style={styles.kycContent}>
-              <Text style={styles.kycTitle}>Complete KYC to unlock all features</Text>
-              <Text style={styles.kycSub}>Add PAN & GST details to get verified</Text>
+          <View style={[ps.card, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+            <View style={ps.cardHead}>
+              <Text style={[ps.cardTitle, { color: theme.textPrimary }]}>{t('profileDetails')}</Text>
+              <TouchableOpacity onPress={() => setShowFullProfile((current) => !current)} style={ps.visibilityBtn} activeOpacity={0.75}>
+                <AppIcon name={showFullProfile ? 'eyeOff' : 'eye'} size={16} color={C.blue} />
+                <Text style={ps.visibilityText}>{showFullProfile ? t('hide') : t('show')}</Text>
+              </TouchableOpacity>
             </View>
           </View>
 
@@ -322,185 +299,157 @@ export function ProfileScreen({
         </View>
       </Modal>
 
-      <Modal visible={showEdit} animationType="slide" transparent onRequestClose={() => setShowEdit(false)}>
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalCard}>
-            <Text style={styles.modalTitle}>Edit Profile</Text>
-            <ScrollView showsVerticalScrollIndicator={false}>
-              {detailRows.map((item) => (
-                <View key={item.key} style={styles.modalField}>
-                  <Text style={styles.modalLabel}>{item.label}</Text>
-                  <TextInput
-                    value={draft[item.key]}
-                    onChangeText={(value) => setDraft((current) => ({ ...current, [item.key]: value }))}
-                    placeholder={`Enter ${item.label}`}
-                    placeholderTextColor="#AA9A90"
-                    style={styles.modalInput}
-                  />
+        <Modal visible={showEdit} animationType="slide" transparent onRequestClose={() => setShowEdit(false)}>
+          <View style={ms.editOverlay}>
+            <View style={ms.editSheet}>
+              <View style={ms.handle} />
+              <View style={ms.editHeader}>
+                <Text style={ms.editTitle}>Edit Profile</Text>
+                <TouchableOpacity onPress={() => setShowEdit(false)} style={ms.closeBtn}><Text style={ms.closeTxt}>✕</Text></TouchableOpacity>
+              </View>
+              <ScrollView showsVerticalScrollIndicator={false}>
+                <View style={ms.avatarSection}>
+                  <TouchableOpacity onPress={() => setShowImgPicker(true)} activeOpacity={0.85} style={{ alignItems: 'center' }}>
+                    <View style={ms.editAvatarRing}>
+                      {draftImage ? <Image source={{ uri: draftImage }} style={ms.editAvatarImg} /> : <View style={ms.editAvatarFallback}><Text style={ms.editAvatarInitials}>{initials}</Text></View>}
+                      <View style={ms.cameraOverlay}><AppIcon name="camera" size={18} color="#fff" /></View>
+                    </View>
+                    <Text style={ms.changePhotoTxt}>{t('tapToChangePhoto')}</Text>
+                  </TouchableOpacity>
+                  {draftImage ? (
+                    <TouchableOpacity onPress={uploadDraftPhoto} activeOpacity={0.85} style={photoUploaded ? ms.photoUploadedBtn : ms.photoUploadBtn}>
+                      <AppIcon name="check" size={16} color="#fff" />
+                      <Text style={ms.photoUploadText}>{photoUploaded ? 'Uploaded' : 'Upload Photo'}</Text>
+                    </TouchableOpacity>
+                  ) : null}
                 </View>
-              ))}
-            </ScrollView>
-            <View style={styles.modalActions}>
-              <Pressable onPress={() => setShowEdit(false)} style={styles.modalSecondary}>
-                <Text style={styles.modalSecondaryText}>Discard</Text>
-              </Pressable>
-              <Pressable onPress={saveProfile} style={styles.modalPrimary}>
-                <Text style={styles.modalPrimaryText}>Save Changes</Text>
-              </Pressable>
+                {([
+                  ['Full Name', 'name'], ['Phone Number', 'phone'], ['Email', 'email'], ['City', 'city'], ['State', 'state'], ['Pincode', 'pincode'],
+                  ['Address', 'address'], ['GST Holder Name', 'gstHolderName'], ['GST Number', 'gstNumber'], ['PAN Holder Name', 'panHolderName'],
+                  ['PAN Number', 'panNumber'], ['Dealer Code', 'dealerCode'],
+                ] as [string, keyof Profile][]).map(([label, key]) => (
+                  <View key={key} style={ms.field}>
+                    <Text style={ms.fieldLabel}>{label}</Text>
+                    <TextInput value={draft[key]} onChangeText={(v) => updateDraftField(key, v)} placeholder={`Enter ${label}`} placeholderTextColor={C.muted} style={ms.input} />
+                  </View>
+                ))}
+              </ScrollView>
+              <View style={ms.editActions}>
+                <Pressable onPress={() => setShowEdit(false)} style={ms.discardBtn}><Text style={ms.discardTxt}>{t('discard')}</Text></Pressable>
+                <Pressable onPress={saveProfile} style={ms.saveBtn}><Text style={ms.saveTxt}>{t('saveChanges')}</Text></Pressable>
+              </View>
             </View>
           </View>
-        </View>
-      </Modal>
-    </>
+        </Modal>
+      </>
+    </PreferenceContext.Provider>
   );
 }
 
-const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: Colors.background },
-  content: { padding: 16, gap: 16, paddingBottom: 120 },
-  pageTitle: { fontSize: 22, fontWeight: '800', color: Colors.textDark, textAlign: 'center' },
-  profileCard: {
-    backgroundColor: Colors.surface,
-    borderRadius: 22,
-    padding: 18,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 10,
-    elevation: 3,
-  },
-  profileTop: { flexDirection: 'row', alignItems: 'flex-start', gap: 14, marginBottom: 14 },
-  profileInfo: { flex: 1 },
-  avatarWrap: { position: 'relative' },
-  avatar: { width: 72, height: 72, borderRadius: 20, backgroundColor: Colors.primary, alignItems: 'center', justifyContent: 'center' },
-  avatarText: { color: '#fff', fontSize: 26, fontWeight: '900' },
-  levelBadge: {
-    position: 'absolute',
-    bottom: -4,
-    right: -4,
-    width: 26,
-    height: 26,
-    borderRadius: 13,
-    backgroundColor: Colors.gold,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 2,
-    borderColor: '#fff',
-  },
-  levelText: { color: '#fff', fontSize: 9, fontWeight: '900' },
-  profileName: { fontSize: 18, fontWeight: '800', color: Colors.textDark },
-  profilePhone: { fontSize: 13, color: Colors.textMuted, marginTop: 3 },
-  profileDealer: { fontSize: 12, color: Colors.textMuted, marginTop: 2 },
-  roleBadgeText: { fontSize: 12, color: Colors.primary, marginTop: 4, fontWeight: '700' },
-  profileCity: { fontSize: 12, color: Colors.textMuted },
-  inlineRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 4 },
-  inlineRowStrong: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  inlineRowStrongSpace: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 16 },
-  editBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: Colors.primaryLight, alignItems: 'center', justifyContent: 'center' },
-  goldMemberRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    backgroundColor: '#FFFBEB',
-    borderRadius: 14,
-    padding: 12,
-    borderWidth: 1,
-    borderColor: '#FEF3C7',
-  },
-  goldMemberText: { fontSize: 14, fontWeight: '800', color: '#92400E' },
-  goldHint: { fontSize: 12, color: '#92400E', fontWeight: '600' },
-  card: {
-    backgroundColor: Colors.surface,
-    borderRadius: 22,
-    padding: 18,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
-  },
-  sectionHeadRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 },
-  sectionTitle: { fontSize: 17, fontWeight: '800', color: Colors.textDark },
-  sectionLabel: { fontSize: 16, fontWeight: '800', color: Colors.textDark, paddingLeft: 2 },
-  editChip: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: Colors.primaryLight, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 6 },
-  editChipText: { color: Colors.primary, fontSize: 13, fontWeight: '700' },
-  kycBanner: {
-    flexDirection: 'row',
-    gap: 10,
-    alignItems: 'flex-start',
-    backgroundColor: '#FFFBEB',
-    borderWidth: 1,
-    borderColor: '#FEF3C7',
-    borderRadius: 14,
-    padding: 12,
-    marginBottom: 14,
-  },
-  kycContent: { flex: 1 },
+const ps = StyleSheet.create({
+  screen: { flex: 1, backgroundColor: C.bg },
+  content: { padding: 16, gap: 14, paddingBottom: 120 },
+  pageHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  pageTitle: { fontSize: 26, fontWeight: '900' },
+  editHeaderBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, borderRadius: 14, paddingHorizontal: 14, paddingVertical: 9, borderWidth: 1 },
+  editHeaderText: { fontSize: 14, fontWeight: '700' },
+  heroCard: { borderRadius: 28, overflow: 'hidden', borderWidth: 1 },
+  blobTL: { position: 'absolute', top: -40, left: -40, width: 130, height: 130, borderRadius: 65, backgroundColor: 'rgba(232,69,60,0.1)' },
+  blobBR: { position: 'absolute', bottom: -30, right: -30, width: 110, height: 110, borderRadius: 55, backgroundColor: 'rgba(37,99,235,0.08)' },
+  heroTop: { flexDirection: 'row', alignItems: 'center', gap: 16, padding: 22, paddingBottom: 16 },
+  avatarWrap: { position: 'relative', paddingBottom: 4, paddingRight: 4 },
+  avatarRing: { width: 80, height: 80, borderRadius: 26, borderWidth: 2.5, borderColor: 'rgba(15,17,32,0.08)', overflow: 'hidden' },
+  avatarImg: { width: '100%', height: '100%' },
+  avatarFallback: { flex: 1, backgroundColor: C.primary, alignItems: 'center', justifyContent: 'center' },
+  avatarInitials: { color: '#fff', fontSize: 28, fontWeight: '900' },
+  levelBadge: { position: 'absolute', right: 2, bottom: 2, minWidth: 34, height: 34, borderRadius: 17, backgroundColor: C.gold, borderWidth: 2, borderColor: C.surface, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 7 },
+  levelTxt: { color: '#fff', fontSize: 10, fontWeight: '900' },
+  heroName: { fontSize: 20, fontWeight: '900', marginBottom: 3 },
+  heroPhone: { fontSize: 13, marginBottom: 10 },
+  tagRow: { flexDirection: 'row', gap: 8, flexWrap: 'wrap' },
+  tag: { borderRadius: 8, paddingHorizontal: 9, paddingVertical: 4 },
+  tagTxt: { fontSize: 11, fontWeight: '700' },
+  memberStrip: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', borderTopWidth: 1, paddingHorizontal: 22, paddingVertical: 14 },
+  memberStarWrap: { width: 28, height: 28, borderRadius: 14, backgroundColor: 'rgba(245,158,11,0.14)', alignItems: 'center', justifyContent: 'center' },
+  memberTitle: { fontSize: 13, fontWeight: '800', color: '#F59E0B' },
+  memberSub: { fontSize: 11, marginTop: 1 },
+  memberHint: { fontSize: 11, fontWeight: '600' },
+  progressTrack: { width: 100, height: 5, borderRadius: 3, backgroundColor: '#E8EAF1' },
+  progressFill: { width: '72%', height: '100%', borderRadius: 3, backgroundColor: '#F59E0B' },
+  statBox: { flex: 1, borderRadius: 20, padding: 14, alignItems: 'center', gap: 6, borderWidth: 1 },
+  statIcon: { width: 38, height: 38, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
+  statVal: { fontSize: 18, fontWeight: '900' },
+  statLbl: { fontSize: 11, fontWeight: '600' },
+  card: { borderRadius: 24, padding: 20, borderWidth: 1 },
+  cardHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
+  cardTitle: { fontSize: 17, fontWeight: '800' },
+  visibilityBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: C.blueLight, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 7 },
+  visibilityText: { fontSize: 13, fontWeight: '700', color: C.blue },
+  kycBanner: { flexDirection: 'row', gap: 10, alignItems: 'center', backgroundColor: '#FFFBEB', borderWidth: 1.5, borderColor: '#FDE68A', borderRadius: 16, padding: 12, marginBottom: 14 },
+  kycIcon: { width: 40, height: 40, borderRadius: 12, backgroundColor: '#FEF3C7', alignItems: 'center', justifyContent: 'center' },
   kycTitle: { fontSize: 13, fontWeight: '800', color: '#92400E' },
   kycSub: { fontSize: 12, color: '#B45309', marginTop: 2 },
-  detailRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 13, gap: 10 },
-  detailBorder: { borderBottomWidth: 1, borderBottomColor: '#F5F5FB' },
-  detailLabel: { fontSize: 13, color: Colors.textMuted, flex: 1 },
-  detailValue: { fontSize: 13, fontWeight: '700', color: Colors.textDark, flex: 1, textAlign: 'right' },
-  detailValueEmpty: { color: Colors.textMuted, fontStyle: 'italic', fontWeight: '400' },
-  menuRow: { flexDirection: 'row', alignItems: 'center', gap: 14, paddingVertical: 14 },
-  menuRowBorder: { borderBottomWidth: 1, borderBottomColor: '#F5F5FB' },
-  menuIcon: { width: 44, height: 44, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
-  menuLabel: { flex: 1, fontSize: 15, fontWeight: '600', color: Colors.textDark },
-  menuArrow: { fontSize: 20, color: '#C0C0D0', fontWeight: '700' },
-  statsCard: { backgroundColor: '#2D3561', borderRadius: 22, padding: 20 },
-  statsTitle: { fontSize: 17, fontWeight: '800', color: '#fff' },
-  statsRow: { flexDirection: 'row', gap: 12 },
-  statBox: { flex: 1, borderRadius: 16, padding: 16, alignItems: 'center', justifyContent: 'center' },
-  statValue: { fontSize: 18, fontWeight: '900' },
-  statLabel: { fontSize: 12, color: 'rgba(255,255,255,0.65)', marginTop: 4, fontWeight: '600' },
-  signOutBtn: {
-    backgroundColor: Colors.surface,
-    borderRadius: 18,
-    paddingVertical: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexDirection: 'row',
-    gap: 8,
-    borderWidth: 1,
-    borderColor: Colors.border,
-  },
-  signOutText: { fontSize: 16, fontWeight: '700', color: Colors.primary },
-  confirmOverlay: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(28,30,46,0.5)' },
-  confirmCard: {
-    backgroundColor: '#fff',
-    borderRadius: 28,
-    padding: 28,
-    marginHorizontal: 32,
-    alignItems: 'center',
-    width: '85%',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.15,
-    shadowRadius: 24,
-    elevation: 10,
-  },
-  confirmIconWrap: { width: 72, height: 72, borderRadius: 36, backgroundColor: Colors.primaryLight, alignItems: 'center', justifyContent: 'center', marginBottom: 16 },
-  confirmTitle: { fontSize: 20, fontWeight: '900', color: Colors.textDark, marginBottom: 8 },
-  confirmSub: { fontSize: 14, color: Colors.textMuted, textAlign: 'center', lineHeight: 20, marginBottom: 24 },
-  confirmActions: { flexDirection: 'row', gap: 12, width: '100%' },
-  confirmCancel: { flex: 1, height: 50, borderRadius: 16, backgroundColor: '#F3E9E1', alignItems: 'center', justifyContent: 'center' },
-  confirmCancelText: { fontSize: 15, fontWeight: '800', color: Colors.textDark },
-  confirmSignOut: { flex: 1, height: 50, borderRadius: 16, backgroundColor: Colors.primary, alignItems: 'center', justifyContent: 'center' },
-  confirmSignOutText: { color: '#fff', fontSize: 15, fontWeight: '800' },
-  modalOverlay: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(28,30,46,0.4)' },
-  modalCard: { maxHeight: '88%', backgroundColor: '#fff', borderTopLeftRadius: 28, borderTopRightRadius: 28, padding: 20 },
-  modalTitle: { fontSize: 19, fontWeight: '800', color: Colors.textDark, marginBottom: 16 },
-  modalField: { marginBottom: 14 },
-  modalLabel: { marginBottom: 7, fontSize: 12, fontWeight: '700', color: Colors.textMuted },
-  modalInput: { minHeight: 50, borderRadius: 16, borderWidth: 1, borderColor: Colors.border, backgroundColor: '#FFF9F4', paddingHorizontal: 14, fontSize: 14, color: Colors.textDark },
-  modalActions: { flexDirection: 'row', gap: 12, marginTop: 10 },
-  modalSecondary: { flex: 1, minHeight: 52, borderRadius: 16, backgroundColor: '#F3E9E1', alignItems: 'center', justifyContent: 'center' },
-  modalSecondaryText: { fontSize: 15, fontWeight: '800', color: Colors.textDark },
-  modalPrimary: { flex: 1, minHeight: 52, borderRadius: 16, backgroundColor: Colors.primary, alignItems: 'center', justifyContent: 'center' },
-  modalPrimaryText: { color: '#fff', fontSize: 15, fontWeight: '800' },
+  kycBadge: { backgroundColor: '#F59E0B', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4 },
+  kycBadgeTxt: { fontSize: 11, fontWeight: '800', color: '#fff' },
+  detailRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 12 },
+  detailBorder: { borderBottomWidth: 1, borderBottomColor: '#F2F2FA' },
+  detailLbl: { fontSize: 13, fontWeight: '500', width: 100 },
+  detailVal: { flex: 1, fontSize: 13, fontWeight: '700', textAlign: 'right' },
+  detailEmpty: { color: C.muted, fontStyle: 'italic', fontWeight: '400' },
+  menuRow: { flexDirection: 'row', alignItems: 'center', gap: 14, paddingVertical: 13 },
+  menuBorder: { borderBottomWidth: 1, borderBottomColor: '#F2F2FA' },
+  menuIcon: { width: 46, height: 46, borderRadius: 15, alignItems: 'center', justifyContent: 'center', position: 'relative' },
+  menuLabel: { flex: 1, fontSize: 15, fontWeight: '600' },
+  arrowWrap: { width: 28, height: 28, borderRadius: 9, alignItems: 'center', justifyContent: 'center' },
+  arrowTxt: { fontSize: 20, lineHeight: 24 },
+  notifDot: { position: 'absolute', top: 7, right: 7, width: 9, height: 9, borderRadius: 5, backgroundColor: C.primary, borderWidth: 1.5, borderColor: C.surface },
+  signOutBtn: { borderRadius: 20, paddingVertical: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, borderWidth: 1.5 },
+  signOutIconWrap: { width: 34, height: 34, borderRadius: 11, backgroundColor: C.primaryLight, alignItems: 'center', justifyContent: 'center' },
+  signOutTxt: { fontSize: 16, fontWeight: '700', color: C.primary },
+});
+
+const ms = StyleSheet.create({
+  overlay: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(15,17,32,0.55)' },
+  confirmCard: { backgroundColor: C.surface, borderRadius: 32, padding: 30, marginHorizontal: 28, width: '86%', alignItems: 'center' },
+  confirmIconBg: { width: 74, height: 74, borderRadius: 22, backgroundColor: C.primaryLight, alignItems: 'center', justifyContent: 'center', marginBottom: 18 },
+  confirmTitle: { fontSize: 21, fontWeight: '900', color: C.dark, marginBottom: 8 },
+  confirmSub: { fontSize: 14, color: C.muted, textAlign: 'center', lineHeight: 21, marginBottom: 26 },
+  cancelBtn: { flex: 1, height: 52, borderRadius: 17, backgroundColor: C.bg, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: C.border },
+  cancelTxt: { fontSize: 15, fontWeight: '800', color: C.dark },
+  signOutActionBtn: { flex: 1, height: 52, borderRadius: 17, backgroundColor: C.primary, alignItems: 'center', justifyContent: 'center' },
+  signOutActionTxt: { color: '#fff', fontSize: 15, fontWeight: '800' },
+  pickerOverlay: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(15,17,32,0.45)' },
+  pickerSheet: { backgroundColor: C.surface, borderTopLeftRadius: 32, borderTopRightRadius: 32, padding: 24, paddingBottom: 40 },
+  pickerTitle: { fontSize: 18, fontWeight: '800', color: C.dark, marginBottom: 20 },
+  pickerOption: { flexDirection: 'row', alignItems: 'center', gap: 16, paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: C.border },
+  pickerOptionIcon: { width: 52, height: 52, borderRadius: 16, backgroundColor: C.blueLight, alignItems: 'center', justifyContent: 'center' },
+  pickerOptionLabel: { fontSize: 16, fontWeight: '700', color: C.dark },
+  pickerOptionSub: { fontSize: 13, color: C.muted, marginTop: 2 },
+  pickerCancel: { marginTop: 16, height: 52, borderRadius: 18, backgroundColor: C.bg, alignItems: 'center', justifyContent: 'center' },
+  pickerCancelTxt: { fontSize: 15, fontWeight: '700', color: C.mid },
+  editOverlay: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(15,17,32,0.45)' },
+  editSheet: { maxHeight: '92%', backgroundColor: C.surface, borderTopLeftRadius: 32, borderTopRightRadius: 32, padding: 20, paddingBottom: Platform.OS === 'ios' ? 36 : 24 },
+  handle: { width: 42, height: 4, borderRadius: 2, backgroundColor: C.border, alignSelf: 'center', marginBottom: 16 },
+  editHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 },
+  editTitle: { fontSize: 20, fontWeight: '900', color: C.dark },
+  closeBtn: { width: 38, height: 38, borderRadius: 12, backgroundColor: C.bg, alignItems: 'center', justifyContent: 'center' },
+  closeTxt: { fontSize: 15, color: C.mid, fontWeight: '700' },
+  avatarSection: { alignItems: 'center', marginBottom: 24 },
+  editAvatarRing: { width: 96, height: 96, borderRadius: 30, borderWidth: 3, borderColor: C.primary, overflow: 'hidden', marginBottom: 8, position: 'relative' },
+  editAvatarImg: { width: '100%', height: '100%' },
+  editAvatarFallback: { flex: 1, backgroundColor: C.primary, alignItems: 'center', justifyContent: 'center' },
+  editAvatarInitials: { color: '#fff', fontSize: 32, fontWeight: '900' },
+  cameraOverlay: { position: 'absolute', bottom: 0, left: 0, right: 0, height: 32, backgroundColor: 'rgba(0,0,0,0.45)', alignItems: 'center', justifyContent: 'center' },
+  changePhotoTxt: { fontSize: 13, color: C.muted, fontWeight: '600' },
+  photoUploadBtn: { marginTop: 12, minWidth: 144, height: 42, borderRadius: 14, backgroundColor: C.primary, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingHorizontal: 16 },
+  photoUploadedBtn: { marginTop: 12, minWidth: 144, height: 42, borderRadius: 14, backgroundColor: C.success, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingHorizontal: 16 },
+  photoUploadText: { color: '#fff', fontSize: 14, fontWeight: '800' },
+  field: { marginBottom: 14 },
+  fieldLabel: { fontSize: 12, fontWeight: '700', color: C.muted, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 7 },
+  input: { height: 52, borderRadius: 16, borderWidth: 1.5, borderColor: C.border, backgroundColor: C.bg, paddingHorizontal: 16, fontSize: 14, fontWeight: '500', color: C.dark },
+  editActions: { flexDirection: 'row', gap: 12, marginTop: 10 },
+  discardBtn: { flex: 1, height: 54, borderRadius: 18, backgroundColor: C.bg, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: C.border },
+  discardTxt: { fontSize: 15, fontWeight: '800', color: C.mid },
+  saveBtn: { flex: 2, height: 54, borderRadius: 18, backgroundColor: C.primary, alignItems: 'center', justifyContent: 'center' },
+  saveTxt: { color: '#fff', fontSize: 15, fontWeight: '900' },
 });

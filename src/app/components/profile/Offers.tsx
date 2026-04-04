@@ -1,20 +1,45 @@
 import React from 'react';
-import { Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { AppIcon, C, PageHeader, usePreferenceContext } from './ProfileShared';
 
+const offers = [
+  { id: 'OFF-01', title: 'Festive Bonus', body: 'Get 500 extra points on selected premium range purchases.', tag: 'Hot' },
+  { id: 'OFF-02', title: 'Dealer Growth Offer', body: 'Complete your monthly target and unlock a surprise gift slab.', tag: 'New' },
+  { id: 'OFF-03', title: 'Scan & Win', body: 'Scan 25 products this month to get accelerated reward points.', tag: 'Live' },
+];
+
 export function OffersPage({ onBack }: { onBack: () => void }) {
-  const { t } = usePreferenceContext();
-  const offers = [{ id: 'offer-1', title: '5% extra redemption value', sub: 'Valid for this week only' }, { id: 'offer-2', title: 'Double scan points', sub: 'Applicable on selected SRV products' }];
+  const { t, theme } = usePreferenceContext();
+
   return (
-    <View style={{ flex: 1, backgroundColor: C.bg }}>
+    <View style={{ flex: 1, backgroundColor: theme.bg }}>
       <PageHeader title={t('offer')} onBack={onBack} />
-      <ScrollView contentContainerStyle={{ padding: 16, gap: 12 }} showsVerticalScrollIndicator={false}>
-        {offers.map((offer) => (
-          <TouchableOpacity key={offer.id} style={styles.card} onPress={() => Alert.alert('Offer applied', `${offer.title} is ready for you.`)} activeOpacity={0.8}>
-            <View style={styles.iconWrap}><AppIcon name="offer" size={18} color={C.gold} /></View>
-            <View style={{ flex: 1 }}><Text style={styles.title}>{offer.title}</Text><Text style={styles.sub}>{offer.sub}</Text></View>
-            <Text style={styles.cta}>Claim</Text>
-          </TouchableOpacity>
+      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+        {offers.map((offer, index) => (
+          <View
+            key={offer.id}
+            style={[
+              styles.offerCard,
+              {
+                backgroundColor: index === 0 ? '#FFF4E8' : theme.surface,
+                borderColor: index === 0 ? '#F7D9A8' : theme.border,
+              },
+            ]}
+          >
+            <View style={styles.offerHead}>
+              <View style={[styles.offerIcon, { backgroundColor: index === 0 ? '#FFE8C4' : C.goldLight }]}>
+                <AppIcon name="offer" size={20} color={C.gold} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.offerTitle, { color: theme.textPrimary }]}>{offer.title}</Text>
+                <Text style={[styles.offerId, { color: theme.textMuted }]}>{offer.id}</Text>
+              </View>
+              <View style={styles.offerTag}>
+                <Text style={styles.offerTagText}>{offer.tag}</Text>
+              </View>
+            </View>
+            <Text style={[styles.offerBody, { color: theme.textSecondary }]}>{offer.body}</Text>
+          </View>
         ))}
       </ScrollView>
     </View>
@@ -22,9 +47,13 @@ export function OffersPage({ onBack }: { onBack: () => void }) {
 }
 
 const styles = StyleSheet.create({
-  card: { flexDirection: 'row', alignItems: 'center', gap: 14, backgroundColor: C.surface, borderRadius: 18, padding: 16, borderWidth: 1, borderColor: C.border },
-  iconWrap: { width: 44, height: 44, borderRadius: 14, backgroundColor: C.goldLight, alignItems: 'center', justifyContent: 'center' },
-  title: { fontSize: 14, fontWeight: '800', color: C.dark },
-  sub: { fontSize: 12, color: C.muted, marginTop: 3 },
-  cta: { fontSize: 12, fontWeight: '800', color: C.primary },
+  content: { padding: 16, gap: 14, paddingBottom: 32 },
+  offerCard: { borderRadius: 24, borderWidth: 1, padding: 18, gap: 14 },
+  offerHead: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  offerIcon: { width: 46, height: 46, borderRadius: 15, alignItems: 'center', justifyContent: 'center' },
+  offerTitle: { fontSize: 15, fontWeight: '800' },
+  offerId: { fontSize: 12, marginTop: 3 },
+  offerTag: { borderRadius: 999, paddingHorizontal: 12, paddingVertical: 7, backgroundColor: C.primaryLight },
+  offerTagText: { color: C.primary, fontSize: 11, fontWeight: '800' },
+  offerBody: { fontSize: 13, lineHeight: 21, fontWeight: '600' },
 });
