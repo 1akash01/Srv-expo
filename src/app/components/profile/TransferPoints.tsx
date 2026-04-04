@@ -44,6 +44,6 @@ const styles = StyleSheet.create({
   searchInput: { flex: 1, height: 52, borderRadius: 14, borderWidth: 1, paddingHorizontal: 16, fontSize: 14 },
   searchBtn: { width: 52, height: 52, borderRadius: 14, backgroundColor: C.primary, alignItems: 'center', justifyContent: 'center' },
   searchResult: { fontSize: 13, color: C.success, fontWeight: '700' },
-  heroCard: { alignItems: 'center', paddingTop: 24 },
-  heroImage: { width: 220, height: 220 },
+  heroCard: { alignItems: 'center', paddingTop: 12 },
+  heroImage: { width: 310, height: 310, maxWidth: '100%' },
 });

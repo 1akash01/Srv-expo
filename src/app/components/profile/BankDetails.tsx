@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Alert, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Alert, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { AppIcon, C, PageHeader, PrimaryBtn, usePreferenceContext } from './ProfileShared';
 
 export function BankDetailsPage({ onBack }: { onBack: () => void }) {
@@ -13,13 +13,26 @@ export function BankDetailsPage({ onBack }: { onBack: () => void }) {
     if (!accountHolderName.trim() || !accountNumber.trim() || !ifsc.trim() || !upi.trim()) {
       return Alert.alert('Required fields', 'Please fill all required fields.');
     }
+    if (!/^[A-Za-z ]+$/.test(accountHolderName.trim())) {
+      return Alert.alert('Invalid account holder name', 'Account holder name should contain only letters and spaces.');
+    }
+    if (!/^\d+$/.test(accountNumber.trim())) {
+      return Alert.alert('Invalid account number', 'Account number should contain only numbers.');
+    }
+    if (!upi.includes('@')) {
+      return Alert.alert('Invalid UPI ID', 'UPI ID must include @.');
+    }
     Alert.alert('Saved', 'Bank details saved successfully!');
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: theme.bg }}>
+    <KeyboardAvoidingView style={{ flex: 1, backgroundColor: theme.bg }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <PageHeader title={t('bankDetails')} onBack={onBack} />
-      <View style={{ flex: 1, padding: 16, gap: 16 }}>
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+      >
         <View style={styles.card}>
           <View style={styles.assetPoster}>
             <View style={styles.posterGlow} />
@@ -49,31 +62,59 @@ export function BankDetailsPage({ onBack }: { onBack: () => void }) {
           <Text style={styles.label}>Account Holder Name *</Text>
           <View style={styles.inputWrap}>
             <AppIcon name="bank" size={18} color={C.gold} />
-            <TextInput style={[styles.input, { color: theme.textPrimary }]} placeholder="Enter Account Holder Name" placeholderTextColor={theme.textMuted} value={accountHolderName} onChangeText={setAccountHolderName} />
+            <TextInput
+              style={[styles.input, { color: theme.textPrimary }]}
+              placeholder="Enter Account Holder Name"
+              placeholderTextColor={theme.textMuted}
+              value={accountHolderName}
+              onChangeText={(value) => setAccountHolderName(value.replace(/[^A-Za-z ]/g, ''))}
+            />
           </View>
           <Text style={styles.label}>Account Number *</Text>
           <View style={styles.inputWrap}>
             <AppIcon name="bank" size={18} color={C.gold} />
-            <TextInput style={[styles.input, { color: theme.textPrimary }]} placeholder="Enter Account Number" placeholderTextColor={theme.textMuted} value={accountNumber} onChangeText={setAccountNumber} keyboardType="number-pad" />
+            <TextInput
+              style={[styles.input, { color: theme.textPrimary }]}
+              placeholder="Enter Account Number"
+              placeholderTextColor={theme.textMuted}
+              value={accountNumber}
+              onChangeText={(value) => setAccountNumber(value.replace(/\D/g, ''))}
+              keyboardType="number-pad"
+            />
           </View>
           <Text style={styles.label}>IFSC Code *</Text>
           <View style={styles.inputWrap}>
             <AppIcon name="bank" size={18} color={C.gold} />
-            <TextInput style={[styles.input, { color: theme.textPrimary }]} placeholder="Enter IFSC Code" placeholderTextColor={theme.textMuted} value={ifsc} onChangeText={setIfsc} autoCapitalize="characters" />
+            <TextInput
+              style={[styles.input, { color: theme.textPrimary }]}
+              placeholder="Enter IFSC Code"
+              placeholderTextColor={theme.textMuted}
+              value={ifsc}
+              onChangeText={(value) => setIfsc(value.toUpperCase())}
+              autoCapitalize="characters"
+            />
           </View>
           <Text style={styles.label}>UPI ID *</Text>
           <View style={styles.inputWrap}>
             <AppIcon name="bank" size={18} color={C.gold} />
-            <TextInput style={[styles.input, { color: theme.textPrimary }]} placeholder="e.g. yourname@upi" placeholderTextColor={theme.textMuted} value={upi} onChangeText={setUpi} autoCapitalize="none" />
+            <TextInput
+              style={[styles.input, { color: theme.textPrimary }]}
+              placeholder="e.g. yourname@upi"
+              placeholderTextColor={theme.textMuted}
+              value={upi}
+              onChangeText={setUpi}
+              autoCapitalize="none"
+            />
           </View>
         </View>
         <PrimaryBtn label={t('save')} onPress={handleSave} />
-      </View>
-    </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
+  scrollContent: { padding: 16, gap: 16, paddingBottom: 32 },
   card: { backgroundColor: C.surface, borderRadius: 22, padding: 20, borderWidth: 1, borderColor: C.border, gap: 14 },
   assetPoster: { width: '100%', height: 120, borderRadius: 22, backgroundColor: '#FFF7E8', overflow: 'hidden', paddingHorizontal: 18, paddingVertical: 14, justifyContent: 'space-between', borderWidth: 1, borderColor: '#F4DFC0' },
   posterGlow: { position: 'absolute', right: -18, top: -18, width: 96, height: 96, borderRadius: 48, backgroundColor: '#FFE5AB' },
