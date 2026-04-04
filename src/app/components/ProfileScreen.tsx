@@ -106,7 +106,14 @@ export function ProfileScreen({
   };
 
   const subpages: Record<Exclude<SubPage, null>, React.ReactElement> = {
-    'My Redemption': <RedemptionPage onBack={() => setSubPage(null)} />,
+    'My Redemption': (
+      <RedemptionPage
+        onBack={() => setSubPage(null)}
+        onNavigate={onNavigate}
+        onOpenBankDetails={() => setSubPage('Bank Details')}
+        onOpenTransferPoints={() => setSubPage('Transfer Points')}
+      />
+    ),
     'Transfer Points': <TransferPointsPage onBack={() => setSubPage(null)} />,
     'My Orders': <MyOrdersPage onBack={() => setSubPage(null)} />,
     'Bank Details': <BankDetailsPage onBack={() => setSubPage(null)} />,
@@ -170,12 +177,16 @@ export function ProfileScreen({
           </View>
 
           <View style={{ flexDirection: 'row', gap: 10 }}>
-            {[{ val: '24', label: t('scans'), icon: 'scan' as IconName, bg: C.primaryLight, color: C.primary }, { val: '4,250', label: t('points'), icon: 'star' as IconName, bg: C.goldLight, color: C.gold }, { val: '6', label: t('rewards'), icon: 'gift' as IconName, bg: C.tealLight, color: C.teal }].map((s) => (
-              <View key={s.label} style={[ps.statBox, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+            {[
+              { val: '24', label: t('scans'), icon: 'scan' as IconName, bg: C.primaryLight, color: C.primary, onPress: () => setSubPage('Scan History') },
+              { val: '4,250', label: t('points'), icon: 'star' as IconName, bg: C.goldLight, color: C.gold, onPress: () => onNavigate('wallet') },
+              { val: '6', label: t('rewards'), icon: 'gift' as IconName, bg: C.tealLight, color: C.teal, onPress: () => onNavigate('rewards') },
+            ].map((s) => (
+              <TouchableOpacity key={s.label} style={[ps.statBox, { backgroundColor: theme.surface, borderColor: theme.border }]} onPress={s.onPress} activeOpacity={0.8}>
                 <View style={[ps.statIcon, { backgroundColor: s.bg }]}><AppIcon name={s.icon} size={18} color={s.color} /></View>
                 <Text style={[ps.statVal, { color: s.color }]}>{s.val}</Text>
                 <Text style={[ps.statLbl, { color: theme.textMuted }]}>{s.label}</Text>
-              </View>
+              </TouchableOpacity>
             ))}
           </View>
 

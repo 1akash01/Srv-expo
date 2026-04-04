@@ -60,7 +60,8 @@ export type IconName =
   | 'edit' | 'eye' | 'eyeOff' | 'star' | 'scan' | 'gift' | 'signOut' | 'transfer'
   | 'order' | 'bank' | 'refer' | 'help' | 'offer' | 'notification' | 'settings'
   | 'history' | 'support' | 'camera' | 'gallery' | 'phone' | 'mail' | 'building'
-  | 'link' | 'message' | 'whatsapp' | 'moon' | 'warning';
+  | 'link' | 'message' | 'whatsapp' | 'moon' | 'warning' | 'arrowLeft' | 'check'
+  | 'chevronRight' | 'chevronDown' | 'chevronUp' | 'location';
 
 export type AppLanguage = 'English' | 'Hindi' | 'Punjabi';
 
@@ -83,38 +84,38 @@ export const translations = {
     submitted: 'Submitted', incompleteForm: 'Incomplete form', fillSubjectComment: 'Please fill subject and comment before submitting.',
   },
   Hindi: {
-    myProfile: 'मेरी प्रोफाइल', edit: 'एडिट', goldMember: 'गोल्ड मेंबर', dealerPartner: 'डीलर पार्टनर',
-    electricianPartner: 'इलेक्ट्रीशियन पार्टनर', toPlatinum: 'प्लैटिनम तक 750 पॉइंट्स', scans: 'स्कैन',
-    points: 'पॉइंट्स', rewards: 'रिवॉर्ड्स', profileDetails: 'प्रोफाइल डिटेल्स', show: 'दिखाएं', hide: 'छुपाएं',
-    quickActions: 'क्विक एक्शन्स', settings: 'सेटिंग्स', giftStore: 'गिफ्ट स्टोर', signOut: 'साइन आउट',
-    appSettings: 'ऐप सेटिंग्स', preferences: 'पसंद', pushNotifications: 'पुश नोटिफिकेशन',
-    receiveAlerts: 'अलर्ट और अपडेट पाएं', darkMode: 'डार्क मोड', switchTheme: 'डार्क थीम पर स्विच करें',
-    language: 'भाषा', about: 'जानकारी', privacyPolicy: 'प्राइवेसी पॉलिसी', terms: 'नियम और शर्तें',
-    open: 'खोलें', english: 'अंग्रेज़ी', hindi: 'हिंदी', punjabi: 'पंजाबी', notification: 'नोटिफिकेशन',
-    offer: 'ऑफर', contactSupport: 'संपर्क सहायता', contactUs: 'संपर्क करें', faqs: 'सवाल-जवाब',
-    myOrders: 'मेरे ऑर्डर', bankDetails: 'बैंक डिटेल्स', referFriend: 'मित्र को रेफर करें', needHelp: 'मदद चाहिए',
-    transferPoint: 'पॉइंट ट्रांसफर', redemptionHistory: 'रिडेम्प्शन हिस्ट्री', scanHistory: 'स्कैन हिस्ट्री',
-    save: 'सेव', saveChanges: 'बदलाव सेव करें', discard: 'रद्द करें', cancel: 'कैंसल',
-    updateProfilePhoto: 'प्रोफाइल फोटो अपडेट करें', takePhoto: 'फोटो लें', useCamera: 'कैमरा इस्तेमाल करें',
-    chooseGallery: 'गैलरी से चुनें', selectPhoto: 'मौजूदा फोटो चुनें', tapToChangePhoto: 'फोटो बदलने के लिए टैप करें',
-    submitted: 'सबमिट हो गया', incompleteForm: 'फॉर्म अधूरा है', fillSubjectComment: 'सबमिट करने से पहले विषय और टिप्पणी भरें।',
+    myProfile: 'à¤®à¥‡à¤°à¥€ à¤ªà¥à¤°à¥‹à¤«à¤¾à¤‡à¤²', edit: 'à¤à¤¡à¤¿à¤Ÿ', goldMember: 'à¤—à¥‹à¤²à¥à¤¡ à¤®à¥‡à¤‚à¤¬à¤°', dealerPartner: 'à¤¡à¥€à¤²à¤° à¤ªà¤¾à¤°à¥à¤Ÿà¤¨à¤°',
+    electricianPartner: 'à¤‡à¤²à¥‡à¤•à¥à¤Ÿà¥à¤°à¥€à¤¶à¤¿à¤¯à¤¨ à¤ªà¤¾à¤°à¥à¤Ÿà¤¨à¤°', toPlatinum: 'à¤ªà¥à¤²à¥ˆà¤Ÿà¤¿à¤¨à¤® à¤¤à¤• 750 à¤ªà¥‰à¤‡à¤‚à¤Ÿà¥à¤¸', scans: 'à¤¸à¥à¤•à¥ˆà¤¨',
+    points: 'à¤ªà¥‰à¤‡à¤‚à¤Ÿà¥à¤¸', rewards: 'à¤°à¤¿à¤µà¥‰à¤°à¥à¤¡à¥à¤¸', profileDetails: 'à¤ªà¥à¤°à¥‹à¤«à¤¾à¤‡à¤² à¤¡à¤¿à¤Ÿà¥‡à¤²à¥à¤¸', show: 'à¤¦à¤¿à¤–à¤¾à¤à¤‚', hide: 'à¤›à¥à¤ªà¤¾à¤à¤‚',
+    quickActions: 'à¤•à¥à¤µà¤¿à¤• à¤à¤•à¥à¤¶à¤¨à¥à¤¸', settings: 'à¤¸à¥‡à¤Ÿà¤¿à¤‚à¤—à¥à¤¸', giftStore: 'à¤—à¤¿à¤«à¥à¤Ÿ à¤¸à¥à¤Ÿà¥‹à¤°', signOut: 'à¤¸à¤¾à¤‡à¤¨ à¤†à¤‰à¤Ÿ',
+    appSettings: 'à¤à¤ª à¤¸à¥‡à¤Ÿà¤¿à¤‚à¤—à¥à¤¸', preferences: 'à¤ªà¤¸à¤‚à¤¦', pushNotifications: 'à¤ªà¥à¤¶ à¤¨à¥‹à¤Ÿà¤¿à¤«à¤¿à¤•à¥‡à¤¶à¤¨',
+    receiveAlerts: 'à¤…à¤²à¤°à¥à¤Ÿ à¤”à¤° à¤…à¤ªà¤¡à¥‡à¤Ÿ à¤ªà¤¾à¤à¤‚', darkMode: 'à¤¡à¤¾à¤°à¥à¤• à¤®à¥‹à¤¡', switchTheme: 'à¤¡à¤¾à¤°à¥à¤• à¤¥à¥€à¤® à¤ªà¤° à¤¸à¥à¤µà¤¿à¤š à¤•à¤°à¥‡à¤‚',
+    language: 'à¤­à¤¾à¤·à¤¾', about: 'à¤œà¤¾à¤¨à¤•à¤¾à¤°à¥€', privacyPolicy: 'à¤ªà¥à¤°à¤¾à¤‡à¤µà¥‡à¤¸à¥€ à¤ªà¥‰à¤²à¤¿à¤¸à¥€', terms: 'à¤¨à¤¿à¤¯à¤® à¤”à¤° à¤¶à¤°à¥à¤¤à¥‡à¤‚',
+    open: 'à¤–à¥‹à¤²à¥‡à¤‚', english: 'à¤…à¤‚à¤—à¥à¤°à¥‡à¤œà¤¼à¥€', hindi: 'à¤¹à¤¿à¤‚à¤¦à¥€', punjabi: 'à¤ªà¤‚à¤œà¤¾à¤¬à¥€', notification: 'à¤¨à¥‹à¤Ÿà¤¿à¤«à¤¿à¤•à¥‡à¤¶à¤¨',
+    offer: 'à¤‘à¤«à¤°', contactSupport: 'à¤¸à¤‚à¤ªà¤°à¥à¤• à¤¸à¤¹à¤¾à¤¯à¤¤à¤¾', contactUs: 'à¤¸à¤‚à¤ªà¤°à¥à¤• à¤•à¤°à¥‡à¤‚', faqs: 'à¤¸à¤µà¤¾à¤²-à¤œà¤µà¤¾à¤¬',
+    myOrders: 'à¤®à¥‡à¤°à¥‡ à¤‘à¤°à¥à¤¡à¤°', bankDetails: 'à¤¬à¥ˆà¤‚à¤• à¤¡à¤¿à¤Ÿà¥‡à¤²à¥à¤¸', referFriend: 'à¤®à¤¿à¤¤à¥à¤° à¤•à¥‹ à¤°à¥‡à¤«à¤° à¤•à¤°à¥‡à¤‚', needHelp: 'à¤®à¤¦à¤¦ à¤šà¤¾à¤¹à¤¿à¤',
+    transferPoint: 'à¤ªà¥‰à¤‡à¤‚à¤Ÿ à¤Ÿà¥à¤°à¤¾à¤‚à¤¸à¤«à¤°', redemptionHistory: 'à¤°à¤¿à¤¡à¥‡à¤®à¥à¤ªà¥à¤¶à¤¨ à¤¹à¤¿à¤¸à¥à¤Ÿà¥à¤°à¥€', scanHistory: 'à¤¸à¥à¤•à¥ˆà¤¨ à¤¹à¤¿à¤¸à¥à¤Ÿà¥à¤°à¥€',
+    save: 'à¤¸à¥‡à¤µ', saveChanges: 'à¤¬à¤¦à¤²à¤¾à¤µ à¤¸à¥‡à¤µ à¤•à¤°à¥‡à¤‚', discard: 'à¤°à¤¦à¥à¤¦ à¤•à¤°à¥‡à¤‚', cancel: 'à¤•à¥ˆà¤‚à¤¸à¤²',
+    updateProfilePhoto: 'à¤ªà¥à¤°à¥‹à¤«à¤¾à¤‡à¤² à¤«à¥‹à¤Ÿà¥‹ à¤…à¤ªà¤¡à¥‡à¤Ÿ à¤•à¤°à¥‡à¤‚', takePhoto: 'à¤«à¥‹à¤Ÿà¥‹ à¤²à¥‡à¤‚', useCamera: 'à¤•à¥ˆà¤®à¤°à¤¾ à¤‡à¤¸à¥à¤¤à¥‡à¤®à¤¾à¤² à¤•à¤°à¥‡à¤‚',
+    chooseGallery: 'à¤—à¥ˆà¤²à¤°à¥€ à¤¸à¥‡ à¤šà¥à¤¨à¥‡à¤‚', selectPhoto: 'à¤®à¥Œà¤œà¥‚à¤¦à¤¾ à¤«à¥‹à¤Ÿà¥‹ à¤šà¥à¤¨à¥‡à¤‚', tapToChangePhoto: 'à¤«à¥‹à¤Ÿà¥‹ à¤¬à¤¦à¤²à¤¨à¥‡ à¤•à¥‡ à¤²à¤¿à¤ à¤Ÿà¥ˆà¤ª à¤•à¤°à¥‡à¤‚',
+    submitted: 'à¤¸à¤¬à¤®à¤¿à¤Ÿ à¤¹à¥‹ à¤—à¤¯à¤¾', incompleteForm: 'à¤«à¥‰à¤°à¥à¤® à¤…à¤§à¥‚à¤°à¤¾ à¤¹à¥ˆ', fillSubjectComment: 'à¤¸à¤¬à¤®à¤¿à¤Ÿ à¤•à¤°à¤¨à¥‡ à¤¸à¥‡ à¤ªà¤¹à¤²à¥‡ à¤µà¤¿à¤·à¤¯ à¤”à¤° à¤Ÿà¤¿à¤ªà¥à¤ªà¤£à¥€ à¤­à¤°à¥‡à¤‚à¥¤',
   },
   Punjabi: {
-    myProfile: 'ਮੇਰੀ ਪ੍ਰੋਫਾਇਲ', edit: 'ਐਡਿਟ', goldMember: 'ਗੋਲਡ ਮੈਂਬਰ', dealerPartner: 'ਡੀਲਰ ਪਾਰਟਨਰ',
-    electricianPartner: 'ਇਲੈਕਟ੍ਰੀਸ਼ੀਅਨ ਪਾਰਟਨਰ', toPlatinum: 'ਪਲੈਟਿਨਮ ਲਈ 750 ਪੌਇੰਟ', scans: 'ਸਕੈਨ',
-    points: 'ਪੌਇੰਟ', rewards: 'ਇਨਾਮ', profileDetails: 'ਪ੍ਰੋਫਾਇਲ ਵੇਰਵਾ', show: 'ਵੇਖਾਓ', hide: 'ਛੁਪਾਓ',
-    quickActions: 'ਕੁਇਕ ਐਕਸ਼ਨ', settings: 'ਸੈਟਿੰਗਜ਼', giftStore: 'ਗਿਫਟ ਸਟੋਰ', signOut: 'ਸਾਈਨ ਆਊਟ',
-    appSettings: 'ਐਪ ਸੈਟਿੰਗਜ਼', preferences: 'ਪਸੰਦਾਂ', pushNotifications: 'ਪੁਸ਼ ਨੋਟੀਫਿਕੇਸ਼ਨ',
-    receiveAlerts: 'ਅਲਰਟ ਅਤੇ ਅਪਡੇਟ ਪ੍ਰਾਪਤ ਕਰੋ', darkMode: 'ਡਾਰਕ ਮੋਡ', switchTheme: 'ਡਾਰਕ ਥੀਮ ਚਾਲੂ ਕਰੋ',
-    language: 'ਭਾਸ਼ਾ', about: 'ਜਾਣਕਾਰੀ', privacyPolicy: 'ਪ੍ਰਾਈਵੇਸੀ ਪਾਲਿਸੀ', terms: 'ਨਿਯਮ ਅਤੇ ਸ਼ਰਤਾਂ',
-    open: 'ਖੋਲ੍ਹੋ', english: 'ਅੰਗਰੇਜ਼ੀ', hindi: 'ਹਿੰਦੀ', punjabi: 'ਪੰਜਾਬੀ', notification: 'ਨੋਟੀਫਿਕੇਸ਼ਨ',
-    offer: 'ਆਫਰ', contactSupport: 'ਸਹਾਇਤਾ ਸੰਪਰਕ', contactUs: 'ਸਾਡੇ ਨਾਲ ਸੰਪਰਕ', faqs: 'ਅਕਸਰ ਪੁੱਛੇ ਸਵਾਲ',
-    myOrders: 'ਮੇਰੇ ਆਰਡਰ', bankDetails: 'ਬੈਂਕ ਵੇਰਵਾ', referFriend: 'ਦੋਸਤ ਨੂੰ ਰਿਫਰ ਕਰੋ', needHelp: 'ਮਦਦ ਚਾਹੀਦੀ ਹੈ',
-    transferPoint: 'ਪੌਇੰਟ ਟ੍ਰਾਂਸਫਰ', redemptionHistory: 'ਰਿਡੈਂਪਸ਼ਨ ਹਿਸਟਰੀ', scanHistory: 'ਸਕੈਨ ਹਿਸਟਰੀ',
-    save: 'ਸੇਵ', saveChanges: 'ਬਦਲਾਵ ਸੇਵ ਕਰੋ', discard: 'ਰੱਦ ਕਰੋ', cancel: 'ਰੱਦ',
-    updateProfilePhoto: 'ਪ੍ਰੋਫਾਇਲ ਫੋਟੋ ਅਪਡੇਟ ਕਰੋ', takePhoto: 'ਫੋਟੋ ਖਿੱਚੋ', useCamera: 'ਕੈਮਰਾ ਵਰਤੋ',
-    chooseGallery: 'ਗੈਲਰੀ ਤੋਂ ਚੁਣੋ', selectPhoto: 'ਮੌਜੂਦਾ ਫੋਟੋ ਚੁਣੋ', tapToChangePhoto: 'ਫੋਟੋ ਬਦਲਣ ਲਈ ਟੈਪ ਕਰੋ',
-    submitted: 'ਜਮ੍ਹਾਂ ਹੋ ਗਿਆ', incompleteForm: 'ਫਾਰਮ ਅਧੂਰਾ ਹੈ', fillSubjectComment: 'ਸਬਮਿਟ ਕਰਨ ਤੋਂ ਪਹਿਲਾਂ ਵਿਸ਼ਾ ਅਤੇ ਟਿੱਪਣੀ ਭਰੋ।',
+    myProfile: 'à¨®à©‡à¨°à©€ à¨ªà©à¨°à©‹à¨«à¨¾à¨‡à¨²', edit: 'à¨à¨¡à¨¿à¨Ÿ', goldMember: 'à¨—à©‹à¨²à¨¡ à¨®à©ˆà¨‚à¨¬à¨°', dealerPartner: 'à¨¡à©€à¨²à¨° à¨ªà¨¾à¨°à¨Ÿà¨¨à¨°',
+    electricianPartner: 'à¨‡à¨²à©ˆà¨•à¨Ÿà©à¨°à©€à¨¸à¨¼à©€à¨…à¨¨ à¨ªà¨¾à¨°à¨Ÿà¨¨à¨°', toPlatinum: 'à¨ªà¨²à©ˆà¨Ÿà¨¿à¨¨à¨® à¨²à¨ˆ 750 à¨ªà©Œà¨‡à©°à¨Ÿ', scans: 'à¨¸à¨•à©ˆà¨¨',
+    points: 'à¨ªà©Œà¨‡à©°à¨Ÿ', rewards: 'à¨‡à¨¨à¨¾à¨®', profileDetails: 'à¨ªà©à¨°à©‹à¨«à¨¾à¨‡à¨² à¨µà©‡à¨°à¨µà¨¾', show: 'à¨µà©‡à¨–à¨¾à¨“', hide: 'à¨›à©à¨ªà¨¾à¨“',
+    quickActions: 'à¨•à©à¨‡à¨• à¨à¨•à¨¸à¨¼à¨¨', settings: 'à¨¸à©ˆà¨Ÿà¨¿à©°à¨—à¨œà¨¼', giftStore: 'à¨—à¨¿à¨«à¨Ÿ à¨¸à¨Ÿà©‹à¨°', signOut: 'à¨¸à¨¾à¨ˆà¨¨ à¨†à¨Šà¨Ÿ',
+    appSettings: 'à¨à¨ª à¨¸à©ˆà¨Ÿà¨¿à©°à¨—à¨œà¨¼', preferences: 'à¨ªà¨¸à©°à¨¦à¨¾à¨‚', pushNotifications: 'à¨ªà©à¨¸à¨¼ à¨¨à©‹à¨Ÿà©€à¨«à¨¿à¨•à©‡à¨¸à¨¼à¨¨',
+    receiveAlerts: 'à¨…à¨²à¨°à¨Ÿ à¨…à¨¤à©‡ à¨…à¨ªà¨¡à©‡à¨Ÿ à¨ªà©à¨°à¨¾à¨ªà¨¤ à¨•à¨°à©‹', darkMode: 'à¨¡à¨¾à¨°à¨• à¨®à©‹à¨¡', switchTheme: 'à¨¡à¨¾à¨°à¨• à¨¥à©€à¨® à¨šà¨¾à¨²à©‚ à¨•à¨°à©‹',
+    language: 'à¨­à¨¾à¨¸à¨¼à¨¾', about: 'à¨œà¨¾à¨£à¨•à¨¾à¨°à©€', privacyPolicy: 'à¨ªà©à¨°à¨¾à¨ˆà¨µà©‡à¨¸à©€ à¨ªà¨¾à¨²à¨¿à¨¸à©€', terms: 'à¨¨à¨¿à¨¯à¨® à¨…à¨¤à©‡ à¨¸à¨¼à¨°à¨¤à¨¾à¨‚',
+    open: 'à¨–à©‹à¨²à©à¨¹à©‹', english: 'à¨…à©°à¨—à¨°à©‡à¨œà¨¼à©€', hindi: 'à¨¹à¨¿à©°à¨¦à©€', punjabi: 'à¨ªà©°à¨œà¨¾à¨¬à©€', notification: 'à¨¨à©‹à¨Ÿà©€à¨«à¨¿à¨•à©‡à¨¸à¨¼à¨¨',
+    offer: 'à¨†à¨«à¨°', contactSupport: 'à¨¸à¨¹à¨¾à¨‡à¨¤à¨¾ à¨¸à©°à¨ªà¨°à¨•', contactUs: 'à¨¸à¨¾à¨¡à©‡ à¨¨à¨¾à¨² à¨¸à©°à¨ªà¨°à¨•', faqs: 'à¨…à¨•à¨¸à¨° à¨ªà©à©±à¨›à©‡ à¨¸à¨µà¨¾à¨²',
+    myOrders: 'à¨®à©‡à¨°à©‡ à¨†à¨°à¨¡à¨°', bankDetails: 'à¨¬à©ˆà¨‚à¨• à¨µà©‡à¨°à¨µà¨¾', referFriend: 'à¨¦à©‹à¨¸à¨¤ à¨¨à©‚à©° à¨°à¨¿à¨«à¨° à¨•à¨°à©‹', needHelp: 'à¨®à¨¦à¨¦ à¨šà¨¾à¨¹à©€à¨¦à©€ à¨¹à©ˆ',
+    transferPoint: 'à¨ªà©Œà¨‡à©°à¨Ÿ à¨Ÿà©à¨°à¨¾à¨‚à¨¸à¨«à¨°', redemptionHistory: 'à¨°à¨¿à¨¡à©ˆà¨‚à¨ªà¨¸à¨¼à¨¨ à¨¹à¨¿à¨¸à¨Ÿà¨°à©€', scanHistory: 'à¨¸à¨•à©ˆà¨¨ à¨¹à¨¿à¨¸à¨Ÿà¨°à©€',
+    save: 'à¨¸à©‡à¨µ', saveChanges: 'à¨¬à¨¦à¨²à¨¾à¨µ à¨¸à©‡à¨µ à¨•à¨°à©‹', discard: 'à¨°à©±à¨¦ à¨•à¨°à©‹', cancel: 'à¨°à©±à¨¦',
+    updateProfilePhoto: 'à¨ªà©à¨°à©‹à¨«à¨¾à¨‡à¨² à¨«à©‹à¨Ÿà©‹ à¨…à¨ªà¨¡à©‡à¨Ÿ à¨•à¨°à©‹', takePhoto: 'à¨«à©‹à¨Ÿà©‹ à¨–à¨¿à©±à¨šà©‹', useCamera: 'à¨•à©ˆà¨®à¨°à¨¾ à¨µà¨°à¨¤à©‹',
+    chooseGallery: 'à¨—à©ˆà¨²à¨°à©€ à¨¤à©‹à¨‚ à¨šà©à¨£à©‹', selectPhoto: 'à¨®à©Œà¨œà©‚à¨¦à¨¾ à¨«à©‹à¨Ÿà©‹ à¨šà©à¨£à©‹', tapToChangePhoto: 'à¨«à©‹à¨Ÿà©‹ à¨¬à¨¦à¨²à¨£ à¨²à¨ˆ à¨Ÿà©ˆà¨ª à¨•à¨°à©‹',
+    submitted: 'à¨œà¨®à©à¨¹à¨¾à¨‚ à¨¹à©‹ à¨—à¨¿à¨†', incompleteForm: 'à¨«à¨¾à¨°à¨® à¨…à¨§à©‚à¨°à¨¾ à¨¹à©ˆ', fillSubjectComment: 'à¨¸à¨¬à¨®à¨¿à¨Ÿ à¨•à¨°à¨¨ à¨¤à©‹à¨‚ à¨ªà¨¹à¨¿à¨²à¨¾à¨‚ à¨µà¨¿à¨¸à¨¼à¨¾ à¨…à¨¤à©‡ à¨Ÿà¨¿à©±à¨ªà¨£à©€ à¨­à¨°à©‹à¥¤',
   },
 } as const;
 
@@ -179,6 +180,12 @@ export function AppIcon({ name, size = 18, color = '#0F1120', strokeWidth = 1.8 
     case 'whatsapp': return <Svg width={size} height={size} viewBox="0 0 24 24" fill="none"><Path d="M12 3.5a8.5 8.5 0 00-7.4 12.7L3.5 20.5l4.4-1.1A8.5 8.5 0 1012 3.5z" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" /><Path d="M9.5 8.6c.2-.5.4-.6.7-.6h.6c.2 0 .4.1.5.4l.7 1.8c.1.2 0 .5-.1.6l-.5.7c.5 1 1.3 1.9 2.3 2.4l.8-.5c.2-.1.4-.1.6 0l1.7.8c.2.1.4.3.3.5v.6c0 .3-.1.5-.5.7-.4.2-1 .3-1.6.2-1.4-.3-2.8-1.2-4-2.5-1.2-1.2-2-2.6-2.3-4-.1-.5 0-1.1.2-1.5z" fill={color} /></Svg>;
     case 'moon': return <Svg width={size} height={size} viewBox="0 0 24 24" fill="none"><Path d="M19 14.5A7.5 7.5 0 019.5 5a8 8 0 1010 9.5z" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" /></Svg>;
     case 'warning': return <Svg width={size} height={size} viewBox="0 0 24 24" fill="none"><Path d="M12 4l8 14H4l8-14z" stroke={color} strokeWidth={strokeWidth} strokeLinejoin="round" /><Path d="M12 9v4M12 16h.01" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" /></Svg>;
+    case 'arrowLeft': return <Svg width={size} height={size} viewBox="0 0 24 24" fill="none"><Path d="M15 6l-6 6 6 6M9 12h10" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" /></Svg>;
+    case 'check': return <Svg width={size} height={size} viewBox="0 0 24 24" fill="none"><Path d="M5 12.5l4.2 4.2L19 7" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" /></Svg>;
+    case 'chevronRight': return <Svg width={size} height={size} viewBox="0 0 24 24" fill="none"><Path d="M9 6l6 6-6 6" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" /></Svg>;
+    case 'chevronDown': return <Svg width={size} height={size} viewBox="0 0 24 24" fill="none"><Path d="M6 9l6 6 6-6" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" /></Svg>;
+    case 'chevronUp': return <Svg width={size} height={size} viewBox="0 0 24 24" fill="none"><Path d="M6 15l6-6 6 6" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" /></Svg>;
+    case 'location': return <Svg width={size} height={size} viewBox="0 0 24 24" fill="none"><Path d="M12 21s6-4.8 6-10a6 6 0 10-12 0c0 5.2 6 10 6 10z" stroke={color} strokeWidth={strokeWidth} strokeLinejoin="round" /><Circle cx="12" cy="11" r="2.2" stroke={color} strokeWidth={strokeWidth} /></Svg>;
     default: return null;
   }
 }
@@ -188,7 +195,7 @@ export function PageHeader({ title, onBack }: { title: string; onBack: () => voi
   return (
     <View style={[shared.header, { backgroundColor: theme.surface, borderBottomColor: theme.border }]}>
       <TouchableOpacity onPress={onBack} style={[shared.backBtn, { backgroundColor: theme.soft }]} activeOpacity={0.75}>
-        <Text style={[shared.backIcon, { color: theme.textPrimary }]}>←</Text>
+        <AppIcon name="arrowLeft" size={20} color={theme.textPrimary} />
       </TouchableOpacity>
       <Text style={[shared.title, { color: theme.textPrimary }]}>{title}</Text>
       <View style={{ width: 44 }} />
@@ -207,7 +214,6 @@ export function EmptyState({ emoji, message }: { emoji: string; message: string 
 const shared = StyleSheet.create({
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingTop: Platform.OS === 'ios' ? 56 : 20, paddingBottom: 14, borderBottomWidth: 1 },
   backBtn: { width: 44, height: 44, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
-  backIcon: { fontSize: 22, fontWeight: '700' },
   title: { fontSize: 18, fontWeight: '800' },
   primaryBtn: { backgroundColor: C.primary, borderRadius: 16, height: 56, alignItems: 'center', justifyContent: 'center' },
   primaryLabel: { color: '#fff', fontSize: 16, fontWeight: '800', letterSpacing: 0.3 },
