@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Alert, Image, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { AppIcon, C, PageHeader, usePreferenceContext } from './ProfileShared';
 
-const transferImage = require('./assets/transferpoint-poster.jpeg');
+const transferImage = require('./assets/transfer.png');
 
 export function TransferPointsPage({ onBack }: { onBack: () => void }) {
   const { t, theme } = usePreferenceContext();
