@@ -8,8 +8,8 @@ import {
   View,
 } from 'react-native';
 import Svg, { Path, Rect, Circle } from 'react-native-svg';
-import { colors } from '../theme';
-import type { Screen } from '../types';
+import { colors } from '../../../theme';
+import type { Screen } from '../../../types';
 
 // ── Icons ─────────────────────────────────────────────────────────────
 

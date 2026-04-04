@@ -1,15 +1,22 @@
 import { StatusBar as ExpoStatusBar } from 'expo-status-bar';
 import { useMemo, useState } from 'react';
 import { Platform, SafeAreaView, StatusBar, StyleSheet, View } from 'react-native';
-import { BottomNav } from './src/components/BottomNav';
-import { HomeScreen } from './src/screens/HomeScreen';
-import { NotificationScreen } from './src/screens/NotificationScreen';
-import { OnboardingScreen } from './src/screens/OnboardingScreen';
-import { ProductScreen } from './src/screens/ProductScreen';
-import { ProfileScreen } from './src/screens/ProfileScreen';
-import { RewardsScreen } from './src/screens/RewardsScreen';
-import { ScanScreen } from './src/screens/ScanScreen';
-import { WalletScreen } from './src/screens/WalletScreen';
+import { BottomNav as DealerBottomNav } from './src/app/components/dealer/BottomNav';
+import { BottomNav as ElectricianBottomNav } from './src/app/components/electrician/BottomNav';
+import { ElectriciansScreen as DealerElectriciansScreen } from './src/screens/dealer/ElectriciansScreen';
+import { HomeScreen as DealerHomeScreen } from './src/screens/dealer/HomeScreen';
+import { NotificationScreen as DealerNotificationScreen } from './src/screens/dealer/NotificationScreen';
+import { ProductScreen as DealerProductScreen } from './src/screens/dealer/ProductScreen';
+import { ProfileScreen as DealerProfileScreen } from './src/screens/dealer/ProfileScreen';
+import { WalletScreen as DealerWalletScreen } from './src/screens/dealer/WalletScreen';
+import { OnboardingScreen } from './src/screens/electrician/OnboardingScreen';
+import { HomeScreen as ElectricianHomeScreen } from './src/screens/electrician/HomeScreen';
+import { NotificationScreen as ElectricianNotificationScreen } from './src/screens/electrician/NotificationScreen';
+import { ProductScreen as ElectricianProductScreen } from './src/screens/electrician/ProductScreen';
+import { ProfileScreen as ElectricianProfileScreen } from './src/screens/electrician/ProfileScreen';
+import { RewardsScreen as ElectricianRewardsScreen } from './src/screens/electrician/RewardsScreen';
+import { ScanScreen as ElectricianScanScreen } from './src/screens/electrician/ScanScreen';
+import { WalletScreen as ElectricianWalletScreen } from './src/screens/electrician/WalletScreen';
 import { colors } from './src/theme';
 import type { Screen, UserRole } from './src/types';
 
@@ -19,6 +26,8 @@ export default function App() {
   const [showOnboarding, setShowOnboarding] = useState(true);
   const [currentRole, setCurrentRole] = useState<UserRole>('electrician');
   const [selectedProductCategory, setSelectedProductCategory] = useState<string>('fanbox');
+
+  const isDealer = currentRole === 'dealer';
 
   const handleNavigate = (screen: Screen) => {
     if (screen === 'product') {
@@ -35,40 +44,80 @@ export default function App() {
 
   const handleSignOut = () => {
     setShowOnboarding(true);
+    setCurrentRole('electrician');
     setCurrentScreen('home');
     setSelectedProductCategory('fanbox');
   };
 
   const screen = useMemo(() => {
+    if (isDealer) {
+      switch (currentScreen) {
+        case 'home':
+          return (
+            <DealerHomeScreen
+              onNavigate={handleNavigate}
+              onOpenProductCategory={handleOpenProductCategory}
+            />
+          );
+        case 'product':
+          return (
+            <DealerProductScreen
+              onNavigate={handleNavigate}
+              initialCategory={selectedProductCategory}
+            />
+          );
+        case 'electricians':
+          return <DealerElectriciansScreen onNavigate={handleNavigate} />;
+        case 'notification':
+          return <DealerNotificationScreen onNavigate={handleNavigate} />;
+        case 'wallet':
+          return <DealerWalletScreen onNavigate={handleNavigate} />;
+        case 'profile':
+          return <DealerProfileScreen onNavigate={handleNavigate} onSignOut={handleSignOut} />;
+        default:
+          return (
+            <DealerHomeScreen
+              onNavigate={handleNavigate}
+              onOpenProductCategory={handleOpenProductCategory}
+            />
+          );
+      }
+    }
+
     switch (currentScreen) {
       case 'home':
         return (
-          <HomeScreen
+          <ElectricianHomeScreen
             onNavigate={handleNavigate}
             onOpenProductCategory={handleOpenProductCategory}
           />
         );
       case 'product':
-        return <ProductScreen onNavigate={handleNavigate} initialCategory={selectedProductCategory} />;
+        return (
+          <ElectricianProductScreen
+            onNavigate={handleNavigate}
+            initialCategory={selectedProductCategory}
+          />
+        );
       case 'notification':
-        return <NotificationScreen onNavigate={handleNavigate} />;
+        return <ElectricianNotificationScreen onNavigate={handleNavigate} />;
       case 'scan':
-        return <ScanScreen onNavigate={handleNavigate} />;
+        return <ElectricianScanScreen onNavigate={handleNavigate} />;
       case 'rewards':
-        return <RewardsScreen />;
+        return <ElectricianRewardsScreen />;
       case 'profile':
-        return <ProfileScreen onNavigate={handleNavigate} onSignOut={handleSignOut} />;
+        return <ElectricianProfileScreen onNavigate={handleNavigate} onSignOut={handleSignOut} />;
       case 'wallet':
-        return <WalletScreen onNavigate={handleNavigate} />;
+        return <ElectricianWalletScreen onNavigate={handleNavigate} />;
       default:
         return (
-          <HomeScreen
+          <ElectricianHomeScreen
             onNavigate={handleNavigate}
             onOpenProductCategory={handleOpenProductCategory}
           />
         );
     }
-  }, [currentScreen, selectedProductCategory, showOnboarding]);
+  }, [currentScreen, isDealer, selectedProductCategory]);
 
   if (showOnboarding) {
     return (
@@ -89,7 +138,11 @@ export default function App() {
     <SafeAreaView style={[styles.root, { paddingTop: androidTopInset }]}>
       <ExpoStatusBar style="dark" />
       <View style={styles.content}>{screen}</View>
-      <BottomNav currentScreen={currentScreen} onNavigate={handleNavigate} />
+      {isDealer ? (
+        <DealerBottomNav currentScreen={currentScreen} onNavigate={handleNavigate} />
+      ) : (
+        <ElectricianBottomNav currentScreen={currentScreen} onNavigate={handleNavigate} />
+      )}
     </SafeAreaView>
   );
 }

@@ -728,7 +728,11 @@ export function OnboardingScreen({ onGetStarted }: { onGetStarted: (role: UserRo
                     )}
 
                     <CtaButton
-                      label={mode === 'login' ? 'Continue' : 'Create Account'}
+                      label={
+                        mode === 'login'
+                          ? 'Continue'
+                          : 'Create Account'
+                      }
                       onPress={handleContinue}
                       disabled={!canContinue}
                       loading={loading}

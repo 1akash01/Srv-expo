@@ -1,8 +1,8 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import Svg, { Circle, Path, Rect } from 'react-native-svg';
-import { colors } from '../../theme';
-import type { Screen } from '../../types';
+import { colors } from '../../../theme';
+import type { Screen } from '../../../types';
 
 type WalletScreenProps = {
   onNavigate?: (screen: Screen) => void;

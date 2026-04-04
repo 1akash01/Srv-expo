@@ -14,7 +14,7 @@ import {
 } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 
-const logoImage = require('../../../assets/banners/srv-logo.jpeg');
+const logoImage = require('../../../../assets/banners/srv-logo.jpeg');
 
 interface Profile {
   name?: string;

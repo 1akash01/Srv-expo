@@ -1,7 +1,7 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Svg, { Circle, Path, Rect } from 'react-native-svg';
-import type { Screen } from '../../types';
+import type { Screen } from '../../../types';
 
 function BellIcon({ color = '#0F172A', size = 22 }: { color?: string; size?: number }) {
   return (

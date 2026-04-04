@@ -15,18 +15,18 @@ import {
   useWindowDimensions,
 } from 'react-native';
 import Svg, { Circle, Path, Rect } from 'react-native-svg';
-import type { Screen } from '../../types';
+import type { Screen } from '../../../types';
 import ProfileFlipCard from './ProfileFlipCard';
 
-const logoImage = require('../../../assets/banners/srv-logo.jpeg');
+const logoImage = require('../../../../assets/banners/srv-logo.jpeg');
 
 const BANNER_SLIDES = [
-  { image: require('../../../assets/banners/aco.jpg.jpeg'), resizeMode: 'cover' as const, backgroundColor: '#192F67' },
-  { image: require('../../../assets/banners/appliances.jpg.jpeg'), resizeMode: 'cover' as const, backgroundColor: '#E8C973' },
-  { image: require('../../../assets/banners/co.jpg.jpeg'), resizeMode: 'cover' as const, backgroundColor: '#4153C8' },
-  { image: require('../../../assets/banners/light.jpg.jpeg'), resizeMode: 'cover' as const, backgroundColor: '#8A20B4' },
-  { image: require('../../../assets/banners/mcb-box.jpg.jpeg'), resizeMode: 'cover' as const, backgroundColor: '#7C8BD7' },
-  { image: require('../../../assets/banners/vs-poster.jpg.jpeg'), resizeMode: 'contain' as const, backgroundColor: '#19211F' },
+  { image: require('../../../../assets/banners/aco.jpg.jpeg'), resizeMode: 'cover' as const, backgroundColor: '#192F67' },
+  { image: require('../../../../assets/banners/appliances.jpg.jpeg'), resizeMode: 'cover' as const, backgroundColor: '#E8C973' },
+  { image: require('../../../../assets/banners/co.jpg.jpeg'), resizeMode: 'cover' as const, backgroundColor: '#4153C8' },
+  { image: require('../../../../assets/banners/light.jpg.jpeg'), resizeMode: 'cover' as const, backgroundColor: '#8A20B4' },
+  { image: require('../../../../assets/banners/mcb-box.jpg.jpeg'), resizeMode: 'cover' as const, backgroundColor: '#7C8BD7' },
+  { image: require('../../../../assets/banners/vs-poster.jpg.jpeg'), resizeMode: 'contain' as const, backgroundColor: '#19211F' },
 ];
 
 const PRODUCTS = [

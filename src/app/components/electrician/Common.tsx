@@ -1,7 +1,7 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { useState, type PropsWithChildren, type ReactNode } from 'react';
 import { Image, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
-import { colors } from '../theme';
+import { colors } from '../../../theme';
 
 export function SectionCard({ children, style }: PropsWithChildren<{ style?: object }>) {
   return <View style={[styles.card, style]}>{children}</View>;
@@ -101,7 +101,7 @@ export function LogoMark({ size = 146 }: { size?: number }) {
       <View style={styles.platformBack} />
       <View style={styles.platformFront} />
       <View style={styles.logoPlate}>
-        <Image source={require('../../assets/srv-logo.png')} style={{ width: size, height: size * 0.34 }} resizeMode="contain" />
+        <Image source={require('../../../../assets/srv-logo.png')} style={{ width: size, height: size * 0.34 }} resizeMode="contain" />
       </View>
     </View>
   );
