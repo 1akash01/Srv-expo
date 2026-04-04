@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
-import { Alert, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Alert, Image, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { AppIcon, C, PageHeader, usePreferenceContext } from './ProfileShared';
+
+const transferImage = require('./assets/transferpoint-poster.jpeg');
 
 export function TransferPointsPage({ onBack }: { onBack: () => void }) {
   const { t, theme } = usePreferenceContext();
   const [mobile, setMobile] = useState('');
   const [transferMode, setTransferMode] = useState<'scan' | 'share'>('scan');
   const [searchResult, setSearchResult] = useState('');
-
   const handleSearch = () => {
     if (mobile.trim().length !== 10) return Alert.alert('Invalid number', 'Please enter a valid 10-digit mobile number.');
     setSearchResult(`User found for ${mobile}. Ready to transfer points.`);
@@ -26,11 +27,10 @@ export function TransferPointsPage({ onBack }: { onBack: () => void }) {
         </View>
         <View style={styles.searchRow}>
           <TextInput style={[styles.searchInput, { backgroundColor: theme.surface, borderColor: theme.border, color: theme.textPrimary }]} placeholder="Enter Your Mobile Number" placeholderTextColor={theme.textMuted} value={mobile} onChangeText={setMobile} keyboardType="phone-pad" />
-          <TouchableOpacity style={styles.searchBtn} onPress={handleSearch} activeOpacity={0.85}>
-            <AppIcon name="eye" size={20} color="#fff" />
-          </TouchableOpacity>
+          <TouchableOpacity style={styles.searchBtn} onPress={handleSearch} activeOpacity={0.85}><AppIcon name="eye" size={20} color="#fff" /></TouchableOpacity>
         </View>
         {searchResult ? <Text style={styles.searchResult}>{searchResult}</Text> : null}
+        <View style={styles.heroCard}><Image source={transferImage} style={styles.heroImage} resizeMode="contain" /></View>
       </ScrollView>
     </View>
   );
@@ -44,4 +44,6 @@ const styles = StyleSheet.create({
   searchInput: { flex: 1, height: 52, borderRadius: 14, borderWidth: 1, paddingHorizontal: 16, fontSize: 14 },
   searchBtn: { width: 52, height: 52, borderRadius: 14, backgroundColor: C.primary, alignItems: 'center', justifyContent: 'center' },
   searchResult: { fontSize: 13, color: C.success, fontWeight: '700' },
+  heroCard: { alignItems: 'center', paddingTop: 24 },
+  heroImage: { width: 220, height: 220 },
 });

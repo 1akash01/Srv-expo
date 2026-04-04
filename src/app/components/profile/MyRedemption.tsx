@@ -1,6 +1,11 @@
 import React, { useState } from 'react';
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { AppIcon, C, EmptyState, PageHeader, usePreferenceContext } from './ProfileShared';
+import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { C, PageHeader, usePreferenceContext } from './ProfileShared';
+
+const noDataImage = require('./assets/nodata.png');
+const buySchemeImage = require('./assets/giftstore.png');
+const bankTransferImage = require('./assets/upi.png');
+const transferPointImage = require('./assets/transferpoint.png');
 
 export function RedemptionPage({ onBack }: { onBack: () => void }) {
   const { t, theme } = usePreferenceContext();
@@ -25,21 +30,29 @@ export function RedemptionPage({ onBack }: { onBack: () => void }) {
           <View style={styles.tabRow}>
             {tabs.map((tab) => (
               <TouchableOpacity key={tab} style={[styles.tab, activeTab === tab && styles.tabActive]} onPress={() => setActiveTab(tab)} activeOpacity={0.8}>
-                <AppIcon name={tab === 'Buy Schemes' ? 'gift' : tab === 'Bank Transfer' ? 'bank' : 'transfer'} size={22} color={activeTab === tab ? C.primary : C.mid} />
+                <Image source={tab === 'Buy Schemes' ? buySchemeImage : tab === 'Bank Transfer' ? bankTransferImage : transferPointImage} style={styles.tabAsset} resizeMode="contain" />
                 <Text style={[styles.tabText, activeTab === tab && { color: C.primary }]}>{tab}</Text>
               </TouchableOpacity>
             ))}
           </View>
         </View>
+        <View style={styles.dateRow}>
+          <Text style={styles.dateText}>01 Apr 2026</Text>
+          <Text style={styles.dateSep}>|</Text>
+          <Text style={styles.dateText}>30 Apr 2026</Text>
+          <View style={styles.checkCircle}><Text style={styles.checkText}>✓</Text></View>
+        </View>
         <Text style={styles.sectionTitle}>{t('redemptionHistory')}</Text>
-        <EmptyState emoji="📋" message="No redemption history yet" />
+        <View style={styles.emptyState}>
+          <Image source={noDataImage} style={styles.emptyImage} resizeMode="contain" />
+        </View>
       </ScrollView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  statBox: { flex: 1, backgroundColor: C.surface, borderRadius: 18, padding: 16, borderWidth: 1.5, borderColor: C.primary },
+  statBox: { flex: 1, backgroundColor: C.surface, borderRadius: 18, padding: 16, borderWidth: 1, borderColor: C.border },
   statLabel: { fontSize: 13, fontWeight: '800', color: C.primary, marginBottom: 6 },
   statValue: { fontSize: 22, fontWeight: '900', color: C.dark },
   pointsCard: { backgroundColor: C.surface, borderRadius: 20, padding: 18, borderWidth: 1, borderColor: C.border },
@@ -48,6 +61,14 @@ const styles = StyleSheet.create({
   tabRow: { flexDirection: 'row', gap: 10 },
   tab: { flex: 1, backgroundColor: '#F3F4F8', borderRadius: 16, padding: 12, alignItems: 'center', gap: 6, borderWidth: 1.5, borderColor: 'transparent' },
   tabActive: { backgroundColor: C.primaryLight, borderColor: C.primary },
+  tabAsset: { width: 40, height: 40 },
   tabText: { fontSize: 11, fontWeight: '700', color: C.mid, textAlign: 'center' },
+  dateRow: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: C.surface, borderRadius: 16, padding: 16, borderWidth: 1, borderColor: C.border },
+  dateText: { fontSize: 14, fontWeight: '700', color: C.dark },
+  dateSep: { fontSize: 16, color: C.muted },
+  checkCircle: { marginLeft: 'auto', width: 36, height: 36, borderRadius: 18, backgroundColor: C.primary, alignItems: 'center', justifyContent: 'center' },
+  checkText: { color: '#fff', fontSize: 18, fontWeight: '900' },
   sectionTitle: { fontSize: 16, fontWeight: '800', color: C.dark },
+  emptyState: { alignItems: 'center', justifyContent: 'center', paddingVertical: 24 },
+  emptyImage: { width: 250, height: 250 },
 });
