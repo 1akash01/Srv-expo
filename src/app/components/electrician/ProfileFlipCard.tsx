@@ -364,7 +364,7 @@ export default function ProfileFlipCard({ profile, role = 'electrician' }: Props
                   <View style={styles.metaStack}>
                     <DetailPill label="Name" value={dealerName} compact />
                     <DetailPill label="Location" value={dealerLocation} compact lines={2} />
-                    <DetailPill label={backThirdLabel} value={backThirdValue} compact lines={role === 'dealer' ? 3 : undefined} />
+                    <DetailPill label={backThirdLabel} value={backThirdValue} compact lines={role === 'dealer' ? 2 : undefined} />
                   </View>
                 </View>
 
@@ -372,7 +372,7 @@ export default function ProfileFlipCard({ profile, role = 'electrician' }: Props
                   <View style={styles.qrFrame}>
                     <Image source={{ uri: qrUrl }} style={styles.qrImage} resizeMode="contain" />
                   </View>
-                  <Text style={styles.qrCodeText} numberOfLines={2}>{qrValue}</Text>
+                  <Text style={styles.qrCodeText} numberOfLines={1}>{qrValue}</Text>
                 </View>
               </View>
             </LinearGradient>
@@ -507,18 +507,19 @@ const styles = StyleSheet.create({
   },
   detailPillCompact: {
     flex: 0,
-    paddingVertical: 7,
-    borderRadius: 16,
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    borderRadius: 15,
   },
   detailLabel: { color: '#D8E4FF', fontSize: 9, fontWeight: '700', marginBottom: 3, textTransform: 'uppercase', letterSpacing: 0.8 },
   detailValueRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   detailIconWrap: { alignItems: 'center', justifyContent: 'center' },
-  detailValue: { color: '#FFFFFF', fontSize: 10.5, fontWeight: '800', flexShrink: 1, lineHeight: 14 },
+  detailValue: { color: '#FFFFFF', fontSize: 10, fontWeight: '800', flexShrink: 1, lineHeight: 13 },
   backContent: { flexDirection: 'row', flex: 1, gap: 10, alignItems: 'stretch' },
   backLeft: { flex: 1, justifyContent: 'flex-start', minWidth: 0 },
   backHeading: { color: '#E4EDFF', fontSize: 10.5, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 1, paddingRight: 34 },
-  metaStack: { gap: 6, marginTop: 8, paddingRight: 1 },
-  qrPanel: { width: 68, alignItems: 'center', justifyContent: 'center', paddingVertical: 10 },
+  metaStack: { gap: 5, marginTop: 8, paddingRight: 1 },
+  qrPanel: { width: 92, alignItems: 'center', justifyContent: 'center', paddingVertical: 10 },
   qrFrame: {
     width: 62,
     height: 62,
@@ -527,7 +528,7 @@ const styles = StyleSheet.create({
     padding: 5,
   },
   qrImage: { width: '100%', height: '100%' },
-  qrCodeText: { color: '#C7D5F3', fontSize: 8, fontWeight: '700', textAlign: 'center', marginTop: 5 },
+  qrCodeText: { color: '#C7D5F3', fontSize: 7.4, fontWeight: '800', textAlign: 'center', marginTop: 5, width: '100%' },
 });
 
 
