@@ -1,10 +1,16 @@
 import React, { useState } from 'react';
-import { Alert, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Alert, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { AppIcon, C, PageHeader, PrimaryBtn, usePreferenceContext } from './ProfileShared';
+
+const bankOptions = ['State Bank of India (SBI)', 'Punjab National Bank (PNB)', 'HDFC Bank', 'ICICI Bank', 'Axis Bank', 'Bank of Baroda', 'Canara Bank', 'Union Bank of India', 'Kotak Mahindra Bank', 'IDFC FIRST Bank'];
 
 export function BankDetailsPage({ onBack }: { onBack: () => void }) {
   const { t, theme } = usePreferenceContext();
   const [upi, setUpi] = useState('');
+  const [ifsc, setIfsc] = useState('');
+  const [accountNumber, setAccountNumber] = useState('');
+  const [selectedBank, setSelectedBank] = useState('');
+  const [showBankOptions, setShowBankOptions] = useState(false);
   return (
     <View style={{ flex: 1, backgroundColor: theme.bg }}>
       <PageHeader title={t('bankDetails')} onBack={onBack} />
@@ -40,6 +46,39 @@ export function BankDetailsPage({ onBack }: { onBack: () => void }) {
             <AppIcon name="bank" size={18} color={C.gold} />
             <TextInput style={[styles.input, { color: theme.textPrimary }]} placeholder="e.g. yourname@upi" placeholderTextColor={theme.textMuted} value={upi} onChangeText={setUpi} autoCapitalize="none" />
           </View>
+          <Text style={styles.label}>IFSC Code</Text>
+          <View style={styles.inputWrap}>
+            <AppIcon name="bank" size={18} color={C.gold} />
+            <TextInput style={[styles.input, { color: theme.textPrimary }]} placeholder="Enter IFSC Code" placeholderTextColor={theme.textMuted} value={ifsc} onChangeText={setIfsc} autoCapitalize="characters" />
+          </View>
+          <Text style={styles.label}>Account Number</Text>
+          <View style={styles.inputWrap}>
+            <AppIcon name="bank" size={18} color={C.gold} />
+            <TextInput style={[styles.input, { color: theme.textPrimary }]} placeholder="Enter Account Number" placeholderTextColor={theme.textMuted} value={accountNumber} onChangeText={setAccountNumber} keyboardType="number-pad" />
+          </View>
+          <Text style={styles.label}>Select Bank</Text>
+          <TouchableOpacity style={styles.inputWrap} activeOpacity={0.85} onPress={() => setShowBankOptions((prev) => !prev)}>
+            <AppIcon name="bank" size={18} color={C.gold} />
+            <Text style={[styles.input, !selectedBank && { color: theme.textMuted }]}>{selectedBank || 'Select Bank'}</Text>
+            <Text style={styles.selectArrow}>{'>'}</Text>
+          </TouchableOpacity>
+          {showBankOptions ? (
+            <View style={styles.bankOptionsWrap}>
+              {bankOptions.map((bank) => (
+                <TouchableOpacity
+                  key={bank}
+                  style={styles.bankOption}
+                  activeOpacity={0.85}
+                  onPress={() => {
+                    setSelectedBank(bank);
+                    setShowBankOptions(false);
+                  }}
+                >
+                  <Text style={styles.bankOptionText}>{bank}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          ) : null}
         </View>
         <PrimaryBtn label={t('save')} onPress={() => Alert.alert('Saved', 'Bank details saved successfully!')} />
       </View>
@@ -67,4 +106,8 @@ const styles = StyleSheet.create({
   label: { fontSize: 12, fontWeight: '700', color: C.muted, textTransform: 'uppercase', letterSpacing: 0.5 },
   inputWrap: { flexDirection: 'row', alignItems: 'center', height: 52, backgroundColor: C.bg, borderRadius: 14, borderWidth: 1.5, borderColor: C.border, paddingHorizontal: 14, gap: 8 },
   input: { flex: 1, fontSize: 15, fontWeight: '600' },
+  selectArrow: { fontSize: 22, color: C.muted, fontWeight: '700', lineHeight: 22 },
+  bankOptionsWrap: { borderRadius: 14, borderWidth: 1, borderColor: C.border, overflow: 'hidden' },
+  bankOption: { paddingHorizontal: 14, paddingVertical: 12, backgroundColor: C.surface, borderBottomWidth: 1, borderBottomColor: C.border },
+  bankOptionText: { fontSize: 14, color: C.dark, fontWeight: '600' },
 });
