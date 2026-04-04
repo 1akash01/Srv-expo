@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { Image, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Alert, Image, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import type { UserRole } from '../../types';
 import { AppIcon, C, defaultProfile, getThemePalette, IconName, PreferenceContext, Profile, Screen, SubPage, translations } from './profile/ProfileShared';
@@ -60,7 +60,40 @@ export function ProfileScreen({
   const initials = useMemo(() => profile.name.split(' ').map((w) => w[0]).join('').slice(0, 2).toUpperCase(), [profile.name]);
 
   const openEdit = () => { setDraft(profile); setDraftImage(profileImage); setShowEdit(true); };
-  const saveProfile = () => { setProfile(draft); setProfileImage(draftImage); setShowEdit(false); };
+  const updateDraftField = (key: keyof Profile, value: string) => {
+    let nextValue = value;
+    if (key === 'name' || key === 'city' || key === 'state' || key === 'gstHolderName' || key === 'panHolderName') {
+      nextValue = value.replace(/[^A-Za-z ]/g, '');
+    } else if (key === 'phone' || key === 'pincode' || key === 'dealerCode') {
+      nextValue = value.replace(/\D/g, '');
+    } else if (key === 'email') {
+      nextValue = value.replace(/\s/g, '');
+    }
+    setDraft((current) => ({ ...current, [key]: nextValue }));
+  };
+  const saveProfile = () => {
+    if (draft.name.trim() && !/^[A-Za-z ]+$/.test(draft.name.trim())) {
+      return Alert.alert('Invalid name', 'Name should contain only alphabets and spaces.');
+    }
+    if (draft.phone.trim() && !/^\d+$/.test(draft.phone.trim())) {
+      return Alert.alert('Invalid phone number', 'Phone number should contain only integers.');
+    }
+    if (draft.email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(draft.email.trim())) {
+      return Alert.alert('Invalid email', 'Please enter a valid email address.');
+    }
+    if (draft.city.trim() && !/^[A-Za-z ]+$/.test(draft.city.trim())) {
+      return Alert.alert('Invalid city', 'City should contain only alphabets and spaces.');
+    }
+    if (draft.state.trim() && !/^[A-Za-z ]+$/.test(draft.state.trim())) {
+      return Alert.alert('Invalid state', 'State should contain only alphabets and spaces.');
+    }
+    if (draft.pincode.trim() && !/^\d+$/.test(draft.pincode.trim())) {
+      return Alert.alert('Invalid pincode', 'Pincode should contain only integers.');
+    }
+    setProfile(draft);
+    setProfileImage(draftImage);
+    setShowEdit(false);
+  };
   const pickFromGallery = async () => {
     setShowImgPicker(false);
     const res = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ImagePicker.MediaTypeOptions.Images, allowsEditing: true, aspect: [1, 1], quality: 0.85 });
@@ -150,7 +183,7 @@ export function ProfileScreen({
             <View style={ps.cardHead}>
               <Text style={[ps.cardTitle, { color: theme.textPrimary }]}>{t('profileDetails')}</Text>
               <TouchableOpacity onPress={() => setShowFullProfile((current) => !current)} style={ps.visibilityBtn} activeOpacity={0.75}>
-                <AppIcon name={showFullProfile ? 'eyeOff' : 'eye'} size={16} color={C.primary} />
+                <AppIcon name={showFullProfile ? 'eyeOff' : 'eye'} size={16} color={C.blue} />
                 <Text style={ps.visibilityText}>{showFullProfile ? t('hide') : t('show')}</Text>
               </TouchableOpacity>
             </View>
@@ -262,7 +295,7 @@ export function ProfileScreen({
                 ] as [string, keyof Profile][]).map(([label, key]) => (
                   <View key={key} style={ms.field}>
                     <Text style={ms.fieldLabel}>{label}</Text>
-                    <TextInput value={draft[key]} onChangeText={(v) => setDraft((c) => ({ ...c, [key]: v }))} placeholder={`Enter ${label}`} placeholderTextColor={C.muted} style={ms.input} />
+                    <TextInput value={draft[key]} onChangeText={(v) => updateDraftField(key, v)} placeholder={`Enter ${label}`} placeholderTextColor={C.muted} style={ms.input} />
                   </View>
                 ))}
               </ScrollView>
@@ -315,8 +348,8 @@ const ps = StyleSheet.create({
   card: { borderRadius: 24, padding: 20, borderWidth: 1 },
   cardHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
   cardTitle: { fontSize: 17, fontWeight: '800' },
-  visibilityBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: C.primaryLight, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 7 },
-  visibilityText: { fontSize: 13, fontWeight: '700', color: C.primary },
+  visibilityBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: C.blueLight, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 7 },
+  visibilityText: { fontSize: 13, fontWeight: '700', color: C.blue },
   kycBanner: { flexDirection: 'row', gap: 10, alignItems: 'center', backgroundColor: '#FFFBEB', borderWidth: 1.5, borderColor: '#FDE68A', borderRadius: 16, padding: 12, marginBottom: 14 },
   kycIcon: { width: 40, height: 40, borderRadius: 12, backgroundColor: '#FEF3C7', alignItems: 'center', justifyContent: 'center' },
   kycTitle: { fontSize: 13, fontWeight: '800', color: '#92400E' },
