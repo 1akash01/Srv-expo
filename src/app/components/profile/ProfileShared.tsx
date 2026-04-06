@@ -60,7 +60,8 @@ export type IconName =
   | 'edit' | 'eye' | 'eyeOff' | 'star' | 'scan' | 'gift' | 'signOut' | 'transfer'
   | 'order' | 'bank' | 'refer' | 'help' | 'offer' | 'notification' | 'settings'
   | 'history' | 'support' | 'camera' | 'gallery' | 'phone' | 'mail' | 'building'
-  | 'link' | 'message' | 'whatsapp' | 'moon' | 'warning';
+  | 'link' | 'message' | 'whatsapp' | 'moon' | 'warning' | 'arrowLeft' | 'check'
+  | 'chevronRight' | 'chevronDown' | 'chevronUp' | 'location' | 'search';
 
 export type AppLanguage = 'English' | 'Hindi' | 'Punjabi';
 
@@ -69,7 +70,7 @@ export const translations = {
     myProfile: 'My Profile', edit: 'Edit', goldMember: 'Gold Member', dealerPartner: 'Dealer Partner',
     electricianPartner: 'Electrician Partner', toPlatinum: '750 pts to Platinum', scans: 'Scans',
     points: 'Points', rewards: 'Rewards', profileDetails: 'Profile Details', show: 'Show', hide: 'Hide',
-    quickActions: 'Quick Actions', settings: 'Settings', giftStore: 'Gift Store', signOut: 'Sign Out',
+    quickActions: 'Quick Actions', settings: 'Settings', giftStore: 'Gift Store', signOut: 'Logout',
     appSettings: 'App Settings', preferences: 'Preferences', pushNotifications: 'Push Notifications',
     receiveAlerts: 'Receive alerts and updates', darkMode: 'Dark Mode', switchTheme: 'Switch to dark theme',
     language: 'Language', about: 'About', privacyPolicy: 'Privacy Policy', terms: 'Terms & Conditions',
@@ -86,13 +87,13 @@ export const translations = {
     myProfile: 'मेरी प्रोफाइल', edit: 'एडिट', goldMember: 'गोल्ड मेंबर', dealerPartner: 'डीलर पार्टनर',
     electricianPartner: 'इलेक्ट्रीशियन पार्टनर', toPlatinum: 'प्लैटिनम तक 750 पॉइंट्स', scans: 'स्कैन',
     points: 'पॉइंट्स', rewards: 'रिवॉर्ड्स', profileDetails: 'प्रोफाइल डिटेल्स', show: 'दिखाएं', hide: 'छुपाएं',
-    quickActions: 'क्विक एक्शन्स', settings: 'सेटिंग्स', giftStore: 'गिफ्ट स्टोर', signOut: 'साइन आउट',
-    appSettings: 'ऐप सेटिंग्स', preferences: 'पसंद', pushNotifications: 'पुश नोटिफिकेशन',
-    receiveAlerts: 'अलर्ट और अपडेट पाएं', darkMode: 'डार्क मोड', switchTheme: 'डार्क थीम पर स्विच करें',
+    quickActions: 'क्विक एक्शन्स', settings: 'सेटिंग्स', giftStore: 'गिफ्ट स्टोर', signOut: 'लॉगआउट',
+    appSettings: 'ऐप सेटिंग्स', preferences: 'पसंद', pushNotifications: 'पुश नोटिफिकेशन्स',
+    receiveAlerts: 'अलर्ट और अपडेट प्राप्त करें', darkMode: 'डार्क मोड', switchTheme: 'डार्क थीम पर स्विच करें',
     language: 'भाषा', about: 'जानकारी', privacyPolicy: 'प्राइवेसी पॉलिसी', terms: 'नियम और शर्तें',
-    open: 'खोलें', english: 'अंग्रेज़ी', hindi: 'हिंदी', punjabi: 'पंजाबी', notification: 'नोटिफिकेशन',
-    offer: 'ऑफर', contactSupport: 'संपर्क सहायता', contactUs: 'संपर्क करें', faqs: 'सवाल-जवाब',
-    myOrders: 'मेरे ऑर्डर', bankDetails: 'बैंक डिटेल्स', referFriend: 'मित्र को रेफर करें', needHelp: 'मदद चाहिए',
+    open: 'खोलें', english: 'अंग्रेजी', hindi: 'हिंदी', punjabi: 'पंजाबी', notification: 'नोटिफिकेशन',
+    offer: 'ऑफर', contactSupport: 'सपोर्ट सहायता', contactUs: 'संपर्क करें', faqs: 'सवाल-जवाब',
+    myOrders: 'मेरे ऑर्डर', bankDetails: 'बैंक डिटेल्स', referFriend: 'दोस्त को रेफर करें', needHelp: 'मदद चाहिए',
     transferPoint: 'पॉइंट ट्रांसफर', redemptionHistory: 'रिडेम्प्शन हिस्ट्री', scanHistory: 'स्कैन हिस्ट्री',
     save: 'सेव', saveChanges: 'बदलाव सेव करें', discard: 'रद्द करें', cancel: 'कैंसल',
     updateProfilePhoto: 'प्रोफाइल फोटो अपडेट करें', takePhoto: 'फोटो लें', useCamera: 'कैमरा इस्तेमाल करें',
@@ -100,19 +101,19 @@ export const translations = {
     submitted: 'सबमिट हो गया', incompleteForm: 'फॉर्म अधूरा है', fillSubjectComment: 'सबमिट करने से पहले विषय और टिप्पणी भरें।',
   },
   Punjabi: {
-    myProfile: 'ਮੇਰੀ ਪ੍ਰੋਫਾਇਲ', edit: 'ਐਡਿਟ', goldMember: 'ਗੋਲਡ ਮੈਂਬਰ', dealerPartner: 'ਡੀਲਰ ਪਾਰਟਨਰ',
-    electricianPartner: 'ਇਲੈਕਟ੍ਰੀਸ਼ੀਅਨ ਪਾਰਟਨਰ', toPlatinum: 'ਪਲੈਟਿਨਮ ਲਈ 750 ਪੌਇੰਟ', scans: 'ਸਕੈਨ',
-    points: 'ਪੌਇੰਟ', rewards: 'ਇਨਾਮ', profileDetails: 'ਪ੍ਰੋਫਾਇਲ ਵੇਰਵਾ', show: 'ਵੇਖਾਓ', hide: 'ਛੁਪਾਓ',
-    quickActions: 'ਕੁਇਕ ਐਕਸ਼ਨ', settings: 'ਸੈਟਿੰਗਜ਼', giftStore: 'ਗਿਫਟ ਸਟੋਰ', signOut: 'ਸਾਈਨ ਆਊਟ',
-    appSettings: 'ਐਪ ਸੈਟਿੰਗਜ਼', preferences: 'ਪਸੰਦਾਂ', pushNotifications: 'ਪੁਸ਼ ਨੋਟੀਫਿਕੇਸ਼ਨ',
-    receiveAlerts: 'ਅਲਰਟ ਅਤੇ ਅਪਡੇਟ ਪ੍ਰਾਪਤ ਕਰੋ', darkMode: 'ਡਾਰਕ ਮੋਡ', switchTheme: 'ਡਾਰਕ ਥੀਮ ਚਾਲੂ ਕਰੋ',
+    myProfile: 'ਮੇਰੀ ਪ੍ਰੋਫਾਈਲ', edit: 'ਐਡਿਟ', goldMember: 'ਗੋਲਡ ਮੈਂਬਰ', dealerPartner: 'ਡੀਲਰ ਪਾਰਟਨਰ',
+    electricianPartner: 'ਇਲੈਕਟ੍ਰੀਸ਼ੀਅਨ ਪਾਰਟਨਰ', toPlatinum: 'ਪਲੈਟਿਨਮ ਲਈ 750 ਪੁਆਇੰਟ', scans: 'ਸਕੈਨ',
+    points: 'ਪੁਆਇੰਟ', rewards: 'ਇਨਾਮ', profileDetails: 'ਪ੍ਰੋਫਾਈਲ ਵੇਰਵਾ', show: 'ਵੇਖਾਓ', hide: 'ਛੁਪਾਓ',
+    quickActions: 'ਕੁਇਕ ਐਕਸ਼ਨ', settings: 'ਸੈਟਿੰਗਜ਼', giftStore: 'ਗਿਫਟ ਸਟੋਰ', signOut: 'ਲਾਗਆਉਟ',
+    appSettings: 'ਐਪ ਸੈਟਿੰਗਜ਼', preferences: 'ਪਸੰਦਾਂ', pushNotifications: 'ਪੁਸ਼ ਨੋਟਿਫਿਕੇਸ਼ਨ',
+    receiveAlerts: 'ਅਲਰਟ ਅਤੇ ਅਪਡੇਟ ਪ੍ਰਾਪਤ ਕਰੋ', darkMode: 'ਡਾਰਕ ਮੋਡ', switchTheme: 'ਡਾਰਕ ਥੀਮ ਤੇ ਜਾਓ',
     language: 'ਭਾਸ਼ਾ', about: 'ਜਾਣਕਾਰੀ', privacyPolicy: 'ਪ੍ਰਾਈਵੇਸੀ ਪਾਲਿਸੀ', terms: 'ਨਿਯਮ ਅਤੇ ਸ਼ਰਤਾਂ',
-    open: 'ਖੋਲ੍ਹੋ', english: 'ਅੰਗਰੇਜ਼ੀ', hindi: 'ਹਿੰਦੀ', punjabi: 'ਪੰਜਾਬੀ', notification: 'ਨੋਟੀਫਿਕੇਸ਼ਨ',
+    open: 'ਖੋਲ੍ਹੋ', english: 'ਅੰਗਰੇਜ਼ੀ', hindi: 'ਹਿੰਦੀ', punjabi: 'ਪੰਜਾਬੀ', notification: 'ਨੋਟਿਫਿਕੇਸ਼ਨ',
     offer: 'ਆਫਰ', contactSupport: 'ਸਹਾਇਤਾ ਸੰਪਰਕ', contactUs: 'ਸਾਡੇ ਨਾਲ ਸੰਪਰਕ', faqs: 'ਅਕਸਰ ਪੁੱਛੇ ਸਵਾਲ',
-    myOrders: 'ਮੇਰੇ ਆਰਡਰ', bankDetails: 'ਬੈਂਕ ਵੇਰਵਾ', referFriend: 'ਦੋਸਤ ਨੂੰ ਰਿਫਰ ਕਰੋ', needHelp: 'ਮਦਦ ਚਾਹੀਦੀ ਹੈ',
-    transferPoint: 'ਪੌਇੰਟ ਟ੍ਰਾਂਸਫਰ', redemptionHistory: 'ਰਿਡੈਂਪਸ਼ਨ ਹਿਸਟਰੀ', scanHistory: 'ਸਕੈਨ ਹਿਸਟਰੀ',
-    save: 'ਸੇਵ', saveChanges: 'ਬਦਲਾਵ ਸੇਵ ਕਰੋ', discard: 'ਰੱਦ ਕਰੋ', cancel: 'ਰੱਦ',
-    updateProfilePhoto: 'ਪ੍ਰੋਫਾਇਲ ਫੋਟੋ ਅਪਡੇਟ ਕਰੋ', takePhoto: 'ਫੋਟੋ ਖਿੱਚੋ', useCamera: 'ਕੈਮਰਾ ਵਰਤੋ',
+    myOrders: 'ਮੇਰੇ ਆਰਡਰ', bankDetails: 'ਬੈਂਕ ਵੇਰਵਾ', referFriend: 'ਦੋਸਤ ਨੂੰ ਰੈਫਰ ਕਰੋ', needHelp: 'ਮਦਦ ਚਾਹੀਦੀ ਹੈ',
+    transferPoint: 'ਪੁਆਇੰਟ ਟ੍ਰਾਂਸਫਰ', redemptionHistory: 'ਰਿਡੈਂਪਸ਼ਨ ਹਿਸਟਰੀ', scanHistory: 'ਸਕੈਨ ਹਿਸਟਰੀ',
+    save: 'ਸੇਵ', saveChanges: 'ਬਦਲਾਅ ਸੇਵ ਕਰੋ', discard: 'ਰੱਦ ਕਰੋ', cancel: 'ਰੱਦ',
+    updateProfilePhoto: 'ਪ੍ਰੋਫਾਈਲ ਫੋਟੋ ਅਪਡੇਟ ਕਰੋ', takePhoto: 'ਫੋਟੋ ਖਿੱਚੋ', useCamera: 'ਕੈਮਰਾ ਵਰਤੋ',
     chooseGallery: 'ਗੈਲਰੀ ਤੋਂ ਚੁਣੋ', selectPhoto: 'ਮੌਜੂਦਾ ਫੋਟੋ ਚੁਣੋ', tapToChangePhoto: 'ਫੋਟੋ ਬਦਲਣ ਲਈ ਟੈਪ ਕਰੋ',
     submitted: 'ਜਮ੍ਹਾਂ ਹੋ ਗਿਆ', incompleteForm: 'ਫਾਰਮ ਅਧੂਰਾ ਹੈ', fillSubjectComment: 'ਸਬਮਿਟ ਕਰਨ ਤੋਂ ਪਹਿਲਾਂ ਵਿਸ਼ਾ ਅਤੇ ਟਿੱਪਣੀ ਭਰੋ।',
   },
@@ -179,6 +180,13 @@ export function AppIcon({ name, size = 18, color = '#0F1120', strokeWidth = 1.8 
     case 'whatsapp': return <Svg width={size} height={size} viewBox="0 0 24 24" fill="none"><Path d="M12 3.5a8.5 8.5 0 00-7.4 12.7L3.5 20.5l4.4-1.1A8.5 8.5 0 1012 3.5z" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" /><Path d="M9.5 8.6c.2-.5.4-.6.7-.6h.6c.2 0 .4.1.5.4l.7 1.8c.1.2 0 .5-.1.6l-.5.7c.5 1 1.3 1.9 2.3 2.4l.8-.5c.2-.1.4-.1.6 0l1.7.8c.2.1.4.3.3.5v.6c0 .3-.1.5-.5.7-.4.2-1 .3-1.6.2-1.4-.3-2.8-1.2-4-2.5-1.2-1.2-2-2.6-2.3-4-.1-.5 0-1.1.2-1.5z" fill={color} /></Svg>;
     case 'moon': return <Svg width={size} height={size} viewBox="0 0 24 24" fill="none"><Path d="M19 14.5A7.5 7.5 0 019.5 5a8 8 0 1010 9.5z" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" /></Svg>;
     case 'warning': return <Svg width={size} height={size} viewBox="0 0 24 24" fill="none"><Path d="M12 4l8 14H4l8-14z" stroke={color} strokeWidth={strokeWidth} strokeLinejoin="round" /><Path d="M12 9v4M12 16h.01" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" /></Svg>;
+    case 'arrowLeft': return <Svg width={size} height={size} viewBox="0 0 24 24" fill="none"><Path d="M15 6l-6 6 6 6M9 12h10" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" /></Svg>;
+    case 'check': return <Svg width={size} height={size} viewBox="0 0 24 24" fill="none"><Path d="M5 12.5l4.2 4.2L19 7" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" /></Svg>;
+    case 'chevronRight': return <Svg width={size} height={size} viewBox="0 0 24 24" fill="none"><Path d="M9 6l6 6-6 6" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" /></Svg>;
+    case 'chevronDown': return <Svg width={size} height={size} viewBox="0 0 24 24" fill="none"><Path d="M6 9l6 6 6-6" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" /></Svg>;
+    case 'chevronUp': return <Svg width={size} height={size} viewBox="0 0 24 24" fill="none"><Path d="M6 15l6-6 6 6" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" /></Svg>;
+    case 'location': return <Svg width={size} height={size} viewBox="0 0 24 24" fill="none"><Path d="M12 21s6-4.8 6-10a6 6 0 10-12 0c0 5.2 6 10 6 10z" stroke={color} strokeWidth={strokeWidth} strokeLinejoin="round" /><Circle cx="12" cy="11" r="2.2" stroke={color} strokeWidth={strokeWidth} /></Svg>;
+    case 'search': return <Svg width={size} height={size} viewBox="0 0 24 24" fill="none"><Circle cx="11" cy="11" r="6.5" stroke={color} strokeWidth={strokeWidth} /><Path d="M16 16l4 4" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" /></Svg>;
     default: return null;
   }
 }
@@ -188,7 +196,7 @@ export function PageHeader({ title, onBack }: { title: string; onBack: () => voi
   return (
     <View style={[shared.header, { backgroundColor: theme.surface, borderBottomColor: theme.border }]}>
       <TouchableOpacity onPress={onBack} style={[shared.backBtn, { backgroundColor: theme.soft }]} activeOpacity={0.75}>
-        <Text style={[shared.backIcon, { color: theme.textPrimary }]}>←</Text>
+        <AppIcon name="arrowLeft" size={20} color={theme.textPrimary} />
       </TouchableOpacity>
       <Text style={[shared.title, { color: theme.textPrimary }]}>{title}</Text>
       <View style={{ width: 44 }} />
@@ -207,7 +215,6 @@ export function EmptyState({ emoji, message }: { emoji: string; message: string 
 const shared = StyleSheet.create({
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingTop: Platform.OS === 'ios' ? 56 : 20, paddingBottom: 14, borderBottomWidth: 1 },
   backBtn: { width: 44, height: 44, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
-  backIcon: { fontSize: 22, fontWeight: '700' },
   title: { fontSize: 18, fontWeight: '800' },
   primaryBtn: { backgroundColor: C.primary, borderRadius: 16, height: 56, alignItems: 'center', justifyContent: 'center' },
   primaryLabel: { color: '#fff', fontSize: 16, fontWeight: '800', letterSpacing: 0.3 },

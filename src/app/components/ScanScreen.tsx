@@ -5,6 +5,7 @@ import {
   Animated,
   Easing,
   Image,
+  Modal,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -183,7 +184,7 @@ export function ScanScreen({ onNavigate }: { onNavigate: (screen: Screen) => voi
   }, [scanned]);
 
   const startScan = () => {
-    setSelectedImage(null);
+    setSelectedScanImage(null);
     setScanned(false);
     setScanning(true);
     setTimeout(() => { setScanning(false); setScanned(true); }, 3000);
@@ -245,11 +246,13 @@ export function ScanScreen({ onNavigate }: { onNavigate: (screen: Screen) => voi
           >
             <View style={[StyleSheet.absoluteFill, styles.frameInner]} />
 
-            {!scanned && (
+            {!scanned && !selectedScanImage && (
               <View style={styles.qrCenter}>
                 <RealQRCode size={qrSize} />
               </View>
             )}
+
+            {selectedScanImage ? <Image source={{ uri: selectedScanImage }} style={styles.selectedScanImage} /> : null}
 
             <Animated.View
               style={[styles.laser, { width: frameSize - 28, opacity: laserOpacity, transform: [{ translateY: laserTranslate }] }]}
@@ -328,6 +331,23 @@ export function ScanScreen({ onNavigate }: { onNavigate: (screen: Screen) => voi
 
         <View style={{ height: 24 }} />
       </ScrollView>
+
+      <Modal visible={!!pendingScanImage} animationType="fade" transparent onRequestClose={cancelScanImage}>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalCard}>
+            {pendingScanImage ? <Image source={{ uri: pendingScanImage }} style={styles.modalPreview} /> : null}
+            <Text style={styles.modalTitle}>Use this image?</Text>
+            <View style={styles.modalActions}>
+              <TouchableOpacity onPress={cancelScanImage} style={styles.modalCancelBtn} activeOpacity={0.85}>
+                <Text style={styles.modalCancelText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={confirmScanImage} style={styles.modalDoneBtn} activeOpacity={0.85}>
+                <Text style={styles.modalDoneText}>Done</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -354,6 +374,7 @@ const styles = StyleSheet.create({
   frame: { borderRadius: 24, backgroundColor: '#FFFFFF', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', position: 'relative' },
   frameInner: { backgroundColor: '#FFFFFF', borderRadius: 24 },
   qrCenter: { alignItems: 'center', justifyContent: 'center' },
+  selectedScanImage: { width: '100%', height: '100%', resizeMode: 'cover' },
   laser: {
     position: 'absolute', top: CORNER_OFFSET, left: CORNER_OFFSET, height: 3, borderRadius: 3,
     backgroundColor: Colors.primary, shadowColor: Colors.primary, shadowOffset: { width: 0, height: 0 },
@@ -389,6 +410,15 @@ const styles = StyleSheet.create({
     shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.04, shadowRadius: 4, elevation: 1,
   },
   secondaryActionText: { color: Colors.textDark, fontSize: 13, fontWeight: '700' },
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(15,17,32,0.5)', justifyContent: 'center', alignItems: 'center', paddingHorizontal: 24 },
+  modalCard: { width: '100%', maxWidth: 340, backgroundColor: Colors.surface, borderRadius: 28, padding: 20, alignItems: 'center' },
+  modalPreview: { width: 220, height: 220, borderRadius: 20, marginBottom: 16 },
+  modalTitle: { fontSize: 18, fontWeight: '800', color: Colors.textDark, marginBottom: 18 },
+  modalActions: { flexDirection: 'row', gap: 12, width: '100%' },
+  modalCancelBtn: { flex: 1, height: 52, borderRadius: 16, backgroundColor: '#F2F3F7', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: Colors.border },
+  modalCancelText: { color: Colors.textDark, fontSize: 15, fontWeight: '700' },
+  modalDoneBtn: { flex: 1, height: 52, borderRadius: 16, backgroundColor: Colors.primary, alignItems: 'center', justifyContent: 'center' },
+  modalDoneText: { color: '#fff', fontSize: 15, fontWeight: '800' },
   howCard: { width: '100%', backgroundColor: Colors.surface, borderRadius: 20, padding: 20, borderWidth: 1, borderColor: Colors.border },
   howTitle: { fontSize: 17, fontWeight: '800', color: Colors.textDark, marginBottom: 4 },
   howRow: { flexDirection: 'row', gap: 14, marginTop: 16, alignItems: 'flex-start' },

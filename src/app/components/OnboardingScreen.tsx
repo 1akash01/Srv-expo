@@ -3,6 +3,7 @@ import {
   Animated,
   Easing,
   Image,
+  Keyboard,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -14,9 +15,14 @@ import {
   View,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import * as Location from 'expo-location';
+import Svg, { Path } from 'react-native-svg';
 
 export type UserRole = 'electrician' | 'dealer';
 type AuthMode = 'login' | 'signup';
+type LoginStep = 'phone' | 'otp' | 'password';
+type SignupStep = 'name' | 'email' | 'dealer' | 'address' | 'location' | 'identity' | 'holders' | 'terms' | 'phone' | 'otp' | 'password';
+type ElectricianLoginMethod = 'otp' | 'password' | null;
 
 const dealerDirectory: Record<string, { dealerName: string; city: string }> = {
   '9876543210': { dealerName: 'Sharma Electricals', city: 'Delhi' },
@@ -24,268 +30,361 @@ const dealerDirectory: Record<string, { dealerName: string; city: string }> = {
   '9123456789': { dealerName: 'Gupta Power House', city: 'Jaipur' },
 };
 
-const COLORS = {
-  ink: '#20201D',
-  panel: '#FFFFFF',
-  shell: '#F8F8F4',
-  line: '#2E2D29',
-  softLine: '#DADACE',
-  aqua: '#12C1CC',
-  aquaDeep: '#12AEB8',
-  lime: '#C8E91D',
-  text: '#21211E',
-  muted: '#63645D',
+const C = {
+  bg: '#EEF3F8',
+  heroA: '#EAF3FF',
+  heroB: '#DDEEFF',
+  heroC: '#F6EEFF',
+  white: '#FFFFFF',
+  line: '#E6ECF5',
+  text: '#152238',
+  title: '#14213D',
+  muted: '#74829D',
+  muted2: '#5C6F91',
+  field: '#FBFDFF',
+  fieldLine: '#D8E2F0',
+  primary: '#E8453C',
+  success: '#1F9C5D',
+  successSoft: '#EAF8EF',
+  error: '#D64B4B',
+  errorSoft: '#FFF3F3',
+  warmA: '#F97316',
+  warmB: '#EF4444',
+  accentA: '#0EA5E9',
+  accentB: '#8B5CF6',
 };
 
 const roleMeta = {
-  electrician: {
-    title: 'Electrician',
-    subtitle: 'Electrician',
-  },
-  dealer: {
-    title: 'Dealer',
-    subtitle: 'Dealer',
-  },
+  electrician: { title: 'Electrician', subtitle: 'Field rewards and quick verification' },
+  dealer: { title: 'Dealer', subtitle: 'Business onboarding and account access' },
+} as const;
+
+const roleImages = {
+  electrician: require('../../../assets/electrician-role.png'),
+  dealer: require('../../../assets/dealer-role.png'),
 } as const;
 
 function useReveal() {
   const fade = useRef(new Animated.Value(0)).current;
-
   useEffect(() => {
-    Animated.timing(fade, {
-      toValue: 1,
-      duration: 420,
-      easing: Easing.out(Easing.cubic),
-      useNativeDriver: true,
-    }).start();
+    Animated.timing(fade, { toValue: 1, duration: 420, easing: Easing.out(Easing.cubic), useNativeDriver: true }).start();
   }, [fade]);
-
-  return {
-    opacity: fade,
-    transform: [
-      {
-        translateY: fade.interpolate({
-          inputRange: [0, 1],
-          outputRange: [18, 0],
-        }),
-      },
-    ],
-  };
+  return { opacity: fade, transform: [{ translateY: fade.interpolate({ inputRange: [0, 1], outputRange: [18, 0] }) }] };
 }
 
-function Header({ role }: { role: UserRole | null }) {
-  const activeRole = role ? roleMeta[role].title : roleMeta.electrician.title;
-
+function Info({ text, kind }: { text: string; kind: 'error' | 'success' }) {
   return (
-    <View style={styles.headerWrap}>
-      <Text style={styles.headerIntro}>Welcome to SRV</Text>
-      <View style={styles.titleRow}>
-        <Text style={styles.headerTitle}>{activeRole}</Text>
-        <View style={styles.headerLine} />
-      </View>
+    <View style={[s.info, kind === 'error' ? s.infoError : s.infoSuccess]}>
+      <Text style={[s.infoText, kind === 'error' ? s.infoErrorText : s.infoSuccessText]}>{text}</Text>
     </View>
   );
 }
 
-function LogoBlock() {
+function EyeIcon({ open }: { open: boolean }) {
   return (
-    <View style={styles.logoWrap}>
-      <Image
-        source={require('../../../assets/srv-logo.png')}
-        style={styles.logoImage}
-        resizeMode="contain"
-      />
-    </View>
+    <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
+      {open ? (
+        <>
+          <Path d="M2 12C3.9 8.3 7.5 6 12 6C16.5 6 20.1 8.3 22 12C20.1 15.7 16.5 18 12 18C7.5 18 3.9 15.7 2 12Z" stroke="#5C6F91" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" />
+          <Path d="M12 15.2C13.7673 15.2 15.2 13.7673 15.2 12C15.2 10.2327 13.7673 8.8 12 8.8C10.2327 8.8 8.8 10.2327 8.8 12C8.8 13.7673 10.2327 15.2 12 15.2Z" stroke="#5C6F91" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" />
+        </>
+      ) : (
+        <>
+          <Path d="M3 3L21 21" stroke="#5C6F91" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" />
+          <Path d="M10.6 6.3C11.05 6.1 11.52 6 12 6C16.5 6 20.1 8.3 22 12C21.2 13.56 20.11 14.88 18.8 15.89" stroke="#5C6F91" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" />
+          <Path d="M6.17 8.22C4.54 9.16 3.18 10.44 2 12C3.9 15.7 7.5 18 12 18C13.76 18 15.37 17.65 16.79 17.03" stroke="#5C6F91" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" />
+          <Path d="M9.9 9.92C9.32 10.5 8.96 11.3 8.96 12.18C8.96 13.94 10.38 15.36 12.14 15.36C13.02 15.36 13.82 15 14.4 14.42" stroke="#5C6F91" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" />
+        </>
+      )}
+    </Svg>
   );
 }
 
-function AuthTabs({
-  mode,
-  onSwitch,
-}: {
-  mode: AuthMode;
-  onSwitch: (mode: AuthMode) => void;
-}) {
-  return (
-    <LinearGradient colors={[COLORS.aqua, COLORS.lime]} start={{ x: 0, y: 0.5 }} end={{ x: 1, y: 0.5 }} style={styles.tabShell}>
-      <Pressable
-        style={[styles.tabButton, mode === 'login' && styles.tabButtonActive]}
-        onPress={() => onSwitch('login')}
-      >
-        <Text style={[styles.tabText, mode === 'login' && styles.tabTextActive]}>Login</Text>
-      </Pressable>
-      <Pressable
-        style={[styles.tabButton, mode === 'signup' && styles.tabButtonActive]}
-        onPress={() => onSwitch('signup')}
-      >
-        <Text style={[styles.tabText, mode === 'signup' && styles.tabTextActive]}>Create Account</Text>
-      </Pressable>
-    </LinearGradient>
-  );
-}
-
-function RoleOption({
-  role,
-  selected,
-  onPress,
-}: {
-  role: UserRole;
-  selected: boolean;
-  onPress: () => void;
-}) {
-  const info = roleMeta[role];
-
-  return (
-    <Pressable
-      onPress={onPress}
-      style={[styles.roleCard, selected && styles.roleCardSelected]}
-    >
-      <View style={styles.roleArtBox}>
-        <View style={styles.roleArtFrame}>
-          <Text style={styles.roleArtText}>Add Image</Text>
-        </View>
-      </View>
-      <View style={styles.roleLabelBar}>
-        <Text style={styles.roleLabel}>{info.title}</Text>
-      </View>
-      <Text style={styles.roleSubLabel}>{info.subtitle}</Text>
-    </Pressable>
-  );
-}
-
-function ContinueButton({
-  label,
-  onPress,
-  disabled,
-}: {
-  label: string;
-  onPress: () => void;
-  disabled: boolean;
-}) {
-  return (
-    <Pressable onPress={onPress} disabled={disabled} style={styles.ctaOuter}>
-      <LinearGradient
-        colors={disabled ? ['#B8BDB6', '#B8BDB6'] : [COLORS.aqua, COLORS.lime]}
-        start={{ x: 0, y: 0.5 }}
-        end={{ x: 1, y: 0.5 }}
-        style={styles.ctaButton}
-      >
-        <Text style={styles.ctaText}>{label}</Text>
-      </LinearGradient>
-    </Pressable>
-  );
-}
-
-function FormField({
+function Field({
   label,
   value,
   onChangeText,
   placeholder,
-  secureTextEntry,
   keyboardType,
+  secureTextEntry,
+  prefix,
+  error,
+  onFocus,
+  onSubmitEditing,
+  actionLabel,
+  onActionPress,
+  actionDisabled,
+  actionContent,
+  inputRef,
+  returnKeyType,
+  blurOnSubmit,
 }: {
   label: string;
   value: string;
   onChangeText: (value: string) => void;
   placeholder: string;
-  secureTextEntry?: boolean;
   keyboardType?: 'default' | 'phone-pad' | 'numeric';
+  secureTextEntry?: boolean;
+  prefix?: string;
+  error?: string;
+  onFocus?: () => void;
+  onSubmitEditing?: () => void;
+  actionLabel?: string;
+  onActionPress?: () => void;
+  actionDisabled?: boolean;
+  actionContent?: React.ReactNode;
+  inputRef?: React.RefObject<TextInput | null>;
+  returnKeyType?: 'done' | 'next';
+  blurOnSubmit?: boolean;
 }) {
   return (
-    <View style={styles.fieldWrap}>
-      <Text style={styles.fieldLabel}>{label}</Text>
-      <TextInput
-        style={styles.fieldInput}
-        value={value}
-        onChangeText={onChangeText}
-        placeholder={placeholder}
-        placeholderTextColor="#93948E"
-        secureTextEntry={secureTextEntry}
-        keyboardType={keyboardType ?? 'default'}
-        autoCapitalize="none"
-        autoCorrect={false}
-      />
+    <View style={s.group}>
+      <Text style={s.label}>{label}</Text>
+      <View style={[s.shell, error ? s.shellError : null]}>
+        {prefix ? (
+          <View style={s.prefixWrap}>
+            <Text style={s.prefix}>{prefix}</Text>
+          </View>
+        ) : null}
+        <TextInput
+          ref={inputRef}
+          style={s.input}
+          value={value}
+          onChangeText={onChangeText}
+          placeholder={placeholder}
+          placeholderTextColor="#90A0BB"
+          keyboardType={keyboardType ?? 'default'}
+          secureTextEntry={secureTextEntry}
+          autoCapitalize="none"
+          autoCorrect={false}
+          onFocus={onFocus}
+          onSubmitEditing={onSubmitEditing}
+          returnKeyType={returnKeyType ?? 'done'}
+          blurOnSubmit={blurOnSubmit ?? returnKeyType !== 'next'}
+        />
+        {actionLabel || actionContent ? (
+          <Pressable onPress={onActionPress} disabled={actionDisabled} style={[s.fieldAction, actionDisabled ? s.fieldActionDisabled : null]}>
+            {actionContent ?? <Text style={[s.fieldActionText, actionDisabled ? s.fieldActionTextDisabled : null]}>{actionLabel}</Text>}
+          </Pressable>
+        ) : null}
+      </View>
+      {error ? <Info text={error} kind="error" /> : null}
     </View>
   );
 }
 
-function BackButton({ onPress }: { onPress: () => void }) {
+function Button({
+  label,
+  onPress,
+  disabled,
+  secondary,
+  colors,
+  shadowColor,
+}: {
+  label: string;
+  onPress: () => void;
+  disabled: boolean;
+  secondary?: boolean;
+  colors?: [string, string];
+  shadowColor?: string;
+}) {
   return (
-    <Pressable onPress={onPress} style={styles.backButton}>
-      <Text style={styles.backButtonText}>Back</Text>
+    <Pressable onPress={onPress} disabled={disabled} style={s.btnOuter}>
+      <LinearGradient
+        colors={
+          disabled
+            ? ['#D0D8E4', '#D0D8E4']
+            : colors
+              ? colors
+            : secondary
+              ? [C.accentA, C.accentB]
+              : [C.warmB, C.warmA]
+        }
+        start={{ x: 0, y: 0.5 }}
+        end={{ x: 1, y: 0.5 }}
+        style={[s.btn, secondary ? s.btnSecondary : null, shadowColor ? { shadowColor } : null]}
+      >
+        <Text style={[s.btnText, secondary ? s.btnTextSecondary : null]}>{label}</Text>
+      </LinearGradient>
+    </Pressable>
+  );
+}
+
+function Tabs({ mode, role, onChange }: { mode: AuthMode; role: UserRole; onChange: (mode: AuthMode) => void }) {
+  return (
+    <View style={s.tabs}>
+      {(['login', 'signup'] as AuthMode[]).map((item) => (
+        <Pressable
+          key={item}
+          style={[
+            s.tab,
+            mode === item ? (role === 'electrician' ? s.tabElectricianActive : s.tabDealerActive) : null,
+          ]}
+          onPress={() => onChange(item)}
+        >
+          <Text style={[s.tabText, mode === item ? s.tabTextActive : null]}>{item === 'login' ? 'Login' : 'Create Account'}</Text>
+        </Pressable>
+      ))}
+    </View>
+  );
+}
+
+function RoleCard({ role, selected, onPress }: { role: UserRole; selected: boolean; onPress: () => void }) {
+  return (
+    <Pressable
+      onPress={onPress}
+      style={[
+        s.roleCard,
+        role === 'electrician' ? s.roleCardElectrician : s.roleCardDealer,
+        selected ? (role === 'electrician' ? s.roleCardElectricianActive : s.roleCardDealerActive) : null,
+      ]}
+    >
+      <View style={s.roleFrame}>
+        <Image source={roleImages[role]} style={s.roleImage} resizeMode="contain" />
+      </View>
+      <Text style={[s.roleTitle, selected ? s.roleTitleActive : s.roleTitleDefault]}>{roleMeta[role].title}</Text>
+      <Text style={[s.roleSubtitle, selected ? s.roleSubtitleActive : s.roleSubtitleDefault]}>{roleMeta[role].subtitle}</Text>
     </Pressable>
   );
 }
 
 export function OnboardingScreen({ onGetStarted }: { onGetStarted: (role: UserRole) => void }) {
-  const revealStyle = useReveal();
+  const reveal = useReveal();
+  const scrollRef = useRef<ScrollView | null>(null);
+  const locationAutoRequestedRef = useRef(false);
+  const signupStateRef = useRef<TextInput | null>(null);
+  const signupCityRef = useRef<TextInput | null>(null);
+  const signupPincodeRef = useRef<TextInput | null>(null);
+  const signupGstNumberRef = useRef<TextInput | null>(null);
+  const signupPanNumberRef = useRef<TextInput | null>(null);
+  const signupGstHolderRef = useRef<TextInput | null>(null);
+  const signupPanHolderRef = useRef<TextInput | null>(null);
+  const signupPassRef = useRef<TextInput | null>(null);
+  const signupConfirmPassRef = useRef<TextInput | null>(null);
 
   const [phase, setPhase] = useState<'role' | 'auth'>('role');
-  const [role, setRole] = useState<UserRole | null>('electrician');
   const [mode, setMode] = useState<AuthMode>('login');
+  const [role, setRole] = useState<UserRole>('electrician');
+  const [authSelectionOpen, setAuthSelectionOpen] = useState(false);
+  const [electricianLoginMethod, setElectricianLoginMethod] = useState<ElectricianLoginMethod>(null);
   const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [showPassword, setShowPassword] = useState(false);
 
   const [loginPhone, setLoginPhone] = useState('');
   const [loginOtp, setLoginOtp] = useState('');
   const [loginPass, setLoginPass] = useState('');
+  const [loginStep, setLoginStep] = useState<LoginStep>('phone');
+  const [loginOtpVerified, setLoginOtpVerified] = useState(false);
 
   const [signupName, setSignupName] = useState('');
-  const [signupBiz, setSignupBiz] = useState('');
+  const [signupEmail, setSignupEmail] = useState('');
+  const [signupDealerPhone, setSignupDealerPhone] = useState('');
+  const [signupAddress, setSignupAddress] = useState('');
+  const [signupState, setSignupState] = useState('');
+  const [signupCity, setSignupCity] = useState('');
+  const [signupPincode, setSignupPincode] = useState('');
+  const [signupGstNumber, setSignupGstNumber] = useState('');
+  const [signupPanNumber, setSignupPanNumber] = useState('');
+  const [signupGstHolderName, setSignupGstHolderName] = useState('');
+  const [signupPanHolderName, setSignupPanHolderName] = useState('');
   const [signupPhone, setSignupPhone] = useState('');
   const [signupOtp, setSignupOtp] = useState('');
-  const [signupDealerPhone, setSignupDealerPhone] = useState('');
   const [signupPass, setSignupPass] = useState('');
+  const [signupConfirmPass, setSignupConfirmPass] = useState('');
+  const [signupStep, setSignupStep] = useState<SignupStep>('name');
+  const [dealerVerified, setDealerVerified] = useState(false);
+  const [verifiedDealerName, setVerifiedDealerName] = useState('');
+  const [termsAccepted, setTermsAccepted] = useState(false);
+  const [locationLoading, setLocationLoading] = useState(false);
+
+  const matchedDealer = signupDealerPhone.length === 10 ? dealerDirectory[signupDealerPhone] : undefined;
+  const setError = (key: string, value?: string) => setErrors((current) => {
+    if (!value) {
+      const next = { ...current };
+      delete next[key];
+      return next;
+    }
+    return { ...current, [key]: value };
+  });
+
+  const scrollToForm = () => setTimeout(() => scrollRef.current?.scrollTo({ y: 420, animated: true }), 120);
 
   const resetForm = () => {
+    setErrors({});
+    setLoading(false);
+    setShowPassword(false);
+    locationAutoRequestedRef.current = false;
+    setAuthSelectionOpen(false);
+    setElectricianLoginMethod(null);
     setLoginPhone('');
     setLoginOtp('');
     setLoginPass('');
+    setLoginStep('phone');
+    setLoginOtpVerified(false);
     setSignupName('');
-    setSignupBiz('');
+    setSignupEmail('');
+    setSignupDealerPhone('');
+    setSignupAddress('');
+    setSignupState('');
+    setSignupCity('');
+    setSignupPincode('');
+    setSignupGstNumber('');
+    setSignupPanNumber('');
+    setSignupGstHolderName('');
+    setSignupPanHolderName('');
     setSignupPhone('');
     setSignupOtp('');
-    setSignupDealerPhone('');
     setSignupPass('');
-    setLoading(false);
+    setSignupConfirmPass('');
+    setSignupStep('name');
+    setDealerVerified(false);
+    setVerifiedDealerName('');
+    setTermsAccepted(false);
+    setLocationLoading(false);
   };
+
+  const handlePhone = (setter: (value: string) => void) => (value: string) => setter(value.replace(/\D/g, '').slice(0, 10));
+  const handleOtp = (setter: (value: string) => void) => (value: string) => setter(value.replace(/\D/g, '').slice(0, 4));
 
   const canContinue = useMemo(() => {
     if (mode === 'login') {
-      return loginPhone.length === 10 && loginOtp.length === 4 && loginPass.length >= 4;
+      if (role === 'electrician') {
+        if (electricianLoginMethod === 'otp') return loginPhone.length === 10 && loginOtp.length === 4 && loginOtpVerified;
+        if (electricianLoginMethod === 'password') return loginPhone.length === 10 && loginStep === 'password' && loginPass.length >= 6;
+        return false;
+      }
+      return loginPhone.length === 10 && loginOtp.length === 4 && loginPass.length >= 6;
     }
-
-    if (signupName.trim().length < 3) return false;
-    if (signupPhone.length !== 10) return false;
-    if (signupOtp.length !== 4) return false;
-    if (signupPass.length < 4) return false;
-    if (role === 'dealer') return signupBiz.trim().length >= 3;
-
-    return signupDealerPhone.length === 10;
-  }, [
-    loginOtp,
-    loginPass,
-    loginPhone,
-    mode,
-    role,
-    signupBiz,
-    signupDealerPhone,
-    signupName,
-    signupOtp,
-    signupPass,
-    signupPhone,
-  ]);
-
-  const handleContinue = () => {
-    if (!role) return;
-
-    if (phase === 'role') {
-      resetForm();
-      setPhase('auth');
-      return;
+    if (role === 'dealer') {
+      return signupName.trim().length >= 3 && signupAddress.trim().length >= 5 && signupState.trim().length >= 2 && signupCity.trim().length >= 2 && signupPincode.trim().length >= 4 && signupGstNumber.trim().length >= 4 && signupPanNumber.trim().length >= 4 && signupGstHolderName.trim().length >= 3 && signupPanHolderName.trim().length >= 3 && termsAccepted && signupPhone.length === 10 && signupOtp.length === 4 && signupPass.length >= 6 && signupConfirmPass === signupPass;
     }
+    return signupName.trim().length >= 3 && dealerVerified && signupPhone.length === 10 && signupOtp.length === 4 && signupPass.length >= 6 && signupConfirmPass === signupPass;
+  }, [dealerVerified, electricianLoginMethod, loginOtp, loginOtpVerified, loginPass, loginPhone, loginStep, mode, role, signupAddress, signupCity, signupConfirmPass, signupGstHolderName, signupGstNumber, signupName, signupOtp, signupPanHolderName, signupPanNumber, signupPass, signupPincode, signupPhone, signupState, termsAccepted]);
 
-    if (!canContinue || loading) return;
-
+  const submitAuth = () => {
+    Keyboard.dismiss();
+    if (mode === 'login') {
+      if (role === 'electrician') {
+        if (electricianLoginMethod === 'otp') {
+          if (!loginOtpVerified) return setError('loginOtp', 'Please verify the OTP before logging in.');
+          setError('loginOtp');
+        }
+        if (electricianLoginMethod === 'password') {
+          if (loginPass.length < 6) return setError('loginPass', 'Password must be at least 6 characters long.');
+          setError('loginPass');
+        }
+        if (!electricianLoginMethod) return setError('loginMode', 'Please choose a login option.');
+      } else if (loginPass.length < 6) {
+        return setError('loginPass', 'Password must be at least 6 characters long.');
+      }
+    }
+    if (mode === 'signup' && signupPass.length < 6) return setError('signupPass', 'Password must be at least 6 characters long.');
+    if (mode === 'signup' && signupConfirmPass !== signupPass) return setError('signupConfirmPass', 'Passwords do not match. Please re-enter the same password.');
+    setError('loginPass');
+    setError('loginMode');
+    setError('signupPass');
+    setError('signupConfirmPass');
     setLoading(true);
     setTimeout(() => {
       setLoading(false);
@@ -293,161 +392,344 @@ export function OnboardingScreen({ onGetStarted }: { onGetStarted: (role: UserRo
     }, 900);
   };
 
-  const handleBack = () => {
-    resetForm();
-    setPhase('role');
+  const useCurrentLocation = async () => {
+    setLocationLoading(true);
+    setError('signupAddress');
+    try {
+      const permission = await Location.requestForegroundPermissionsAsync();
+      if (permission.status !== 'granted') {
+        setError('signupAddress', 'Location permission is required to auto-fill current location.');
+        setSignupStep('location');
+        return;
+      }
+      const pos =
+        (await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced }).catch(() => null)) ??
+        (await Location.getLastKnownPositionAsync().catch(() => null));
+
+      if (!pos) {
+        setError('signupAddress', 'Unable to fetch current location. Please fill manually.');
+        setSignupStep('location');
+        return;
+      }
+
+      const reverse = await Location.reverseGeocodeAsync({ latitude: pos.coords.latitude, longitude: pos.coords.longitude });
+      const current = reverse[0];
+      const resolvedAddress = [
+        current?.name,
+        current?.street,
+        current?.district,
+        current?.city,
+        current?.region,
+      ].filter(Boolean).join(', ');
+      setSignupAddress((value) => value.trim() || resolvedAddress);
+      setSignupState(current?.region ?? '');
+      setSignupCity(current?.city ?? current?.subregion ?? current?.district ?? '');
+      setSignupPincode(current?.postalCode ?? '');
+      setSignupStep('location');
+    } catch {
+      setError('signupAddress', 'Unable to fetch current location. Please fill manually.');
+      setSignupStep('location');
+    } finally {
+      setLocationLoading(false);
+    }
   };
 
-  const handlePhone = (setter: (value: string) => void) => (value: string) => {
-    setter(value.replace(/\D/g, '').slice(0, 10));
+  useEffect(() => {
+    if (
+      role === 'dealer' &&
+      mode === 'signup' &&
+      signupStep === 'address' &&
+      !locationLoading &&
+      !locationAutoRequestedRef.current &&
+      !signupAddress &&
+      !signupState &&
+      !signupCity &&
+      !signupPincode
+    ) {
+      locationAutoRequestedRef.current = true;
+      void useCurrentLocation();
+    }
+  }, [locationLoading, mode, role, signupAddress, signupCity, signupPincode, signupState, signupStep]);
+
+  const continueLoginPhone = () => {
+    Keyboard.dismiss();
+    if (loginPhone.length !== 10) return setError('loginPhone', 'Please enter a valid 10-digit mobile number.');
+    setError('loginPhone');
+    if (role === 'electrician') {
+      if (!electricianLoginMethod) return setError('loginMode', 'Please choose a login option.');
+      setError('loginMode');
+      setLoginOtp('');
+      setLoginPass('');
+      setLoginOtpVerified(false);
+      setLoginStep(electricianLoginMethod === 'otp' ? 'otp' : 'password');
+      return;
+    }
+    setLoginStep('otp');
   };
 
-  const handleOtp = (setter: (value: string) => void) => (value: string) => {
-    setter(value.replace(/\D/g, '').slice(0, 4));
+  const verifyLoginOtp = () => {
+    Keyboard.dismiss();
+    if (loginOtp.length !== 4) return setError('loginOtp', 'Enter the 4-digit OTP to continue.');
+    setError('loginOtp');
+    if (role === 'electrician' && electricianLoginMethod === 'otp') {
+      setLoginOtpVerified(true);
+      return;
+    }
+    setLoginStep('password');
   };
 
-  const matchedDealer = signupDealerPhone.length === 10 ? dealerDirectory[signupDealerPhone] : undefined;
-  const activeRole = role ?? 'electrician';
+  const verifyDealer = () => {
+    Keyboard.dismiss();
+    if (signupDealerPhone.length !== 10) return setError('signupDealerPhone', 'Enter a valid 10-digit dealer number.');
+    setError('signupDealerPhone');
+    setDealerVerified(true);
+    setVerifiedDealerName(matchedDealer?.dealerName ?? 'SRV Premium Dealer');
+  };
+
+  const continueSignup = () => {
+    Keyboard.dismiss();
+    if (signupStep === 'name') {
+      if (signupName.trim().length < 3) return setError('signupName', 'Please fill the name field.');
+      setError('signupName');
+      setSignupStep(role === 'dealer' ? 'email' : 'dealer');
+      return;
+    }
+    if (signupStep === 'email') {
+      if (signupEmail.trim() && !/\S+@\S+\.\S+/.test(signupEmail.trim())) return setError('signupEmail', 'Please enter a valid email address or leave it empty.');
+      setError('signupEmail');
+      setSignupStep('address');
+      if (role === 'dealer') {
+        locationAutoRequestedRef.current = true;
+        setTimeout(() => { void useCurrentLocation(); }, 120);
+      }
+      return;
+    }
+    if (signupStep === 'dealer') {
+      if (!dealerVerified) return setError('signupDealerPhone', 'Please verify the dealer number before continuing.');
+      setSignupStep('phone');
+      return;
+    }
+    if (signupStep === 'address') {
+      if (signupAddress.trim().length < 5) return setError('signupAddress', 'Please fill the address field.');
+      if (!signupState || !signupCity || !signupPincode) return setError('signupAddress', 'Tap address field to fetch current location first.');
+      setSignupStep('location');
+      return;
+    }
+    if (signupStep === 'location') {
+      if (signupState.trim().length < 2) return setError('signupState', 'Please enter state.');
+      if (signupCity.trim().length < 2) return setError('signupCity', 'Please enter city.');
+      if (signupPincode.trim().length < 4) return setError('signupPincode', 'Please enter a valid pincode.');
+      setError('signupState');
+      setError('signupCity');
+      setError('signupPincode');
+      setSignupStep('identity');
+      return;
+    }
+    if (signupStep === 'identity') {
+      if (signupGstNumber.trim().length < 4) return setError('signupGstNumber', 'Please enter GST number.');
+      if (signupPanNumber.trim().length < 4) return setError('signupPanNumber', 'Please enter PAN number.');
+      setSignupStep('holders');
+      return;
+    }
+    if (signupStep === 'holders') {
+      if (signupGstHolderName.trim().length < 3) return setError('signupGstHolderName', 'Please enter GST holder name.');
+      if (signupPanHolderName.trim().length < 3) return setError('signupPanHolderName', 'Please enter PAN holder name.');
+      setSignupStep('terms');
+      return;
+    }
+    if (signupStep === 'terms') {
+      if (!termsAccepted) return setError('termsAccepted', 'Please accept the Terms & Conditions and Privacy Policy.');
+      setError('termsAccepted');
+      setSignupStep('phone');
+      return;
+    }
+    if (signupStep === 'phone') {
+      if (signupPhone.length !== 10) return setError('signupPhone', 'Please enter a valid 10-digit mobile number.');
+      setError('signupPhone');
+      setSignupStep('otp');
+      return;
+    }
+    if (signupStep === 'otp') {
+      if (signupOtp.length !== 4) return setError('signupOtp', 'Enter the 4-digit OTP to verify your number.');
+      setError('signupOtp');
+      setSignupStep('password');
+    }
+  };
 
   return (
-    <KeyboardAvoidingView
-      style={styles.root}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-    >
-      <StatusBar barStyle="dark-content" backgroundColor={COLORS.shell} />
-      <LinearGradient colors={['#F8F8F1', '#E6F5E8']} style={styles.appBg}>
-        <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-          <Animated.View style={[styles.deviceShell, revealStyle]}>
-            <LinearGradient
-              colors={['#F7F4D7', '#19BEC6']}
-              locations={[0, 0.7]}
-              style={styles.phoneScreen}
-            >
-              <Header role={role} />
-              <LogoBlock />
+    <KeyboardAvoidingView style={s.root} behavior={Platform.OS === 'ios' ? 'padding' : 'height'} keyboardVerticalOffset={Platform.OS === 'ios' ? 12 : 0}>
+      <StatusBar hidden />
+      <LinearGradient colors={[C.heroA, C.heroB, C.heroC]} style={s.bg}>
+        <View style={s.glow1} />
+        <View style={s.glow2} />
+        <View style={s.glow3} />
+        <ScrollView ref={scrollRef} contentContainerStyle={s.content} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'} automaticallyAdjustKeyboardInsets>
+          <Animated.View style={reveal}>
+            <View style={s.topRow}>
+              <View style={s.brandBlock}>
+                <View style={s.logoWrap}><Image source={require('../../../assets/srv-logo.png')} style={s.logo} resizeMode="contain" /></View>
+              </View>
+              {phase === 'auth' ? <Pressable onPress={() => { Keyboard.dismiss(); resetForm(); setPhase('role'); }} style={s.back}><Text style={s.backText}>Back</Text></Pressable> : null}
+            </View>
 
-              <View style={styles.panelWrap}>
-                <View style={styles.panelCap} />
-                {phase === 'auth' && <BackButton onPress={handleBack} />}
+            <View style={s.welcomeBadge}>
+              <LinearGradient colors={['rgba(14,165,233,0.12)', 'rgba(139,92,246,0.12)']} start={{ x: 0, y: 0.5 }} end={{ x: 1, y: 0.5 }} style={s.welcomeBadgeFill}>
+                <Text style={s.eyebrow}>Welcome to SRV</Text>
+              </LinearGradient>
+            </View>
+            <Text style={[s.bigTitle, role === 'electrician' ? s.bigTitleElectrician : s.bigTitleDealer]}>{roleMeta[role].title}</Text>
+            <Text style={s.subtext}>{phase === 'role' ? 'Choose your role to start the onboarding journey.' : 'Professional authentication flow aligned with the app design system.'}</Text>
 
-                {phase === 'role' ? (
-                  <>
-                    <View style={styles.roleGrid}>
-                      <RoleOption
-                        role="electrician"
-                        selected={activeRole === 'electrician'}
-                        onPress={() => setRole('electrician')}
-                      />
-                      <RoleOption
-                        role="dealer"
-                        selected={activeRole === 'dealer'}
-                        onPress={() => setRole('dealer')}
-                      />
-                    </View>
-                    <ContinueButton label="Continue" onPress={handleContinue} disabled={!role} />
-                  </>
+            {phase === 'role' ? (
+              <View style={s.card}>
+                <Text style={s.sectionEyebrow}>Account Setup</Text>
+                <Text style={s.sectionTitle}>CHOOSE YOUR ROLE</Text>
+                <Text style={s.sectionText}>This keeps rewards, verification and account setup perfectly aligned.</Text>
+                <View style={s.roleGrid}>
+                  <RoleCard role="electrician" selected={role === 'electrician'} onPress={() => setRole('electrician')} />
+                  <RoleCard role="dealer" selected={role === 'dealer'} onPress={() => setRole('dealer')} />
+                </View>
+                <Button
+                  label="Continue"
+                  onPress={() => {
+                    resetForm();
+                    setMode('login');
+                    setPhase('auth');
+                    setAuthSelectionOpen(true);
+                  }}
+                  disabled={!role}
+                  colors={role === 'electrician' ? ['#159A6F', '#47C98B'] : ['#2C6BE7', '#5DAAF8']}
+                  shadowColor={role === 'electrician' ? '#159A6F' : '#2C6BE7'}
+                />
+              </View>
+            ) : (
+              <View style={s.card}>
+                <Text style={s.sectionEyebrow}>Authentication</Text>
+                <Text style={s.sectionTitle}>{mode === 'login' ? 'Welcome back' : 'Create your account'}</Text>
+                <Text style={s.sectionText}>Smooth inputs, full-screen layout, and no keyboard overlap while typing.</Text>
+                <Tabs
+                  mode={mode}
+                  role={role}
+                  onChange={(next) => {
+                    Keyboard.dismiss();
+                    resetForm();
+                    setMode(next);
+                    setPhase('auth');
+                    setAuthSelectionOpen(true);
+                  }}
+                />
+
+                {!authSelectionOpen ? null : mode === 'login' ? (
+                  <View style={s.form}>
+                    {role === 'electrician' ? (
+                      <>
+                        <Text style={s.label}>Select Login Method</Text>
+                        <View style={s.loginChoiceRow}>
+                          <Pressable
+                            onPress={() => {
+                              setElectricianLoginMethod('otp');
+                              setLoginStep('phone');
+                              setLoginOtp('');
+                              setLoginPass('');
+                              setLoginOtpVerified(false);
+                              setError('loginMode');
+                              setError('loginOtp');
+                              setError('loginPass');
+                            }}
+                            style={[s.loginChoiceCard, electricianLoginMethod === 'otp' ? s.loginChoiceCardActive : null]}
+                          >
+                            <Text style={[s.loginChoiceText, electricianLoginMethod === 'otp' ? s.loginChoiceTextActive : null]}>Login with OTP</Text>
+                          </Pressable>
+                          <Pressable
+                            onPress={() => {
+                              setElectricianLoginMethod('password');
+                              setLoginStep('phone');
+                              setLoginOtp('');
+                              setLoginPass('');
+                              setLoginOtpVerified(false);
+                              setError('loginMode');
+                              setError('loginOtp');
+                              setError('loginPass');
+                            }}
+                            style={[s.loginChoiceCard, electricianLoginMethod === 'password' ? s.loginChoiceCardActive : null]}
+                          >
+                            <Text style={[s.loginChoiceText, electricianLoginMethod === 'password' ? s.loginChoiceTextActive : null]}>Login with Password</Text>
+                          </Pressable>
+                        </View>
+                        {errors.loginMode ? <Info text={errors.loginMode} kind="error" /> : null}
+                        {electricianLoginMethod ? (
+                          <>
+                            <Field label="Mobile Number" value={loginPhone} onChangeText={handlePhone(setLoginPhone)} placeholder="Enter mobile number" keyboardType="phone-pad" prefix="+91" error={errors.loginPhone} onFocus={scrollToForm} onSubmitEditing={continueLoginPhone} actionLabel={loginStep === 'phone' ? 'Verify' : undefined} onActionPress={continueLoginPhone} actionDisabled={loginPhone.length !== 10} />
+                            {electricianLoginMethod === 'otp' && loginStep !== 'phone' ? <Field label="OTP" value={loginOtp} onChangeText={handleOtp(setLoginOtp)} placeholder="Enter 4 digit OTP" keyboardType="numeric" error={errors.loginOtp} onFocus={scrollToForm} onSubmitEditing={verifyLoginOtp} /> : null}
+                            {electricianLoginMethod === 'otp' && loginStep !== 'phone' && !loginOtpVerified ? <Button label="Verify OTP" onPress={verifyLoginOtp} disabled={loginOtp.length !== 4} secondary /> : null}
+                            {electricianLoginMethod === 'otp' && loginOtpVerified ? <Info text="OTP verified successfully." kind="success" /> : null}
+                            {electricianLoginMethod === 'otp' && loginOtpVerified ? <Button label={loading ? 'Logging In...' : 'Login'} onPress={submitAuth} disabled={!canContinue || loading} /> : null}
+                            {electricianLoginMethod === 'password' && loginStep === 'password' ? <Field label="Password" value={loginPass} onChangeText={setLoginPass} placeholder="Enter password" secureTextEntry={!showPassword} error={errors.loginPass} onFocus={scrollToForm} onSubmitEditing={submitAuth} actionContent={<EyeIcon open={showPassword} />} onActionPress={() => setShowPassword((current) => !current)} /> : null}
+                            {electricianLoginMethod === 'password' && loginStep === 'password' ? <Button label={loading ? 'Logging In...' : 'Login'} onPress={submitAuth} disabled={!canContinue || loading} /> : null}
+                          </>
+                        ) : null}
+                      </>
+                    ) : (
+                      <>
+                        <Field label="Mobile Number" value={loginPhone} onChangeText={handlePhone(setLoginPhone)} placeholder="Enter mobile number" keyboardType="phone-pad" prefix="+91" error={errors.loginPhone} onFocus={scrollToForm} onSubmitEditing={continueLoginPhone} actionLabel={loginStep === 'phone' ? 'Verify' : undefined} onActionPress={continueLoginPhone} actionDisabled={loginPhone.length !== 10} />
+                        {loginStep !== 'phone' ? <Field label="OTP" value={loginOtp} onChangeText={handleOtp(setLoginOtp)} placeholder="Enter 4 digit OTP" keyboardType="numeric" error={errors.loginOtp} onFocus={scrollToForm} onSubmitEditing={verifyLoginOtp} /> : null}
+                        {loginStep !== 'phone' ? <Button label="Verify OTP" onPress={verifyLoginOtp} disabled={loginOtp.length !== 4} secondary /> : null}
+                        {loginStep === 'password' ? <Info text="OTP verification successful." kind="success" /> : null}
+                        {loginStep === 'password' ? <Field label="Password" value={loginPass} onChangeText={setLoginPass} placeholder="Enter password" secureTextEntry={!showPassword} error={errors.loginPass} onFocus={scrollToForm} onSubmitEditing={submitAuth} actionContent={<EyeIcon open={showPassword} />} onActionPress={() => setShowPassword((current) => !current)} /> : null}
+                        {loginStep === 'password' ? <Button label={loading ? 'Opening...' : 'Continue'} onPress={submitAuth} disabled={!canContinue || loading} /> : null}
+                      </>
+                    )}
+                  </View>
                 ) : (
-                  <>
-                    <AuthTabs mode={mode} onSwitch={setMode} />
-                    <View style={styles.formCard}>
-                      {mode === 'login' ? (
-                        <>
-                          <FormField
-                            label="Mobile Number"
-                            value={loginPhone}
-                            onChangeText={handlePhone(setLoginPhone)}
-                            placeholder="Enter mobile number"
-                            keyboardType="phone-pad"
-                          />
-                          <FormField
-                            label="OTP"
-                            value={loginOtp}
-                            onChangeText={handleOtp(setLoginOtp)}
-                            placeholder="Enter 4 digit OTP"
-                            keyboardType="numeric"
-                          />
-                          <FormField
-                            label="Password"
-                            value={loginPass}
-                            onChangeText={setLoginPass}
-                            placeholder="Enter password"
-                            secureTextEntry
-                          />
-                        </>
-                      ) : (
-                        <>
-                          <FormField
-                            label="Full Name"
-                            value={signupName}
-                            onChangeText={setSignupName}
-                            placeholder="Enter your full name"
-                          />
-                          {activeRole === 'dealer' ? (
-                            <FormField
-                              label="Business Name"
-                              value={signupBiz}
-                              onChangeText={setSignupBiz}
-                              placeholder="Enter business name"
-                            />
-                          ) : (
-                            <View style={styles.fieldWrap}>
-                              <Text style={styles.fieldLabel}>Dealer Number</Text>
-                              <TextInput
-                                style={styles.fieldInput}
-                                value={signupDealerPhone}
-                                onChangeText={handlePhone(setSignupDealerPhone)}
-                                placeholder="Enter dealer mobile number"
-                                placeholderTextColor="#93948E"
-                                keyboardType="phone-pad"
-                              />
-                              <Text
-                                style={[
-                                  styles.dealerHint,
-                                  { color: matchedDealer ? '#4F8E55' : COLORS.muted },
-                                ]}
-                              >
-                                {matchedDealer
-                                  ? `${matchedDealer.dealerName}, ${matchedDealer.city}`
-                                  : 'Valid dealer number required'}
-                              </Text>
-                            </View>
-                          )}
-                          <FormField
-                            label="Mobile Number"
-                            value={signupPhone}
-                            onChangeText={handlePhone(setSignupPhone)}
-                            placeholder="Enter mobile number"
-                            keyboardType="phone-pad"
-                          />
-                          <FormField
-                            label="OTP"
-                            value={signupOtp}
-                            onChangeText={handleOtp(setSignupOtp)}
-                            placeholder="Enter 4 digit OTP"
-                            keyboardType="numeric"
-                          />
-                          <FormField
-                            label="Password"
-                            value={signupPass}
-                            onChangeText={setSignupPass}
-                            placeholder="Create password"
-                            secureTextEntry
-                          />
-                        </>
-                      )}
-                    </View>
+                  <View style={s.form}>
+                    <Field label="Full Name" value={signupName} onChangeText={setSignupName} placeholder="Enter your full name" error={errors.signupName} onFocus={scrollToForm} onSubmitEditing={continueSignup} />
+                    {signupStep === 'name' ? <Button label="Continue" onPress={continueSignup} disabled={signupName.trim().length < 3} secondary /> : null}
 
-                    <ContinueButton
-                      label={loading ? 'Opening...' : mode === 'login' ? 'Continue' : 'Create Account'}
-                      onPress={handleContinue}
-                      disabled={!canContinue || loading}
-                    />
-                  </>
+                    {role === 'dealer' && signupStep !== 'name' ? <Field label="Email" value={signupEmail} onChangeText={setSignupEmail} placeholder="Enter email address (optional)" error={errors.signupEmail} onFocus={scrollToForm} onSubmitEditing={continueSignup} /> : null}
+                    {role === 'dealer' && signupStep === 'email' ? <Button label="Continue" onPress={continueSignup} disabled={!!signupEmail.trim() && !/\S+@\S+\.\S+/.test(signupEmail.trim())} secondary /> : null}
+
+                    {role === 'electrician' && signupStep !== 'name' ? <Field label="Dealer Verification Number" value={signupDealerPhone} onChangeText={(value) => { handlePhone(setSignupDealerPhone)(value); setDealerVerified(false); setVerifiedDealerName(''); setError('signupDealerPhone'); }} placeholder="Enter dealer mobile number" keyboardType="phone-pad" error={errors.signupDealerPhone} onFocus={scrollToForm} onSubmitEditing={verifyDealer} /> : null}
+                    {role === 'electrician' && signupStep === 'dealer' ? <Button label="Verify" onPress={verifyDealer} disabled={signupDealerPhone.length !== 10} secondary /> : null}
+                    {role === 'electrician' && dealerVerified ? <Info text={`${verifiedDealerName} verification successfully done.`} kind="success" /> : null}
+                    {role === 'electrician' && dealerVerified && signupStep === 'dealer' ? <Button label="Continue" onPress={continueSignup} disabled={!dealerVerified} secondary /> : null}
+
+                    {role === 'dealer' && signupStep !== 'name' && signupStep !== 'email' ? <Field label="Address" value={signupAddress} onChangeText={setSignupAddress} placeholder="Tap here to use current location" error={errors.signupAddress} onFocus={() => { scrollToForm(); if (!locationLoading && (!signupState || !signupCity || !signupPincode)) { locationAutoRequestedRef.current = true; void useCurrentLocation(); } }} onSubmitEditing={continueSignup} /> : null}
+                    {role === 'dealer' && signupStep === 'address' ? <Button label={locationLoading ? 'Fetching Current Location...' : 'Use Current Location'} onPress={() => void useCurrentLocation()} disabled={locationLoading} secondary /> : null}
+
+                    {role === 'dealer' && ['location', 'identity', 'holders', 'terms', 'phone', 'otp', 'password'].includes(signupStep) ? <Field label="State" value={signupState} onChangeText={setSignupState} placeholder="State" error={errors.signupState} onFocus={scrollToForm} inputRef={signupStateRef} returnKeyType="next" blurOnSubmit={false} onSubmitEditing={() => signupCityRef.current?.focus()} /> : null}
+                    {role === 'dealer' && ['location', 'identity', 'holders', 'terms', 'phone', 'otp', 'password'].includes(signupStep) ? <Field label="City" value={signupCity} onChangeText={setSignupCity} placeholder="City" error={errors.signupCity} onFocus={scrollToForm} inputRef={signupCityRef} returnKeyType="next" blurOnSubmit={false} onSubmitEditing={() => signupPincodeRef.current?.focus()} /> : null}
+                    {role === 'dealer' && ['location', 'identity', 'holders', 'terms', 'phone', 'otp', 'password'].includes(signupStep) ? <Field label="Pincode" value={signupPincode} onChangeText={(value) => setSignupPincode(value.replace(/\D/g, '').slice(0, 6))} placeholder="Pincode" keyboardType="numeric" error={errors.signupPincode} onFocus={scrollToForm} inputRef={signupPincodeRef} onSubmitEditing={continueSignup} /> : null}
+                    {role === 'dealer' && signupStep === 'location' ? <Button label="Continue" onPress={continueSignup} disabled={signupState.trim().length < 2 || signupCity.trim().length < 2 || signupPincode.trim().length < 4} secondary /> : null}
+
+                    {role === 'dealer' && ['identity', 'holders', 'terms', 'phone', 'otp', 'password'].includes(signupStep) ? <Field label="GST Number" value={signupGstNumber} onChangeText={setSignupGstNumber} placeholder="Enter GST number" error={errors.signupGstNumber} onFocus={scrollToForm} inputRef={signupGstNumberRef} returnKeyType="next" blurOnSubmit={false} onSubmitEditing={() => signupPanNumberRef.current?.focus()} /> : null}
+                    {role === 'dealer' && ['identity', 'holders', 'terms', 'phone', 'otp', 'password'].includes(signupStep) ? <Field label="PAN Number" value={signupPanNumber} onChangeText={setSignupPanNumber} placeholder="Enter PAN number" error={errors.signupPanNumber} onFocus={scrollToForm} inputRef={signupPanNumberRef} onSubmitEditing={continueSignup} /> : null}
+                    {role === 'dealer' && signupStep === 'identity' ? <Button label="Continue" onPress={continueSignup} disabled={signupGstNumber.trim().length < 4 || signupPanNumber.trim().length < 4} secondary /> : null}
+
+                    {role === 'dealer' && ['holders', 'terms', 'phone', 'otp', 'password'].includes(signupStep) ? <Field label="GST Holder Name" value={signupGstHolderName} onChangeText={setSignupGstHolderName} placeholder="Enter GST holder name" error={errors.signupGstHolderName} onFocus={scrollToForm} inputRef={signupGstHolderRef} returnKeyType="next" blurOnSubmit={false} onSubmitEditing={() => signupPanHolderRef.current?.focus()} /> : null}
+                    {role === 'dealer' && ['holders', 'terms', 'phone', 'otp', 'password'].includes(signupStep) ? <Field label="PAN Holder Name" value={signupPanHolderName} onChangeText={setSignupPanHolderName} placeholder="Enter PAN holder name" error={errors.signupPanHolderName} onFocus={scrollToForm} inputRef={signupPanHolderRef} onSubmitEditing={continueSignup} /> : null}
+                    {role === 'dealer' && signupStep === 'holders' ? <Button label="Continue" onPress={continueSignup} disabled={signupGstHolderName.trim().length < 3 || signupPanHolderName.trim().length < 3} secondary /> : null}
+
+                    {role === 'dealer' && ['terms', 'phone', 'otp', 'password'].includes(signupStep) ? (
+                      <Pressable style={s.checkboxRow} onPress={() => { setTermsAccepted((current) => !current); setError('termsAccepted'); }}>
+                        <View style={[s.checkbox, termsAccepted ? s.checkboxOn : null]}>{termsAccepted ? <Text style={s.check}>✓</Text> : null}</View>
+                        <Text style={s.checkboxText}>I agree to our Terms & Conditions and Privacy Policy</Text>
+                      </Pressable>
+                    ) : null}
+                    {role === 'dealer' && errors.termsAccepted ? <Info text={errors.termsAccepted} kind="error" /> : null}
+                    {role === 'dealer' && signupStep === 'terms' ? <Button label="Continue" onPress={continueSignup} disabled={!termsAccepted} secondary /> : null}
+
+                    {['phone', 'otp', 'password'].includes(signupStep) ? <Field label="Mobile Number" value={signupPhone} onChangeText={handlePhone(setSignupPhone)} placeholder="Enter mobile number" keyboardType="phone-pad" prefix="+91" error={errors.signupPhone} onFocus={scrollToForm} onSubmitEditing={continueSignup} /> : null}
+                    {signupStep === 'phone' ? <Button label="Continue" onPress={continueSignup} disabled={signupPhone.length !== 10} secondary /> : null}
+                    {['otp', 'password'].includes(signupStep) ? <Field label="OTP" value={signupOtp} onChangeText={handleOtp(setSignupOtp)} placeholder="Enter 4 digit OTP" keyboardType="numeric" error={errors.signupOtp} onFocus={scrollToForm} onSubmitEditing={continueSignup} /> : null}
+                    {signupStep === 'otp' ? <Button label="Verify OTP" onPress={continueSignup} disabled={signupOtp.length !== 4} secondary /> : null}
+                    {signupStep === 'password' ? <Info text="OTP verification successful." kind="success" /> : null}
+                    {signupStep === 'password' ? <Field label="Password" value={signupPass} onChangeText={setSignupPass} placeholder="Create password" secureTextEntry={!showPassword} error={errors.signupPass} onFocus={scrollToForm} inputRef={signupPassRef} returnKeyType="next" blurOnSubmit={false} onSubmitEditing={() => signupConfirmPassRef.current?.focus()} actionContent={<EyeIcon open={showPassword} />} onActionPress={() => setShowPassword((current) => !current)} /> : null}
+                    {signupStep === 'password' ? <Field label="Confirm Password" value={signupConfirmPass} onChangeText={setSignupConfirmPass} placeholder="Re-enter password" secureTextEntry={!showPassword} error={errors.signupConfirmPass} onFocus={scrollToForm} inputRef={signupConfirmPassRef} actionContent={<EyeIcon open={showPassword} />} onActionPress={() => setShowPassword((current) => !current)} /> : null}
+                    {signupStep === 'password' ? <Button label={loading ? (role === 'dealer' ? 'Creating Account...' : 'Opening...') : role === 'dealer' ? 'Create Account' : 'Continue'} onPress={submitAuth} disabled={!canContinue || loading} /> : null}
+                  </View>
                 )}
               </View>
-
-              <View style={styles.homeIndicator} />
-            </LinearGradient>
+            )}
           </Animated.View>
         </ScrollView>
       </LinearGradient>
@@ -455,246 +737,82 @@ export function OnboardingScreen({ onGetStarted }: { onGetStarted: (role: UserRo
   );
 }
 
-const styles = StyleSheet.create({
-  root: {
-    flex: 1,
-    backgroundColor: COLORS.shell,
-  },
-  appBg: {
-    flex: 1,
-  },
-  scrollContent: {
-    flexGrow: 1,
-    justifyContent: 'center',
-    paddingVertical: 18,
-  },
-  deviceShell: {
-    width: 328,
-    alignSelf: 'center',
-    borderRadius: 30,
-    borderWidth: 3,
-    borderColor: COLORS.line,
-    backgroundColor: COLORS.shell,
-    padding: 6,
-    shadowColor: '#000',
-    shadowOpacity: 0.12,
-    shadowRadius: 18,
-    shadowOffset: { width: 0, height: 10 },
-    elevation: 8,
-  },
-  phoneScreen: {
-    minHeight: 640,
-    borderRadius: 24,
-    paddingHorizontal: 14,
-    paddingTop: 22,
-    paddingBottom: 14,
-    overflow: 'hidden',
-  },
-  headerWrap: {
-    marginTop: 8,
-    paddingHorizontal: 6,
-  },
-  headerIntro: {
-    fontSize: 16,
-    color: '#3D433F',
-    fontWeight: '400',
-  },
-  titleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 2,
-  },
-  headerTitle: {
-    fontSize: 30,
-    lineHeight: 34,
-    color: COLORS.text,
-    fontWeight: '800',
-  },
-  headerLine: {
-    flex: 1,
-    height: 1.5,
-    marginLeft: 2,
-    marginTop: 8,
-    backgroundColor: '#3D433F',
-  },
-  logoWrap: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 28,
-    marginBottom: 24,
-  },
-  logoImage: {
-    width: 162,
-    height: 92,
-  },
-  panelWrap: {
-    marginTop: 'auto',
-    backgroundColor: 'rgba(255,255,255,0.18)',
-    borderRadius: 26,
-    paddingTop: 12,
-    paddingBottom: 8,
-  },
-  panelCap: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    top: 0,
-    height: 10,
-    borderTopLeftRadius: 26,
-    borderTopRightRadius: 26,
-    backgroundColor: COLORS.lime,
-  },
-  backButton: {
-    alignSelf: 'flex-start',
-    marginHorizontal: 8,
-    marginBottom: 8,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 999,
-    backgroundColor: 'rgba(255,255,255,0.75)',
-  },
-  backButtonText: {
-    color: COLORS.text,
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  tabShell: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginHorizontal: 6,
-    borderRadius: 18,
-    padding: 3,
-  },
-  tabButton: {
-    flex: 1,
-    height: 34,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 14,
-  },
-  tabButtonActive: {
-    backgroundColor: '#FFFFFF',
-  },
-  tabText: {
-    color: '#FFFFFF',
-    fontSize: 15,
-    fontWeight: '700',
-  },
-  tabTextActive: {
-    color: COLORS.text,
-  },
-  roleGrid: {
-    flexDirection: 'row',
-    gap: 10,
-    marginTop: 10,
-    marginHorizontal: 6,
-  },
-  roleCard: {
-    flex: 1,
-    borderRadius: 16,
-    padding: 8,
-    backgroundColor: COLORS.aquaDeep,
-    borderWidth: 3,
-    borderColor: COLORS.lime,
-  },
-  roleCardSelected: {
-    shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 3,
-  },
-  roleArtBox: {
-    backgroundColor: COLORS.panel,
-    borderRadius: 10,
-    padding: 8,
-    minHeight: 126,
-  },
-  roleArtFrame: {
-    flex: 1,
-    borderWidth: 1.5,
-    borderColor: '#D7D7CF',
-    borderStyle: 'dashed',
-    borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  roleArtText: {
-    color: '#A5A79F',
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  roleLabelBar: {
-    marginTop: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: '#FFFFFF',
-    paddingBottom: 3,
-    alignItems: 'center',
-  },
-  roleLabel: {
-    color: '#FFFFFF',
-    fontSize: 15,
-    fontWeight: '700',
-  },
-  roleSubLabel: {
-    color: '#E7F7F8',
-    fontSize: 11,
-    textAlign: 'center',
-    marginTop: 4,
-    marginBottom: 2,
-  },
-  ctaOuter: {
-    marginTop: 10,
-    marginHorizontal: 6,
-  },
-  ctaButton: {
-    height: 38,
-    borderRadius: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  ctaText: {
-    color: '#FFFFFF',
-    fontSize: 18,
-    fontWeight: '700',
-  },
-  formCard: {
-    marginTop: 10,
-    marginHorizontal: 6,
-    backgroundColor: 'rgba(255,255,255,0.9)',
-    borderRadius: 18,
-    padding: 12,
-    gap: 10,
-  },
-  fieldWrap: {
-    gap: 4,
-  },
-  fieldLabel: {
-    color: COLORS.text,
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  fieldInput: {
-    height: 42,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: COLORS.softLine,
-    backgroundColor: '#FFFFFF',
-    paddingHorizontal: 12,
-    color: COLORS.text,
-    fontSize: 14,
-  },
-  dealerHint: {
-    marginTop: 4,
-    fontSize: 11,
-    fontWeight: '600',
-  },
-  homeIndicator: {
-    width: 124,
-    height: 5,
-    borderRadius: 5,
-    backgroundColor: '#545651',
-    alignSelf: 'center',
-    marginTop: 16,
-  },
+const s = StyleSheet.create({
+  root: { flex: 1, backgroundColor: C.bg },
+  bg: { flex: 1, overflow: 'hidden' },
+  glow1: { position: 'absolute', width: 220, height: 220, borderRadius: 110, backgroundColor: 'rgba(59,130,246,0.18)', top: -60, right: -35 },
+  glow2: { position: 'absolute', width: 160, height: 160, borderRadius: 80, backgroundColor: 'rgba(236,72,153,0.14)', bottom: 120, left: -28 },
+  glow3: { position: 'absolute', width: 180, height: 180, borderRadius: 90, backgroundColor: 'rgba(34,197,94,0.1)', top: 90, left: '34%' },
+  content: { flexGrow: 1, paddingHorizontal: 14, paddingTop: 26, paddingBottom: 36 },
+  topRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 18 },
+  brandBlock: { gap: 8 },
+  logoWrap: { width: 64, height: 64, borderRadius: 20, backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: 'rgba(148,163,184,0.28)', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', padding: 6, shadowColor: '#94A3B8', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.16, shadowRadius: 16, elevation: 5 },
+  logo: { width: 48, height: 48 },
+  back: { paddingHorizontal: 14, paddingVertical: 9, borderRadius: 999, backgroundColor: 'rgba(255,255,255,0.96)', borderWidth: 1, borderColor: 'rgba(148,163,184,0.2)' },
+  backText: { color: C.text, fontSize: 13, fontWeight: '700' },
+  welcomeBadge: { alignSelf: 'flex-start', marginBottom: 10 },
+  welcomeBadgeFill: { borderRadius: 999, paddingHorizontal: 12, paddingVertical: 7, borderWidth: 1, borderColor: 'rgba(14,165,233,0.12)' },
+  eyebrow: { color: C.muted2, fontSize: 12, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 1.2 },
+  bigTitle: { fontSize: 34, fontWeight: '900', marginBottom: 10, letterSpacing: -0.4 },
+  bigTitleElectrician: { color: 'rgba(21,154,111,0.84)' },
+  bigTitleDealer: { color: 'rgba(44,107,231,0.84)' },
+  subtext: { color: C.muted, fontSize: 14, lineHeight: 22, marginBottom: 22, maxWidth: '92%' },
+  card: { backgroundColor: C.white, borderRadius: 28, padding: 18, borderWidth: 1, borderColor: C.line, shadowColor: '#0F172A', shadowOffset: { width: 0, height: 12 }, shadowOpacity: 0.08, shadowRadius: 20, elevation: 6 },
+  sectionEyebrow: { color: '#7D8AA5', fontSize: 11, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 1.1, marginBottom: 5 },
+  sectionTitle: { color: C.title, fontSize: 13, fontWeight: '900', marginBottom: 6 },
+  sectionText: { color: C.muted, fontSize: 13, lineHeight: 19 },
+  roleGrid: { flexDirection: 'row', gap: 12, marginTop: 18, marginBottom: 18 },
+  roleCard: { flex: 1, borderRadius: 22, padding: 12, borderWidth: 1.5, borderColor: '#243554' },
+  roleCardElectrician: { backgroundColor: '#F1FBF7', borderColor: '#B9E7D4' },
+  roleCardDealer: { backgroundColor: '#F2F7FF', borderColor: '#BED4F7' },
+  roleCardElectricianActive: { borderColor: '#63D79C', backgroundColor: '#CFF3DE', shadowColor: '#63D79C', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.18, shadowRadius: 14, elevation: 4 },
+  roleCardDealerActive: { borderColor: '#69B8FF', backgroundColor: '#D8EBFF', shadowColor: '#4D9FFF', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.18, shadowRadius: 14, elevation: 4 },
+  roleFrame: { height: 132, borderRadius: 18, borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.18)', backgroundColor: '#FFFFFF', alignItems: 'center', justifyContent: 'center', marginBottom: 12, overflow: 'hidden', padding: 6 },
+  roleImage: { width: '100%', height: '100%' },
+  roleFrameText: { color: '#D3DFF5', fontSize: 12, fontWeight: '700' },
+  roleTitle: { fontSize: 16, fontWeight: '800', marginBottom: 4 },
+  roleTitleDefault: { color: C.text },
+  roleTitleActive: { color: C.text },
+  roleSubtitle: { fontSize: 12, lineHeight: 18 },
+  roleSubtitleDefault: { color: C.muted2 },
+  roleSubtitleActive: { color: C.muted2 },
+  tabs: { flexDirection: 'row', backgroundColor: '#F1F6FD', borderRadius: 18, padding: 4, marginTop: 18, marginBottom: 18 },
+  tab: { flex: 1, height: 42, alignItems: 'center', justifyContent: 'center', borderRadius: 14 },
+  tabElectricianActive: { backgroundColor: '#CFF3DE', borderWidth: 1, borderColor: '#63D79C', shadowColor: '#63D79C', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.12, shadowRadius: 10, elevation: 2 },
+  tabDealerActive: { backgroundColor: '#D8EBFF', borderWidth: 1, borderColor: '#69B8FF', shadowColor: '#4D9FFF', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.12, shadowRadius: 10, elevation: 2 },
+  tabText: { color: C.muted, fontSize: 14, fontWeight: '700' },
+  tabTextActive: { color: C.text },
+  loginChoiceRow: { flexDirection: 'row', gap: 10, marginTop: 4, marginBottom: 2 },
+  loginChoiceCard: { flex: 1, minHeight: 48, borderRadius: 16, borderWidth: 1.2, borderColor: C.fieldLine, backgroundColor: '#FFFFFF', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 10 },
+  loginChoiceCardActive: { borderColor: C.accentA, backgroundColor: '#EEF7FF' },
+  loginChoiceText: { color: C.text, fontSize: 12, fontWeight: '800', textAlign: 'center' },
+  loginChoiceTextActive: { color: C.accentA },
+  form: { gap: 12 },
+  group: { gap: 6 },
+  label: { color: C.muted2, fontSize: 11, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 1 },
+  shell: { height: 52, borderRadius: 16, borderWidth: 1.2, borderColor: C.fieldLine, backgroundColor: C.field, flexDirection: 'row', alignItems: 'center', overflow: 'hidden' },
+  shellError: { borderColor: C.error, backgroundColor: C.errorSoft },
+  prefixWrap: { height: '100%', justifyContent: 'center', paddingHorizontal: 12, borderRightWidth: 1, borderRightColor: '#DFE7F1' },
+  prefix: { color: C.text, fontSize: 14, fontWeight: '700' },
+  input: { flex: 1, height: '100%', paddingHorizontal: 14, color: C.text, fontSize: 15, fontWeight: '600' },
+  fieldAction: { alignSelf: 'center', marginRight: 8, paddingHorizontal: 12, minWidth: 70, height: 36, borderRadius: 12, backgroundColor: '#EEF4FF', alignItems: 'center', justifyContent: 'center' },
+  fieldActionDisabled: { backgroundColor: '#E3E9F2' },
+  fieldActionText: { color: C.accentA, fontSize: 12, fontWeight: '800' },
+  fieldActionTextDisabled: { color: '#97A6BE' },
+  btnOuter: { marginTop: 2 },
+  btn: { minHeight: 48, borderRadius: 16, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 18, shadowColor: '#F97316', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.18, shadowRadius: 16, elevation: 4 },
+  btnSecondary: { borderWidth: 1, borderColor: 'rgba(255,255,255,0.35)', shadowColor: '#0EA5E9', shadowOpacity: 0.14, backgroundColor: '#FFFFFF' },
+  btnText: { color: C.white, fontSize: 15, fontWeight: '900', letterSpacing: 0.2 },
+  btnTextSecondary: { color: C.white },
+  info: { borderRadius: 14, paddingHorizontal: 12, paddingVertical: 10 },
+  infoError: { backgroundColor: C.errorSoft },
+  infoSuccess: { backgroundColor: C.successSoft },
+  infoText: { fontSize: 12, lineHeight: 18, fontWeight: '700' },
+  infoErrorText: { color: C.error },
+  infoSuccessText: { color: C.success },
+  checkboxRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 10 },
+  checkbox: { width: 22, height: 22, borderRadius: 7, borderWidth: 1.4, borderColor: C.fieldLine, backgroundColor: '#FFFFFF', alignItems: 'center', justifyContent: 'center' },
+  checkboxOn: { backgroundColor: C.primary, borderColor: C.primary },
+  check: { color: '#FFFFFF', fontSize: 13, fontWeight: '900' },
+  checkboxText: { flex: 1, color: C.text, fontSize: 12, lineHeight: 19, fontWeight: '500' },
 });
