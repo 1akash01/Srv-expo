@@ -74,7 +74,10 @@ export function ProfileScreen({
   const [darkMode, setDarkMode] = useState(false);
 
   const theme = useMemo(() => getThemePalette(darkMode), [darkMode]);
-  const t = (key: keyof (typeof translations)['English']) => translations[language][key];
+  const t = (key: keyof (typeof translations)['English']) => {
+    const value = translations[language][key];
+    return /[Ãàâ¨]/.test(value) ? translations.English[key] : value;
+  };
   const preferenceValue = { language, setLanguage, darkMode, setDarkMode, t, theme };
 
   const initials = useMemo(
@@ -243,6 +246,23 @@ export function ProfileScreen({
             <Text style={styles.signOutText}>{t('signOut')}</Text>
           </Pressable>
         </ScrollView>
+
+        <Modal visible={!!pendingDraftImage} animationType="fade" transparent onRequestClose={cancelDraftPhoto}>
+          <View style={ms.overlay}>
+            <View style={ms.confirmPhotoCard}>
+              {pendingDraftImage ? <Image source={{ uri: pendingDraftImage }} style={ms.confirmPhotoPreview} /> : null}
+              <Text style={ms.confirmPhotoTitle}>Use this photo?</Text>
+              <View style={ms.confirmPhotoActions}>
+                <Pressable onPress={cancelDraftPhoto} style={ms.cancelBtn}>
+                  <Text style={ms.cancelTxt}>{t('cancel')}</Text>
+                </Pressable>
+                <Pressable onPress={confirmDraftPhoto} style={ms.signOutActionBtn}>
+                  <Text style={ms.signOutActionTxt}>Done</Text>
+                </Pressable>
+              </View>
+            </View>
+          </View>
+        </Modal>
 
         <Modal visible={showEdit} animationType="slide" transparent onRequestClose={() => setShowEdit(false)}>
           <View style={styles.modalOverlay}>
