@@ -17,6 +17,7 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Location from 'expo-location';
 import Svg, { Path } from 'react-native-svg';
+import type { AppLanguage } from '../../types';
 
 export type UserRole = 'electrician' | 'dealer';
 type AuthMode = 'login' | 'signup';
@@ -248,7 +249,13 @@ function RoleCard({ role, selected, onPress }: { role: UserRole; selected: boole
   );
 }
 
-export function OnboardingScreen({ onGetStarted }: { onGetStarted: (role: UserRole) => void }) {
+export function OnboardingScreen({
+  onGetStarted,
+}: {
+  onGetStarted: (role: UserRole) => void;
+  language?: AppLanguage;
+  onLanguageChange?: (language: AppLanguage) => void;
+}) {
   const reveal = useReveal();
   const scrollRef = useRef<ScrollView | null>(null);
   const locationAutoRequestedRef = useRef(false);
