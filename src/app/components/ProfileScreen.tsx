@@ -305,7 +305,7 @@ export function ProfileScreen({
             <View style={ms.confirmCard}>
               <View style={ms.confirmIconBg}><AppIcon name="signOut" size={28} color={C.primary} /></View>
               <Text style={ms.confirmTitle}>{`${t('signOut')}?`}</Text>
-              <Text style={ms.confirmSub}>{'Are you sure you want to sign out?\nYour data will be saved.'}</Text>
+              <Text style={ms.confirmSub}>{'Are you sure you want to sign out?\nYour data will be .'}</Text>
               <View style={{ flexDirection: 'row', gap: 12, width: '100%' }}>
                 <Pressable style={ms.cancelBtn} onPress={() => setShowSignOut(false)}><Text style={ms.cancelTxt}>{t('cancel')}</Text></Pressable>
                 <Pressable style={ms.signOutActionBtn} onPress={() => { setShowSignOut(false); onSignOut(); }}><Text style={ms.signOutActionTxt}>{t('signOut')}</Text></Pressable>
