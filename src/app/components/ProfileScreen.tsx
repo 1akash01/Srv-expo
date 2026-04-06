@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+﻿import React, { useMemo, useState } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import type { Screen, UserRole } from '../../types';
 import {
@@ -77,6 +77,8 @@ export function ProfileScreen({
   const [showEdit, setShowEdit] = useState(false);
   const [showSignOut, setShowSignOut] = useState(false);
   const [subPage, setSubPage] = useState<SubPage>(null);
+  const [language, setLanguage] = useState<AppLanguage>('English');
+  const [darkMode, setDarkMode] = useState(false);
 
   const theme = useMemo(() => getThemePalette(darkMode), [darkMode]);
   const t = (key: keyof (typeof translations)['English']) => fallbackT(language, key);
@@ -89,27 +91,10 @@ export function ProfileScreen({
     .slice(0, 2)
     .toUpperCase();
 
-  const updateDraftField = (key: keyof Profile, value: string) => {
-    let nextValue = value;
-    if (key === 'name' || key === 'city' || key === 'state' || key === 'gstHolderName' || key === 'panHolderName') {
-      nextValue = value.replace(/[^A-Za-z ]/g, '');
-    } else if (key === 'phone' || key === 'pincode' || key === 'dealerCode') {
-      nextValue = value.replace(/\D/g, '');
-    } else if (key === 'email') {
-      nextValue = value.replace(/\s/g, '');
-    }
-    setDraft((current) => ({ ...current, [key]: nextValue }));
-  };
-
-  const openEdit = () => {
-    setDraft(profile);
-    setShowEdit(true);
-  };
-
-  const closeEdit = () => {
-    setDraft(profile);
-    setShowEdit(false);
-  };
+  const initials = useMemo(
+    () => profile.name.split(' ').map((part) => part[0]).join('').slice(0, 2).toUpperCase(),
+    [profile.name]
+  );
 
   const saveProfile = () => {
     setProfile(draft);
@@ -278,30 +263,54 @@ export function ProfileScreen({
           </Pressable>
         </ScrollView>
 
-        <Modal visible={showEdit} animationType="slide" transparent onRequestClose={closeEdit}>
+        <Modal visible={!!pendingDraftImage} animationType="fade" transparent onRequestClose={cancelDraftPhoto}>
+          <View style={ms.overlay}>
+            <View style={ms.confirmPhotoCard}>
+              {pendingDraftImage ? <Image source={{ uri: pendingDraftImage }} style={ms.confirmPhotoPreview} /> : null}
+              <Text style={ms.confirmPhotoTitle}>Use this photo?</Text>
+              <View style={ms.confirmPhotoActions}>
+                <Pressable onPress={cancelDraftPhoto} style={ms.cancelBtn}>
+                  <Text style={ms.cancelTxt}>{t('cancel')}</Text>
+                </Pressable>
+                <Pressable onPress={confirmDraftPhoto} style={ms.signOutActionBtn}>
+                  <Text style={ms.signOutActionTxt}>Done</Text>
+                </Pressable>
+              </View>
+            </View>
+          </View>
+        </Modal>
+
+        <Modal visible={showEdit} animationType="slide" transparent onRequestClose={() => setShowEdit(false)}>
           <View style={styles.modalOverlay}>
-            <View style={[styles.modalCard, { backgroundColor: theme.surface, borderColor: theme.border }]}>
-              <Text style={[styles.modalTitle, { color: theme.textPrimary }]}>{t('edit')} Profile</Text>
-              {[
-                { key: 'name' as const, label: 'Name' },
-                { key: 'phone' as const, label: 'Phone Number' },
-                { key: 'email' as const, label: 'Email' },
-                { key: 'address' as const, label: 'Address' },
-                { key: 'state' as const, label: 'State' },
-                { key: 'city' as const, label: 'City' },
-                { key: 'pincode' as const, label: 'Pincode' },
-              ].map((field) => (
-                <View key={field.key} style={styles.modalField}>
-                  <Text style={[styles.modalLabel, { color: theme.textMuted }]}>{field.label}</Text>
-                  <TextInput
-                    value={draft[field.key]}
-                    onChangeText={(value) => updateDraftField(field.key, value)}
-                    placeholder={field.label}
-                    placeholderTextColor={theme.textMuted}
-                    style={[styles.modalInput, { backgroundColor: theme.soft, borderColor: theme.border, color: theme.textPrimary }]}
-                  />
-                </View>
-              ))}
+            <View style={[styles.modalCard, { backgroundColor: theme.surface }]}>
+              <Text style={[styles.modalTitle, { color: theme.textPrimary }]}>{t('edit')}</Text>
+              <ScrollView showsVerticalScrollIndicator={false}>
+                {([
+                  ['Full Name', 'name'],
+                  ['Phone Number', 'phone'],
+                  ['Email', 'email'],
+                  ['City', 'city'],
+                  ['State', 'state'],
+                  ['Pincode', 'pincode'],
+                  ['Address', 'address'],
+                  ['GST Holder Name', 'gstHolderName'],
+                  ['GST Number', 'gstNumber'],
+                  ['PAN Holder Name', 'panHolderName'],
+                  ['PAN Number', 'panNumber'],
+                  ['Dealer Code', 'dealerCode'],
+                ] as [string, keyof Profile][]).map(([label, key]) => (
+                  <View key={key} style={styles.modalField}>
+                    <Text style={[styles.modalLabel, { color: theme.textMuted }]}>{label}</Text>
+                    <TextInput
+                      value={draft[key]}
+                      onChangeText={(value) => setDraft((current) => ({ ...current, [key]: value }))}
+                      placeholder={label}
+                      placeholderTextColor={theme.textMuted}
+                      style={[styles.modalInput, { borderColor: theme.border, backgroundColor: theme.soft, color: theme.textPrimary }]}
+                    />
+                  </View>
+                ))}
+              </ScrollView>
               <View style={styles.modalActions}>
                 <Pressable style={[styles.modalSecondary, { backgroundColor: theme.soft, borderColor: theme.border }]} onPress={closeEdit}>
                   <Text style={[styles.modalSecondaryTxt, { color: theme.textPrimary }]}>{t('cancel')}</Text>
@@ -345,269 +354,60 @@ export function ProfileScreen({
 }
 
 const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-  },
-  content: {
-    padding: 16,
-    gap: 14,
-    paddingBottom: 32,
-  },
-  heroCard: {
-    borderRadius: 28,
-    borderWidth: 1,
-    padding: 18,
-    gap: 18,
-  },
-  heroHead: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  pageTitle: {
-    fontSize: 24,
-    fontWeight: '900',
-  },
-  editHeaderBtn: {
-    minHeight: 38,
-    borderRadius: 14,
-    borderWidth: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 12,
-    gap: 8,
-  },
-  editHeaderTxt: {
-    fontSize: 13,
-    fontWeight: '700',
-  },
-  profileRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  avatar: {
-    width: 72,
-    height: 72,
-    borderRadius: 24,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 14,
-  },
-  avatarTxt: {
-    color: '#fff',
-    fontSize: 24,
-    fontWeight: '900',
-  },
-  profileMeta: {
-    flex: 1,
-    gap: 4,
-  },
-  name: {
-    fontSize: 18,
-    fontWeight: '900',
-  },
-  phone: {
-    fontSize: 14,
-    fontWeight: '700',
-  },
-  city: {
-    fontSize: 13,
-    fontWeight: '600',
-  },
-  rolePill: {
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    borderRadius: 16,
-    marginLeft: 12,
-  },
-  rolePillTxt: {
-    fontSize: 11,
-    fontWeight: '800',
-    textAlign: 'center',
-  },
-  statsRow: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  statBox: {
-    flex: 1,
-    borderRadius: 20,
-    borderWidth: 1,
-    paddingVertical: 14,
-    alignItems: 'center',
-  },
-  statIcon: {
-    width: 38,
-    height: 38,
-    borderRadius: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 10,
-  },
-  statVal: {
-    fontSize: 18,
-    fontWeight: '900',
-  },
-  statLbl: {
-    fontSize: 12,
-    fontWeight: '700',
-    marginTop: 4,
-  },
-  sectionCard: {
-    borderRadius: 24,
-    borderWidth: 1,
-    padding: 18,
-  },
-  sectionTitle: {
-    fontSize: 15,
-    fontWeight: '900',
-    marginBottom: 14,
-  },
-  detailRow: {
-    paddingVertical: 12,
-  },
-  detailLbl: {
-    fontSize: 12,
-    fontWeight: '700',
-    textTransform: 'uppercase',
-    marginBottom: 6,
-  },
-  detailVal: {
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  grid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 12,
-  },
-  gridCard: {
-    width: '48%',
-    borderRadius: 18,
-    borderWidth: 1,
-    padding: 14,
-  },
-  gridIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 12,
-  },
-  gridLabel: {
-    fontSize: 13,
-    fontWeight: '800',
-    lineHeight: 18,
-  },
-  settingRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 14,
-  },
-  settingLeft: {
-    width: 40,
-    height: 40,
-    borderRadius: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 12,
-  },
-  settingLabel: {
-    flex: 1,
-    fontSize: 14,
-    fontWeight: '700',
-  },
-  signOutBtn: {
-    height: 54,
-    borderRadius: 18,
-    backgroundColor: C.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexDirection: 'row',
-    gap: 10,
-  },
-  signOutTxt: {
-    color: '#fff',
-    fontSize: 15,
-    fontWeight: '800',
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(15,17,32,0.45)',
-    justifyContent: 'center',
-    paddingHorizontal: 20,
-  },
-  modalCard: {
-    borderRadius: 26,
-    borderWidth: 1,
-    padding: 20,
-  },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: '900',
-    marginBottom: 16,
-  },
-  modalField: {
-    marginBottom: 12,
-  },
-  modalLabel: {
-    fontSize: 12,
-    fontWeight: '700',
-    textTransform: 'uppercase',
-    marginBottom: 8,
-  },
-  modalInput: {
-    height: 52,
-    borderRadius: 16,
-    borderWidth: 1.5,
-    paddingHorizontal: 16,
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  modalActions: {
-    flexDirection: 'row',
-    gap: 12,
-    marginTop: 8,
-  },
-  modalSecondary: {
-    flex: 1,
-    height: 52,
-    borderRadius: 16,
-    borderWidth: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  modalSecondaryTxt: {
-    fontSize: 15,
-    fontWeight: '700',
-  },
-  modalPrimary: {
-    flex: 1,
-    height: 52,
-    borderRadius: 16,
-    backgroundColor: C.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  modalPrimaryTxt: {
-    color: '#fff',
-    fontSize: 15,
-    fontWeight: '800',
-  },
-  confirmCard: {
-    borderRadius: 24,
-    borderWidth: 1,
-    padding: 20,
-  },
-  confirmTitle: {
-    fontSize: 18,
-    fontWeight: '900',
-    marginBottom: 8,
-  },
-  confirmText: {
-    fontSize: 14,
-    lineHeight: 20,
-    marginBottom: 14,
-  },
+  screen: { flex: 1 },
+  content: { padding: 16, gap: 14, paddingBottom: 120 },
+  pageTitle: { fontSize: 26, fontWeight: '900' },
+  profileCard: { borderRadius: 28, borderWidth: 1, padding: 18, gap: 18 },
+  profileTop: { flexDirection: 'row', alignItems: 'center', gap: 14 },
+  avatarWrap: { position: 'relative' },
+  avatar: { width: 74, height: 74, borderRadius: 24, alignItems: 'center', justifyContent: 'center' },
+  avatarText: { color: '#FFFFFF', fontSize: 24, fontWeight: '900' },
+  levelBadge: { position: 'absolute', right: -2, bottom: -2, minWidth: 28, height: 28, borderRadius: 14, backgroundColor: '#111827', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 8 },
+  levelText: { color: '#FFFFFF', fontSize: 11, fontWeight: '800' },
+  profileInfo: { flex: 1 },
+  profileName: { fontSize: 18, fontWeight: '800' },
+  profilePhone: { marginTop: 4, fontSize: 13, fontWeight: '600' },
+  profileDealer: { marginTop: 4, fontSize: 12, fontWeight: '600' },
+  roleBadge: { marginTop: 8, alignSelf: 'flex-start', borderRadius: 999, paddingHorizontal: 12, paddingVertical: 8 },
+  roleBadgeText: { fontSize: 11, fontWeight: '800' },
+  roleBadgeDealer: { backgroundColor: '#EAF2FF' },
+  roleBadgeElectrician: { backgroundColor: '#EAF8EF' },
+  roleBadgeDealerText: { color: C.blue },
+  roleBadgeElectricianText: { color: C.success },
+  inlineRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 8 },
+  profileCity: { fontSize: 12, fontWeight: '600' },
+  editBtn: { width: 42, height: 42, borderRadius: 14, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
+  statsRow: { flexDirection: 'row', gap: 10 },
+  statBox: { flex: 1, borderRadius: 20, borderWidth: 1, paddingVertical: 14, paddingHorizontal: 10, alignItems: 'center', gap: 6 },
+  statIcon: { width: 42, height: 42, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
+  statValue: { fontSize: 18, fontWeight: '900' },
+  statLabel: { fontSize: 12, fontWeight: '700' },
+  sectionCard: { borderRadius: 24, borderWidth: 1, padding: 16 },
+  sectionTitle: { fontSize: 16, fontWeight: '800', marginBottom: 8 },
+  detailRow: { flexDirection: 'row', gap: 14, paddingVertical: 12 },
+  detailBorder: { borderBottomWidth: 1 },
+  detailLabel: { width: 124, fontSize: 12, fontWeight: '700' },
+  detailValue: { flex: 1, fontSize: 13, fontWeight: '600' },
+  menuRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 14 },
+  menuIcon: { width: 42, height: 42, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
+  menuLabel: { flex: 1, fontSize: 14, fontWeight: '700' },
+  signOutButton: { minHeight: 54, borderRadius: 18, backgroundColor: '#FDECEC', alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 10 },
+  signOutText: { color: '#B42318', fontSize: 15, fontWeight: '800' },
+  modalOverlay: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(34, 18, 10, 0.36)' },
+  modalCard: { maxHeight: '88%', borderTopLeftRadius: 28, borderTopRightRadius: 28, padding: 18 },
+  modalTitle: { fontSize: 18, fontWeight: '800', marginBottom: 12 },
+  modalField: { marginBottom: 12 },
+  modalLabel: { marginBottom: 8, fontSize: 12, fontWeight: '700' },
+  modalInput: { minHeight: 50, borderRadius: 16, borderWidth: 1, paddingHorizontal: 14, fontSize: 14 },
+  modalActions: { flexDirection: 'row', gap: 12, marginTop: 8 },
+  modalSecondary: { flex: 1, minHeight: 50, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
+  modalSecondaryText: { fontSize: 14, fontWeight: '800' },
+  modalPrimary: { flex: 1, minHeight: 50, borderRadius: 16, backgroundColor: C.primary, alignItems: 'center', justifyContent: 'center' },
+  modalPrimaryText: { color: '#FFFFFF', fontSize: 14, fontWeight: '800' },
+  confirmOverlay: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(34, 18, 10, 0.36)', padding: 20 },
+  confirmCard: { width: '100%', maxWidth: 360, borderRadius: 24, padding: 20 },
+  confirmTitle: { fontSize: 20, fontWeight: '800' },
+  confirmText: { marginTop: 8, fontSize: 14, lineHeight: 20 },
+  confirmActions: { flexDirection: 'row', gap: 12, marginTop: 18 },
+  confirmPrimary: { flex: 1, minHeight: 50, borderRadius: 16, backgroundColor: '#B42318', alignItems: 'center', justifyContent: 'center' },
 });
