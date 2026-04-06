@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
+import * as ImagePicker from 'expo-image-picker';
 import {
+  Alert,
   Animated,
   Easing,
   Alert,
@@ -71,8 +73,7 @@ export function ScanScreen({ onNavigate }: { onNavigate: (screen: Screen) => voi
   const { width } = useWindowDimensions();
   const [scanned, setScanned] = useState(false);
   const [scanning, setScanning] = useState(false);
-  const [pendingScanImage, setPendingScanImage] = useState<string | null>(null);
-  const [selectedScanImage, setSelectedScanImage] = useState<string | null>(null);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const frameSize = Math.min(width - 64, 260);
 
   const laserY = useRef(new Animated.Value(0)).current;
@@ -185,36 +186,38 @@ export function ScanScreen({ onNavigate }: { onNavigate: (screen: Screen) => voi
   }, [scanned]);
 
   const startScan = () => {
+    setSelectedImage(null);
     setScanned(false);
     setSelectedScanImage(null);
     setScanning(true);
     setTimeout(() => { setScanning(false); setScanned(true); }, 3000);
   };
 
-  const pickScanImage = async () => {
+  const handlePickFromGallery = async () => {
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+
     if (!permission.granted) {
-      return Alert.alert('Permission required', 'Please allow gallery access.');
+      Alert.alert('Permission needed', 'Gallery access allow karo taaki aap QR image select kar sako.');
+      return;
     }
-    const res = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      quality: 0.85,
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      allowsEditing: false,
+      quality: 1,
     });
-    if (!res.canceled) {
-      setPendingScanImage(res.assets[0].uri);
+
+    if (result.canceled || !result.assets?.length) {
+      return;
     }
-  };
 
-  const confirmScanImage = () => {
-    if (!pendingScanImage) return;
-    setSelectedScanImage(pendingScanImage);
-    setPendingScanImage(null);
-    setScanning(false);
-    setScanned(true);
-  };
-
-  const cancelScanImage = () => {
-    setPendingScanImage(null);
+    setSelectedImage(result.assets[0].uri);
+    setScanned(false);
+    setScanning(true);
+    setTimeout(() => {
+      setScanning(false);
+      setScanned(true);
+    }, 1800);
   };
 
   const laserTranslate = laserY.interpolate({ inputRange: [0, 1], outputRange: [0, frameSize - 10] });
@@ -309,7 +312,7 @@ export function ScanScreen({ onNavigate }: { onNavigate: (screen: Screen) => voi
             <FlashlightIcon size={20} color={Colors.textDark} />
             <Text style={styles.secondaryActionText}>Flashlight</Text>
           </Pressable>
-          <Pressable style={styles.secondaryAction} onPress={pickScanImage}>
+          <Pressable style={styles.secondaryAction} onPress={handlePickFromGallery}>
             <GalleryIcon size={20} color={Colors.textDark} />
             <Text style={styles.secondaryActionText}>Gallery</Text>
           </Pressable>
@@ -426,3 +429,5 @@ const styles = StyleSheet.create({
   howIndexText: { color: '#fff', fontSize: 13, fontWeight: '800' },
   howText: { flex: 1, fontSize: 13, lineHeight: 20, color: Colors.textMuted },
 });
+
+

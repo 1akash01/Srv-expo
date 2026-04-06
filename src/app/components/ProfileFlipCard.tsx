@@ -1,13 +1,18 @@
-import { LinearGradient } from 'expo-linear-gradient';
+ï»¿import { LinearGradient } from 'expo-linear-gradient';
+import * as LegacyFileSystem from 'expo-file-system/legacy';
+import * as Print from 'expo-print';
 import { useEffect, useRef, useState } from 'react';
 import {
+  Alert,
   Animated,
   Image,
+  Platform,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from 'react-native';
+import Svg, { Path } from 'react-native-svg';
 
 const logoImage = require('../../../assets/banners/srv-logo.jpeg');
 
@@ -29,18 +34,85 @@ interface Props {
   role?: 'dealer' | 'electrician';
 }
 
-function DetailPill({ label, value }: { label: string; value: string }) {
+function DownloadIcon({ color = '#FFFFFF', size = 16 }: { color?: string; size?: number }) {
   return (
-    <View style={styles.detailPill}>
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M12 4.5v9m0 0l-3.5-3.5M12 13.5l3.5-3.5M5 16.5v1a2 2 0 002 2h10a2 2 0 002-2v-1"
+        stroke={color}
+        strokeWidth={1.9}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </Svg>
+  );
+}
+
+function LocationIcon({ color = '#FFFFFF', size = 12 }: { color?: string; size?: number }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M12 21s6-5.33 6-11a6 6 0 10-12 0c0 5.67 6 11 6 11z"
+        stroke={color}
+        strokeWidth={1.8}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <Path d="M12 12.5a2.5 2.5 0 100-5 2.5 2.5 0 000 5z" stroke={color} strokeWidth={1.8} />
+    </Svg>
+  );
+}
+
+function escapeHtml(value: string) {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+
+async function getLogoDataUri() {
+  try {
+    const assetUri = Image.resolveAssetSource(logoImage).uri;
+    const base64 = await LegacyFileSystem.readAsStringAsync(assetUri, {
+      encoding: LegacyFileSystem.EncodingType.Base64,
+    });
+    return `data:image/jpeg;base64,${base64}`;
+  } catch {
+    return null;
+  }
+}
+function DetailPill({
+  label,
+  value,
+  compact = false,
+  lines,
+  icon,
+}: {
+  label: string;
+  value: string;
+  compact?: boolean;
+  lines?: number;
+  icon?: React.ReactNode;
+}) {
+  return (
+    <View style={[styles.detailPill, compact && styles.detailPillCompact]}>
       <Text style={styles.detailLabel}>{label}</Text>
-      <Text style={styles.detailValue} numberOfLines={1}>{value}</Text>
+      <View style={styles.detailValueRow}>
+        {icon ? <View style={styles.detailIconWrap}>{icon}</View> : null}
+        <Text style={styles.detailValue} numberOfLines={lines}>{value}</Text>
+      </View>
     </View>
   );
 }
 
 export default function ProfileFlipCard({ profile, role = 'electrician' }: Props) {
   const [flipped, setFlipped] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
   const flipAnim = useRef(new Animated.Value(0)).current;
+  const hintPulse = useRef(new Animated.Value(1)).current;
 
   const initials = (profile?.name || 'U')
     .split(' ')
@@ -77,6 +149,17 @@ export default function ProfileFlipCard({ profile, role = 'electrician' }: Props
     };
   }, []);
 
+  useEffect(() => {
+    const pulse = Animated.loop(
+      Animated.sequence([
+        Animated.timing(hintPulse, { toValue: 1.06, duration: 900, useNativeDriver: true }),
+        Animated.timing(hintPulse, { toValue: 1, duration: 900, useNativeDriver: true }),
+      ])
+    );
+    pulse.start();
+    return () => pulse.stop();
+  }, [hintPulse]);
+
   const onToggle = () => {
     const next = !flipped;
     animateTo(next);
@@ -85,82 +168,232 @@ export default function ProfileFlipCard({ profile, role = 'electrician' }: Props
     }
   };
 
-  const backTitle = role === 'dealer' ? (profile?.name || 'Harshvardhan') : (profile?.dealer_name || 'Bansal Chauke');
-  const backSub = role === 'dealer'
-    ? ((profile?.district || 'Mansa') + ', ' + (profile?.state || 'Punjab'))
-    : ((profile?.dealer_town || 'Chauke') + ' • +91 ' + (profile?.dealer_phone || '9465258788'));
+  const dealerName = role === 'dealer' ? (profile?.name || 'Harshvardhan') : (profile?.dealer_name || 'Bansal Chauke');
+  const dealerLocation = role === 'dealer'
+    ? [profile?.town || 'Chauke', profile?.district || 'Mansa', profile?.state || 'Punjab'].filter(Boolean).join(', ')
+    : [profile?.dealer_town || 'Chauke', profile?.district || 'Mansa', profile?.state || 'Punjab'].filter(Boolean).join(', ');
+  const dealerPhone = '+91 ' + (role === 'dealer' ? (profile?.phone || '9162038214') : (profile?.dealer_phone || '9465258788'));
+  const exportName = ((profile?.name || dealerName || 'srv-profile-card')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')) || 'srv-profile-card';
+
+  const buildPdfHtml = (logoDataUri: string | null) => {
+    const profileName = escapeHtml(profile?.name || 'Harshvardhan');
+    const profilePhone = escapeHtml('+91 ' + (profile?.phone || '9162038214'));
+    const location = escapeHtml(profile?.town || 'Chauke, Punjab');
+    const safeCode = escapeHtml(code || 'PB03900-001');
+    const safeDealerName = escapeHtml(dealerName);
+    const safeDealerLocation = escapeHtml(dealerLocation);
+    const safeDealerPhone = escapeHtml(dealerPhone);
+    const heading = escapeHtml(role === 'dealer' ? 'Business Details' : 'Connected Dealer');
+    const partnerRole = escapeHtml(role === 'dealer' ? 'Dealer Partner' : 'Electrician Partner');
+
+    return `
+      <html>
+        <head>
+          <meta charset="utf-8" />
+          <style>
+            body { font-family: Arial, sans-serif; background: #eef4ff; margin: 0; padding: 28px; color: #0f172a; }
+            .title { font-size: 22px; font-weight: 800; margin-bottom: 18px; color: #10254a; }
+            .card { border-radius: 28px; padding: 22px; margin-bottom: 22px; color: white; overflow: hidden; }
+            .front { background: linear-gradient(135deg, #587ac7, #4768b7, #38549b); }
+            .back { background: linear-gradient(135deg, #6284c9, #4b6db4, #35518c); }
+            .row { display: flex; justify-content: space-between; gap: 16px; align-items: flex-start; }
+            .identity { display: flex; gap: 14px; align-items: center; flex: 1; }
+            .avatar { width: 66px; height: 66px; border-radius: 22px; background: white; color: #10254a; font-size: 24px; font-weight: 900; display: flex; align-items: center; justify-content: center; }
+            .eyebrow { color: #afc0e4; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; }
+            .name { font-size: 22px; font-weight: 800; margin-bottom: 4px; }
+            .phone { font-size: 13px; color: #d8e3f8; }
+            .logo { width: 54px; height: 54px; border-radius: 18px; background: rgba(255,255,255,0.18); display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: 800; overflow: hidden; }
+            .logo img { width: 100%; height: 100%; object-fit: contain; background: white; }
+            .pill-row { display: flex; gap: 12px; margin-top: 20px; }
+            .pill { flex: 1; background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.08); border-radius: 18px; padding: 12px; }
+            .pill-label { color: #96a7c5; font-size: 10px; font-weight: 700; text-transform: uppercase; margin-bottom: 6px; letter-spacing: 0.8px; }
+            .pill-value { font-size: 13px; font-weight: 800; line-height: 18px; }
+            .back-layout { display: flex; gap: 14px; align-items: stretch; }
+            .back-left { flex: 1; }
+            .stack { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
+            .qr-panel { width: 112px; text-align: center; }
+            .qr-frame { background: white; border-radius: 18px; padding: 8px; }
+            .qr-frame img { width: 100%; height: 96px; object-fit: contain; }
+            .qr-text { color: #afc0e4; font-size: 10px; font-weight: 700; margin-top: 8px; word-break: break-word; }
+          </style>
+        </head>
+        <body>
+          <div class="title">SRV Profile Card</div>
+          <div class="card front">
+            <div class="row">
+              <div class="identity">
+                <div class="avatar">${escapeHtml(initials)}</div>
+                <div>
+                  <div class="eyebrow">${partnerRole}</div>
+                  <div class="name">${profileName}</div>
+                  <div class="phone">${profilePhone}</div>
+                </div>
+              </div>
+              <div class="logo">${logoDataUri ? `<img src="${logoDataUri}" />` : "SRV"}</div>
+            </div>
+            <div class="pill-row">
+              <div class="pill">
+                <div class="pill-label">Code</div>
+                <div class="pill-value">${safeCode}</div>
+              </div>
+              <div class="pill">
+                <div class="pill-label">Location</div>
+                <div class="pill-value">${location}</div>
+              </div>
+            </div>
+          </div>
+          <div class="card back">
+            <div class="back-layout">
+              <div class="back-left">
+                <div class="eyebrow">${heading}</div>
+                <div class="stack">
+                  <div class="pill"><div class="pill-label">Name</div><div class="pill-value">${safeDealerName}</div></div>
+                  <div class="pill"><div class="pill-label">Location</div><div class="pill-value">${safeDealerLocation}</div></div>
+                  <div class="pill"><div class="pill-label">Phone</div><div class="pill-value">${safeDealerPhone}</div></div>
+                </div>
+              </div>
+              <div class="qr-panel">
+                <div class="qr-frame"><img src="${qrUrl}" /></div>
+                <div class="qr-text">${safeCode}</div>
+              </div>
+            </div>
+          </div>
+        </body>
+      </html>
+    `;
+  };
+
+  const handleDownloadPdf = async () => {
+    try {
+      setIsDownloading(true);
+      const logoDataUri = await getLogoDataUri();
+      const { uri } = await Print.printToFileAsync({ html: buildPdfHtml(logoDataUri), base64: false });
+      const fileName = `${exportName}-srv-card.pdf`;
+
+      if (Platform.OS === 'android') {
+        const permission = await LegacyFileSystem.StorageAccessFramework.requestDirectoryPermissionsAsync();
+        if (!permission.granted) {
+          Alert.alert('Save cancelled', 'Folder not selected.');
+          return;
+        }
+
+        const base64 = await LegacyFileSystem.readAsStringAsync(uri, {
+          encoding: LegacyFileSystem.EncodingType.Base64,
+        });
+        const targetUri = await LegacyFileSystem.StorageAccessFramework.createFileAsync(
+          permission.directoryUri,
+          fileName.replace(/\.pdf$/i, ''),
+          'application/pdf'
+        );
+        await LegacyFileSystem.StorageAccessFramework.writeAsStringAsync(targetUri, base64, {
+          encoding: LegacyFileSystem.EncodingType.Base64,
+        });
+        Alert.alert('PDF saved', 'Profile card PDF saved to your selected device folder.');
+        return;
+      }
+
+      const destination = `${LegacyFileSystem.documentDirectory ?? LegacyFileSystem.cacheDirectory}${fileName}`;
+      await LegacyFileSystem.copyAsync({ from: uri, to: destination });
+      Alert.alert('PDF saved', `Saved in local files:\n${destination}`);
+    } catch {
+      Alert.alert('Download failed', 'Unable to create the profile card PDF right now.');
+    } finally {
+      setIsDownloading(false);
+    }
+  };
 
   return (
-    <TouchableOpacity activeOpacity={0.98} onPress={onToggle}>
+    <View>
       <View style={styles.container}>
-        <Animated.View style={[styles.face, { opacity: frontOpacity, transform: [{ rotateY: frontRotate }] }]}> 
-          <LinearGradient colors={['#152848', '#12213A', '#0C1628']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.gradientFill}>
-            <View style={styles.textureOne} />
-            <View style={styles.textureTwo} />
+        <TouchableOpacity activeOpacity={0.98} onPress={onToggle}>
+          <Animated.View style={[styles.face, { opacity: frontOpacity, transform: [{ rotateY: frontRotate }] }]}>
+            <LinearGradient colors={['#587AC7', '#4768B7', '#38549B']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.gradientFill}>
+              <View style={styles.textureOne} />
+              <View style={styles.textureTwo} />
 
-            <View style={styles.frontTopRow}>
-              <View style={styles.identityWrap}>
-                <View style={styles.avatarWrap}>
-                  <Text style={styles.avatarText}>{initials}</Text>
+              <View style={styles.frontTopRow}>
+                <View style={styles.identityWrap}>
+                  <View style={styles.avatarWrap}>
+                    <Text style={styles.avatarText}>{initials}</Text>
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.roleText}>{role === 'dealer' ? 'Dealer Partner' : 'Electrician Partner'}</Text>
+                    <Text style={styles.nameText}>{profile?.name || 'Harshvardhan'}</Text>
+                    <Text style={styles.phoneText}>+91 {profile?.phone || '9162038214'}</Text>
+                    <Animated.Text
+                      style={[styles.inlineTapHint, { transform: [{ scale: hintPulse }] }]}
+                      numberOfLines={1}
+                    >
+                      Tap card to view QR & details
+                    </Animated.Text>
+                  </View>
                 </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.roleText}>{role === 'dealer' ? 'Dealer Partner' : 'Electrician Partner'}</Text>
-                  <Text style={styles.nameText} numberOfLines={1}>{profile?.name || 'Harshvardhan'}</Text>
-                  <Text style={styles.phoneText}>+91 {profile?.phone || '9162038214'}</Text>
-                </View>
-              </View>
-              <View style={styles.logoMiniWrap}>
-                <Image source={logoImage} style={styles.logoMini} resizeMode="contain" />
-              </View>
-            </View>
 
-            <View style={styles.frontBottomRow}>
-              <DetailPill label="Code" value={code || 'PB03900-001'} />
-              <DetailPill label="Location" value={profile?.town || 'Chauke, Punjab'} />
-            </View>
-          </LinearGradient>
-        </Animated.View>
-
-        <Animated.View style={[styles.face, { opacity: backOpacity, transform: [{ rotateY: backRotate }] }]}> 
-          <LinearGradient colors={['#0B1324', '#101D35', '#172C52']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.gradientFill}>
-            <View style={styles.backContent}>
-              <View style={styles.backLeft}>
-                <Text style={styles.backHeading}>{role === 'dealer' ? 'Business Details' : 'Connected Dealer'}</Text>
-                <Text style={styles.backMain} numberOfLines={1}>{backTitle}</Text>
-                <Text style={styles.backSub}>{backSub}</Text>
-
-                <View style={styles.metaStack}>
-                  <DetailPill label="Dealer Code" value={profile?.dealer_code || 'PB-03-900017-001'} />
-                  <DetailPill label="Tap Action" value="Flip to profile" />
-                </View>
               </View>
 
-              <View style={styles.qrPanel}>
-                <View style={styles.qrFrame}>
-                  <Image source={{ uri: qrUrl }} style={styles.qrImage} resizeMode="contain" />
-                </View>
-                <Text style={styles.qrCodeText} numberOfLines={2}>{qrValue}</Text>
+              <View style={styles.frontBottomRow}>
+                <DetailPill label="Electrician Code" value={code || 'PB03900-001'} />
+                <DetailPill
+                  label="Location"
+                  value={profile?.town || 'Chauke, Punjab'}
+                  icon={<LocationIcon />}
+                />
               </View>
-            </View>
-          </LinearGradient>
-        </Animated.View>
+            </LinearGradient>
+          </Animated.View>
+
+          <Animated.View style={[styles.face, { opacity: backOpacity, transform: [{ rotateY: backRotate }] }]}>
+            <LinearGradient colors={['#6284C9', '#4B6DB4', '#35518C']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.gradientFill}>
+              <View style={styles.backGlowOne} />
+              <View style={styles.backGlowTwo} />
+              <View style={styles.backContent}>
+                <View style={styles.backLeft}>
+                  <Text style={styles.backHeading}>{role === 'dealer' ? 'Business Details' : 'Connected Dealer'}</Text>
+                  <View style={styles.metaStack}>
+                    <DetailPill label="Name" value={dealerName} compact />
+                    <DetailPill label="Location" value={dealerLocation} compact lines={2} />
+                    <DetailPill label="Phone" value={dealerPhone} compact />
+                  </View>
+                </View>
+
+                <View style={styles.qrPanel}>
+                  <View style={styles.qrFrame}>
+                    <Image source={{ uri: qrUrl }} style={styles.qrImage} resizeMode="contain" />
+                  </View>
+                  <Text style={styles.qrCodeText} numberOfLines={2}>{qrValue}</Text>
+                </View>
+              </View>
+            </LinearGradient>
+          </Animated.View>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.downloadMiniBtn}
+          activeOpacity={0.9}
+          onPress={() => void handleDownloadPdf()}
+          disabled={isDownloading}
+        >
+          <DownloadIcon size={15} />
+        </TouchableOpacity>
       </View>
 
-      <Text style={styles.tapHint}>Tap card to {flipped ? 'view profile front' : 'view QR & details'}</Text>
-    </TouchableOpacity>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     width: '100%',
-    height: 172,
+    height: 208,
     position: 'relative',
   },
   face: {
     position: 'absolute',
     width: '100%',
-    height: 172,
+    height: 208,
     borderRadius: 28,
     overflow: 'hidden',
     shadowColor: '#020617',
@@ -171,7 +404,7 @@ const styles = StyleSheet.create({
   },
   gradientFill: {
     flex: 1,
-    padding: 18,
+    padding: 15,
   },
   textureOne: {
     position: 'absolute',
@@ -191,12 +424,45 @@ const styles = StyleSheet.create({
     bottom: -24,
     left: -18,
   },
+  downloadMiniBtn: {
+    position: 'absolute',
+    top: 12,
+    right: 12,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: 'rgba(255,255,255,0.18)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.25)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 3,
+  },
+  backGlowOne: {
+    position: 'absolute',
+    width: 150,
+    height: 150,
+    borderRadius: 75,
+    backgroundColor: 'rgba(56,189,248,0.12)',
+    top: -24,
+    right: -20,
+  },
+  backGlowTwo: {
+    position: 'absolute',
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: 'rgba(244,114,182,0.12)',
+    bottom: -18,
+    left: -14,
+  },
   frontTopRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: 16,
+    marginBottom: 18,
     gap: 12,
+    paddingRight: 28,
   },
   identityWrap: { flexDirection: 'row', gap: 12, flex: 1 },
   avatarWrap: {
@@ -208,44 +474,53 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   avatarText: { color: '#10254A', fontSize: 24, fontWeight: '900' },
-  roleText: { color: '#AFC0E4', fontSize: 10.5, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 1.1, marginBottom: 4 },
-  nameText: { color: '#FFFFFF', fontSize: 20, fontWeight: '900' },
+  roleText: { color: '#AFC0E4', fontSize: 9.5, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 1.1, marginBottom: 4 },
+  nameText: { color: '#FFFFFF', fontSize: 16, fontWeight: '900', flexShrink: 1 },
   phoneText: { color: '#D8E3F8', fontSize: 12.5, marginTop: 5 },
-  logoMiniWrap: {
-    width: 54,
-    height: 54,
-    borderRadius: 18,
-    backgroundColor: '#FFFFFF',
-    padding: 6,
+  inlineTapHint: { color: 'rgba(255,255,255,0.72)', fontSize: 7.8, marginTop: 10, paddingRight: 2, flexShrink: 1 },
+
+  frontBottomRow: {
+    position: 'absolute',
+    left: 15,
+    right: 15,
+    bottom: 15,
+    flexDirection: 'row',
+    gap: 10,
   },
-  logoMini: { width: '100%', height: '100%', borderRadius: 12 },
-  frontBottomRow: { flexDirection: 'row', gap: 10 },
   detailPill: {
     flex: 1,
-    backgroundColor: 'rgba(255,255,255,0.1)',
+    backgroundColor: 'rgba(255,255,255,0.12)',
     borderRadius: 18,
     paddingHorizontal: 12,
-    paddingVertical: 10,
+    paddingVertical: 9,
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.08)',
   },
-  detailLabel: { color: '#96A7C5', fontSize: 10, fontWeight: '700', marginBottom: 4, textTransform: 'uppercase', letterSpacing: 0.8 },
-  detailValue: { color: '#FFFFFF', fontSize: 12, fontWeight: '800' },
-  backContent: { flexDirection: 'row', flex: 1, gap: 14 },
-  backLeft: { flex: 1, justifyContent: 'space-between' },
-  backHeading: { color: '#9AB0D5', fontSize: 10.5, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 1 },
-  backMain: { color: '#FFFFFF', fontSize: 18, fontWeight: '900', marginTop: 6 },
-  backSub: { color: '#C3D2EA', fontSize: 12, lineHeight: 18, marginTop: 6 },
-  metaStack: { gap: 9, marginTop: 12 },
-  qrPanel: { width: 96, alignItems: 'center', justifyContent: 'center' },
+  detailPillCompact: {
+    flex: 0,
+    paddingVertical: 7,
+    borderRadius: 16,
+  },
+  detailLabel: { color: '#D8E4FF', fontSize: 9, fontWeight: '700', marginBottom: 3, textTransform: 'uppercase', letterSpacing: 0.8 },
+  detailValueRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  detailIconWrap: { alignItems: 'center', justifyContent: 'center' },
+  detailValue: { color: '#FFFFFF', fontSize: 10.5, fontWeight: '800', flexShrink: 1, lineHeight: 14 },
+  backContent: { flexDirection: 'row', flex: 1, gap: 10, alignItems: 'stretch' },
+  backLeft: { flex: 1, justifyContent: 'flex-start', minWidth: 0 },
+  backHeading: { color: '#E4EDFF', fontSize: 10.5, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 1, paddingRight: 34 },
+  metaStack: { gap: 6, marginTop: 8, paddingRight: 1 },
+  qrPanel: { width: 68, alignItems: 'center', justifyContent: 'center', paddingVertical: 10 },
   qrFrame: {
-    width: 92,
-    height: 92,
-    borderRadius: 22,
+    width: 62,
+    height: 62,
+    borderRadius: 16,
     backgroundColor: '#FFFFFF',
-    padding: 8,
+    padding: 5,
   },
   qrImage: { width: '100%', height: '100%' },
-  qrCodeText: { color: '#AFC0E4', fontSize: 9.5, fontWeight: '700', textAlign: 'center', marginTop: 8 },
-  tapHint: { textAlign: 'center', color: 'rgba(255,255,255,0.5)', fontSize: 10.5, marginTop: 8, marginBottom: 2 },
+  qrCodeText: { color: '#C7D5F3', fontSize: 8, fontWeight: '700', textAlign: 'center', marginTop: 5 },
 });
+
+
+
+

@@ -60,7 +60,7 @@ export default function App() {
       case 'profile':
         return <ProfileScreen currentRole={currentRole} onNavigate={handleNavigate} onSignOut={handleSignOut} />;
       case 'wallet':
-        return <WalletScreen />;
+        return <WalletScreen onNavigate={handleNavigate} />;
       default:
         return (
           <HomeScreen
